@@ -25,6 +25,7 @@ our $FLAG_PRINT_SOURCE = 1;
     # 0 = don't print sources
     # 1 = print sources
 our @LANGUAGES = (
+    'la',
     'en',
     'fr',
     'de',
@@ -58,9 +59,10 @@ my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432",
     PrintError => 1
 });
 
-# Retrieve a list of all species containing names in any of our languages.
+# Retrieve a list of all species containing names in Latin, which should
+# only be the index of names which exist in Map of Life.
 my $languages = join(', ', map { "'$_'" } @LANGUAGES);
-my $sth = $db->prepare("SELECT scname FROM entries WHERE LOWER(lang) IN ($languages) AND source NOT LIKE 'GBIF%' GROUP BY scname");
+my $sth = $db->prepare("SELECT scname FROM entries WHERE LOWER(lang) = 'la' AND source NOT LIKE 'GBIF%' GROUP BY scname");
 $sth->execute;
 my $scientific_names = $sth->fetchall_arrayref([0]);
 
