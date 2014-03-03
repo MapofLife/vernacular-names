@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS entries (
 -- So we can look up entries by scientific name. 
 CREATE INDEX entries_scname ON entries (scname);
 
+Or case insensitive
+CREATE INDEX entries_scname_lc ON entries (LOWER(scname))
+
 -- Might be useful to group this way around too.
 CREATE INDEX entries_cmname ON entries (cmname);
 
