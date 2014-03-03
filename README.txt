@@ -8,3 +8,6 @@ the following structure.
 For now, I’m using the language ‘la’ to store the definitive list of
 species currently in Map of Life; I’ll delete it once I have a better
 way of storing lists in this system.
+
+To pull out binomial names, I used:
+ - UPDATE entries SET binomial = split_part(scname, ' ', 1) || ' ' || split_part(scname, ' ', 2);

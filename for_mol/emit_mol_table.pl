@@ -69,7 +69,7 @@ my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432",
 # Retrieve a list of all species containing names in Latin, which should
 # only be the index of names which exist in Map of Life.
 my $languages = join(', ', map { "'$_'" } @LANGUAGES);
-my $sth = $db->prepare("SELECT scname FROM entries WHERE LOWER(lang) = 'la' AND source NOT LIKE 'GBIF%' GROUP BY scname");
+my $sth = $db->prepare("SELECT binomial FROM entries WHERE LOWER(lang) = 'la' AND source = 'EOL API calls week of February 9 to 15, 2014' GROUP BY binomial");
 $sth->execute;
 my $scientific_names = $sth->fetchall_arrayref([0]);
 
@@ -132,7 +132,7 @@ foreach my $row (@$scientific_names) {
         . " array_agg(tax_family),"
         . " array_agg(tax_genus)"
         . " FROM entries"
-        . " WHERE scname=? AND LOWER(lang) IN ($languages) AND source NOT LIKE 'GBIF%'"
+        . " WHERE binomial=? AND LOWER(lang) IN ($languages) AND source NOT LIKE 'GBIF%'"
         . " GROUP BY cmname, lang_lower"
         . " ORDER BY count_cmname DESC, lang_lower DESC"
     );
@@ -151,12 +151,12 @@ foreach my $row (@$scientific_names) {
         my $count = $entry->[2];
         my $source_list = $entry->[3];
         
-        $higher_taxonomy{'kingdom'}{$_} = 1 foreach grep {defined($_)} @{$entry->[4]};
-        $higher_taxonomy{'phylum'}{$_} = 1 foreach grep {defined($_)} @{$entry->[5]};
-        $higher_taxonomy{'class'}{$_} = 1 foreach grep {defined($_)} @{$entry->[6]};
-        $higher_taxonomy{'order'}{$_} = 1 foreach grep {defined($_)} @{$entry->[7]};
-        $higher_taxonomy{'family'}{$_} = 1 foreach grep {defined($_)} @{$entry->[8]};
-        $higher_taxonomy{'genus'}{$_} = 1 foreach grep {defined($_)} @{$entry->[9]};
+        $higher_taxonomy{'kingdom'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[4]};
+        $higher_taxonomy{'phylum'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[5]};
+        $higher_taxonomy{'class'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[6]};
+        $higher_taxonomy{'order'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[7]};
+        $higher_taxonomy{'family'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[8]};
+        $higher_taxonomy{'genus'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[9]};
 
         if(exists $names{$lang}) {
             if($FLAG_CONCAT_ALL) {
@@ -214,7 +214,7 @@ foreach my $row (@$scientific_names) {
 
             $sth = $db->prepare("SELECT cmname, array_agg(source), COUNT(*) AS count_cmname"
                 . " FROM entries"
-                . " WHERE LOWER(scname)=? AND LOWER(lang)=?"
+                . " WHERE LOWER(binomial)=? AND LOWER(lang)=?"
                 . " GROUP BY cmname"
                 . " ORDER BY count_cmname DESC"
                 . " LIMIT 1"
