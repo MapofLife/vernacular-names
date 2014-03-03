@@ -24,6 +24,9 @@ our $FLAG_CONCAT_ALL = 0;
 our $FLAG_PRINT_SOURCE = 1;
     # 0 = don't print sources
     # 1 = print sources
+our $FLAG_PRINT_HIGHER = 1;
+    # 0 = don't print higher taxonomy
+    # 1 = print higher taxonomy
 our @LANGUAGES = (
     'la',
     'en',
@@ -35,19 +38,22 @@ our @LANGUAGES = (
     'zh'
 );
 
+# Start counting.
+my $start_time = time;
+
 # Set up results folder.
 mkdir("results");
 our $OUTPUT_DIR = "results/" . time;
 die "Results already exist!" if -e $OUTPUT_DIR;
 mkdir($OUTPUT_DIR);
 
-open(my $fh_table, ">:encoding(utf8)", "$OUTPUT_DIR/mol_table.csv")
+open(my $fh_table, ">:utf8", "$OUTPUT_DIR/mol_table.csv")
     or die "Could not create '$OUTPUT_DIR/mol_table.csv': $!";
 
-open(my $fh_summary, ">:encoding(utf8)", "$OUTPUT_DIR/mol_summary.csv")
+open(my $fh_summary, ">:utf8", "$OUTPUT_DIR/mol_summary.csv")
     or die "Could not create '$OUTPUT_DIR/mol_summary.csv': $!";
 
-open(my $fh_missing, ">:encoding(utf8)", "$OUTPUT_DIR/mol_missing.csv")
+open(my $fh_missing, ">:utf8", "$OUTPUT_DIR/mol_missing.csv")
     or die "Could not create '$OUTPUT_DIR/mol_missing.csv': $!";
 
 # Set up database connection.
@@ -56,7 +62,8 @@ my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432",
 {
     AutoCommit => 1,
     RaiseError => 1,
-    PrintError => 1
+    PrintError => 1,
+    pg_enable_utf8 => 1
 });
 
 # Retrieve a list of all species containing names in Latin, which should
@@ -72,22 +79,42 @@ my $csv = Text::CSV->new ( { binary => 1 } );
 
 # Write a header for $fh_table
 my @HEADER = (
-    'scientificname', 'tax_class', 'tax_order'
+    'scientificname', 'tax_class', 'tax_order', 'tax_family'
 );
 foreach my $lang (@LANGUAGES) {
     push @HEADER, "$lang\_name";
     push @HEADER, "$lang\_source" if $FLAG_PRINT_SOURCE;
+    if($FLAG_PRINT_HIGHER) {
+        push @HEADER, "$lang\_class";
+        push @HEADER, "$lang\_class_source" if $FLAG_PRINT_SOURCE;
+        push @HEADER, "$lang\_order";
+        push @HEADER, "$lang\_order_source" if $FLAG_PRINT_SOURCE;
+        push @HEADER, "$lang\_family";
+        push @HEADER, "$lang\_family_source" if $FLAG_PRINT_SOURCE;
+    }
 }
 $csv->combine(@HEADER);
 say $fh_table $csv->string;
 
 # Write a header for $fh_missing
-@HEADER = ( 'scientificname', 'tax_class', 'tax_order', 'lang', 'cmname', 'source');
+@HEADER = ( 'scientificname', 'tax_class', 'tax_order', 'tax_family', 'lang', 'cmname', 'source');
 $csv->combine(@HEADER);
 say $fh_missing $csv->string;
 
 # Count groups.
 my %groups;
+
+# Add to groups.
+sub add_to_group($$$) {
+    my ($group_name, $lang, $name_status) = @_;
+
+    unless(exists $groups{$group_name}{$lang}{$name_status}) {
+        $groups{$group_name}{$lang}{$name_status} = 0;
+    }
+
+    $groups{$group_name}{$lang}{$name_status}++;
+}
+
 
 # For each name:
 my $count_scname = 0;
@@ -124,12 +151,12 @@ foreach my $row (@$scientific_names) {
         my $count = $entry->[2];
         my $source_list = $entry->[3];
         
-        $higher_taxonomy{'kingdom'}{$_ // 'null'} = 1 foreach @{$entry->[4]};
-        $higher_taxonomy{'phylum'}{$_ // 'null'} = 1 foreach @{$entry->[5]};
-        $higher_taxonomy{'class'}{$_ // 'null'} = 1 foreach @{$entry->[6]};
-        $higher_taxonomy{'order'}{$_ // 'null'} = 1 foreach @{$entry->[7]};
-        $higher_taxonomy{'family'}{$_ // 'null'} = 1 foreach @{$entry->[8]};
-        $higher_taxonomy{'genus'}{$_ // 'null'} = 1 foreach @{$entry->[9]};
+        $higher_taxonomy{'kingdom'}{$_} = 1 foreach grep {defined($_)} @{$entry->[4]};
+        $higher_taxonomy{'phylum'}{$_} = 1 foreach grep {defined($_)} @{$entry->[5]};
+        $higher_taxonomy{'class'}{$_} = 1 foreach grep {defined($_)} @{$entry->[6]};
+        $higher_taxonomy{'order'}{$_} = 1 foreach grep {defined($_)} @{$entry->[7]};
+        $higher_taxonomy{'family'}{$_} = 1 foreach grep {defined($_)} @{$entry->[8]};
+        $higher_taxonomy{'genus'}{$_} = 1 foreach grep {defined($_)} @{$entry->[9]};
 
         if(exists $names{$lang}) {
             if($FLAG_CONCAT_ALL) {
@@ -151,6 +178,8 @@ foreach my $row (@$scientific_names) {
     push @results, $str_class;
     my $str_order = join('|', sort keys %{$higher_taxonomy{'order'}});
     push @results, $str_order;
+    my $str_family = join('|', sort keys %{$higher_taxonomy{'family'}});
+    push @results, $str_family;
 
     foreach my $lang (@LANGUAGES) {
         my $name_status;
@@ -179,15 +208,53 @@ foreach my $row (@$scientific_names) {
             say $fh_missing $csv->string;
         }
 
-        # Add to groups.
-        sub add_to_group($$$) {
-            my ($group_name, $lang, $name_status) = @_;
+        # Add higher taxonomy
+        if($FLAG_PRINT_HIGHER) {
+            # Remember, we need to concat onto @results: order, class, family
 
-            unless(exists $groups{$group_name}{$lang}{$name_status}) {
-                $groups{$group_name}{$lang}{$name_status} = 0;
-            }
+            $sth = $db->prepare("SELECT cmname, array_agg(source), COUNT(*) AS count_cmname"
+                . " FROM entries"
+                . " WHERE LOWER(scname)=? AND LOWER(lang)=?"
+                . " GROUP BY cmname"
+                . " ORDER BY count_cmname DESC"
+                . " LIMIT 1"
+            );
 
-            $groups{$group_name}{$lang}{$name_status}++;
+            foreach my $rank ("class", "order", "family") {
+                my @names = sort keys %{$higher_taxonomy{$rank}};
+                my @higher_tax_names = ();
+                my %higher_tax_sources = ();
+
+                foreach my $name (@names) {
+                    my $name = lc($name);
+                    next if ($name eq '') or ($name eq 'null');
+
+                    # say "Looking up higher taxonomy: '$name' in $lang.";
+                    $sth->execute($name, $lang);
+                    my $rows = $sth->fetchall_arrayref();
+
+                    unless(exists $rows->[0]) {
+                        # say "\tNot found.";
+                    } else {
+                        my $row = $rows->[0];
+                        push @higher_tax_names, $row->[0];
+                        $higher_tax_sources{$_} = 1 foreach @{$row->[1]};
+                        # say "\tNames: " . $row->[0];
+                        # say "\tSources: " . join(', ', @{$row->[1]});
+                    } 
+
+                }
+
+                my $higher_name = join('|', @names);
+                push @results, join("|", @higher_tax_names);
+                push @results, join("|", sort keys %higher_tax_sources);
+
+                if(0 == scalar @higher_tax_names) {
+                    add_to_group("taxon $higher_name as $rank", $lang, 'missing');
+                } else {
+                    add_to_group("taxon $higher_name as $rank", $lang, 'filled');
+                }
+            } 
         }
 
         add_to_group('all', $lang, $name_status);
@@ -241,3 +308,8 @@ foreach my $group (sort keys %groups) {
 close($fh_table);
 close($fh_summary);
 close($fh_missing);
+
+# Report time.
+my $end_time = time;
+
+say "Completed in " . ($end_time - $start_time) . " seconds.";
