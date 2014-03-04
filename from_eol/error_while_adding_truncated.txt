@@ -1,0 +1,69 @@
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 520.
+Caprimulgus parvula (anthonyi) (Caprimulgus parvula): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 520.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 880.
+Cyperaceae indet.  (Cyperaceae indet.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 880.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1089.
+Fabaceae indet.  (Fabaceae indet.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1089.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1141.
+Formica cf. fossaceaps (Formica cf.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1141.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1142.
+Formica cf. fossaceps (Formica cf.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1142.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1143.
+Formica cf. integra (Formica cf.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1143.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1264.
+Guettardella sp. nov. 'durisylvatica' (Guettardella sp.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1264.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1486.
+Lasius species A (Lasius species): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1486.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1504.
+Leptothorax AF-can ("canadensis") (Leptothorax AF-can): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1504.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1505.
+Leptothorax AF-erg ("ergatogyneus") (Leptothorax AF-erg): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1505.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1595.
+Malvaceae indet.  (Malvaceae indet.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1595.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1660.
+Mico sp. nov. (Mico sp.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1660.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1754.
+Myrmecina species A (Myrmecina species): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1754.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 1813.
+Nylanderia species A (Nylanderia species): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 1813.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 2118.
+Philautus sp. nov. 'amboli forest' (Philautus sp.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 2118.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 2119.
+Philautus sp. nov. 'munnar' (Philautus sp.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 2119.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 2316.
+Pteroglossus azara(war flavirostris) (Pteroglossus azara(war): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 2316.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 2414.
+Rhynchobatus sp. nov. A (Rhynchobatus sp.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 2414.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 2423.
+Rubiaceae indet.  (Rubiaceae indet.): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 2423.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 2691.
+Tapinoma species A (Tapinoma species): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 2691.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 3591.
+unassigned Asteraceae  (unassigned Asteraceae): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 3591.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 3592.
+unassigned Lamiaceae  (unassigned Lamiaceae): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 3592.>>
+Use of uninitialized value $header in concatenation (.) or string at add_after_shortening.pl line 71, <$fh> line 3593.
+unassigned Urticaceae  (unassigned Urticaceae): 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_after_shortening.pl line 49, <$fh> line 3593.>>
