@@ -214,7 +214,7 @@ foreach my $row (@$scientific_names) {
 
             $sth = $db->prepare("SELECT cmname, array_agg(source), COUNT(*) AS count_cmname"
                 . " FROM entries"
-                . " WHERE LOWER(binomial)=? AND LOWER(lang)=?"
+                . " WHERE LOWER(scname)=? AND LOWER(lang)=?"
                 . " GROUP BY cmname"
                 . " ORDER BY count_cmname DESC"
                 . " LIMIT 1"
