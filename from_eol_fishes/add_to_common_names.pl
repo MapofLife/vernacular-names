@@ -12,7 +12,7 @@ use DBD::Pg;
 use JSON;
 
 # If = 1: no writes to database, only write to STDOUT.
-our $FLAG_DEBUG_ONLY = 1;
+our $FLAG_DEBUG_ONLY = 0;
 
 my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432", 
     'vaidyagi', '', 
@@ -73,6 +73,7 @@ while(my $row = $csv->getline_hr($fh)) {
     }
 
     # Try to parse the JSON.
+    if($json ne '') {
     try {
         my $eol_results = decode_json($json);
 
@@ -102,6 +103,7 @@ while(my $row = $csv->getline_hr($fh)) {
         my $header = (split "\n", $json)[0];
         say STDERR "$canonicalName ($tax_order|$tax_class): $header\n\t<<$_>>";
     };
+    }
 
 }
 
