@@ -69,7 +69,7 @@ my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432",
 # Retrieve a list of all species containing names in Latin, which should
 # only be the index of names which exist in Map of Life.
 my $languages = join(', ', map { "'$_'" } @LANGUAGES);
-my $sth = $db->prepare("SELECT binomial FROM entries WHERE LOWER(lang) = 'la' AND source = 'EOL API calls week of February 9 to 15, 2014' GROUP BY binomial");
+my $sth = $db->prepare("SELECT binomial FROM entries WHERE LOWER(lang) = 'la' AND (source = 'EOL API calls week of February 9 to 15, 2014' OR source = 'EOL API calls, March 29 to 30, 2014') GROUP BY binomial");
 $sth->execute;
 my $scientific_names = $sth->fetchall_arrayref([0]);
 
