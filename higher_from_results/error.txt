@@ -1,0 +1,7 @@
+column names: higher_taxa_name, eol_match_json, eol_best_match_id, eol_common_and_synonyms
+Use of uninitialized value $header in concatenation (.) or string at add_to_common_names.pl line 86, <$fh> line 70.
+elassomatiformes: 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_to_common_names.pl line 61, <$fh> line 70.>>
+Use of uninitialized value $header in concatenation (.) or string at add_to_common_names.pl line 86, <$fh> line 406.
+elassomatiformes: 
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "(end of string)") at add_to_common_names.pl line 61, <$fh> line 406.>>
