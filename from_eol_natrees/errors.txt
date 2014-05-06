@@ -1,0 +1,29 @@
+column names: latin, eol_match_json, eol_best_match_id, eol_synonyms_and_vern, eol_taxon_concept_id, eol_first_tc_id, eol_taxon_hierarchy
+Use of uninitialized value $tax_order in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 198.
+Use of uninitialized value $tax_class in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 198.
+Carya myristicaeformis (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 78, <$fh> line 198.>>
+Use of uninitialized value $tax_order in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 325.
+Use of uninitialized value $tax_class in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 325.
+Cereus robinii (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 78, <$fh> line 325.>>
+Use of uninitialized value $tax_order in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 629.
+Use of uninitialized value $tax_class in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 629.
+Nemopanthus collinus (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 78, <$fh> line 629.>>
+Use of uninitialized value $tax_order in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 915.
+Use of uninitialized value $tax_class in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 915.
+Rapanea punctata (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 78, <$fh> line 915.>>
+Use of uninitialized value $tax_order in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 1013.
+Use of uninitialized value $tax_class in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 1013.
+Rhamnus betulaefolia (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 78, <$fh> line 1013.>>
+Use of uninitialized value $tax_order in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 1172.
+Use of uninitialized value $tax_class in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 1172.
+Sapium biloculare (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 78, <$fh> line 1172.>>
+Use of uninitialized value $tax_order in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 1327.
+Use of uninitialized value $tax_class in concatenation (.) or string at add_to_common_names.pl line 127, <$fh> line 1327.
+Vauquelinia pauciflora (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 78, <$fh> line 1327.>>
