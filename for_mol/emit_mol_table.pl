@@ -69,7 +69,7 @@ my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432",
 # Retrieve a list of all species containing names in Latin, which should
 # only be the index of names which exist in Map of Life.
 my $languages = join(', ', map { "'$_'" } @LANGUAGES);
-my $sth = $db->prepare("SELECT binomial FROM entries WHERE LOWER(lang) = 'la' AND (source = 'EOL API calls week of February 9 to 15, 2014' OR source = 'EOL API calls, March 29 to 30, 2014') GROUP BY binomial");
+my $sth = $db->prepare("SELECT binomial FROM entries WHERE LOWER(lang) = 'la' AND (source = 'EOL API calls week of February 9 to 15, 2014' OR source = 'EOL API calls, March 29 to 30, 2014' OR source = 'EOL API calls, May 2, 2014: new_world_palms' OR source = 'EOL API calls, May 2, 2014: na_trees') GROUP BY binomial");
 $sth->execute;
 my $scientific_names = $sth->fetchall_arrayref([0]);
 
@@ -185,7 +185,7 @@ foreach my $row (@$scientific_names) {
         my $name_status;
 
         if(exists $names{$lang}) {
-            push @results, $names{$lang};
+            push @results, ucfirst $names{$lang};
             push @results, join('|', sort keys $sources{$lang})
                 if $FLAG_PRINT_SOURCE;
 
@@ -237,7 +237,7 @@ foreach my $row (@$scientific_names) {
                         # say "\tNot found.";
                     } else {
                         my $row = $rows->[0];
-                        push @higher_tax_names, $row->[0];
+                        push @higher_tax_names, ucfirst $row->[0];
                         $higher_tax_sources{$_} = 1 foreach @{$row->[1]};
                         # say "\tNames: " . $row->[0];
                         # say "\tSources: " . join(', ', @{$row->[1]});
