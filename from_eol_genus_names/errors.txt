@@ -1,0 +1,171 @@
+column names: genus, eol_match_json, eol_best_match_id, eol_synonyms_and_vern, tax_kingdom, tax_phylum, tax_class, tax_order, tax_family, tax_genus
+Mastichodendron (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 215.>>
+Mopsitta (psittaciformes|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 333.>>
+Chamaethlypis (passeriformes|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 404.>>
+Protepicyon (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 584.>>
+Hulsanpes (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1006.>>
+Paratomarctus (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1130.>>
+Armintomys (rodentia|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1307.>>
+Rhizocyon (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1380.>>
+Gandakasia (cetacea|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1503.>>
+Chettusia (charadriiformes|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1568.>>
+Prohesperocyon (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1625.>>
+Attockicetus (cetacea|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1714.>>
+Ololygon (anura|amphibia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1816.>>
+Dictyocarpum (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 1907.>>
+Protopteryx (|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 2213.>>
+Palaeoamasia (|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 2324.>>
+Sciadeops (siluriformes|actinopterygii): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 2708.>>
+Rhiodenticulatus (testudines|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 2796.>>
+Maelestes (|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 2850.>>
+Platytroctegen (osmeriformes|actinopterygii): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 2954.>>
+Oromycter (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 3113.>>
+Tsaganomys (rodentia|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 3214.>>
+Migmacastor (rodentia|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 3877.>>
+Crysophila (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 4130.>>
+Cardiodon (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 4254.>>
+Carpocyon (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 4846.>>
+Rhamphinion (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 4944.>>
+Emausaurus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 5041.>>
+Hypsamasia (|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 5157.>>
+Parachirus (pleuronectiformes|actinopterygii): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 5259.>>
+Bharattherium (|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 5406.>>
+Comodactylus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 5463.>>
+Glaucodon (dasyuromorphia|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 5513.>>
+Microtomarctus (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 5564.>>
+Concornis (|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 5719.>>
+Pezosiren (sirenia|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 6005.>>
+Tugulusaurus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 6058.>>
+Apsaravis (|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 6170.>>
+Socognathus (squamata|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 6343.>>
+Xiaosaurus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 6573.>>
+Coplothrinax (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 6786.>>
+Tastavinsaurus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 6945.>>
+Synoicus (galliformes|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 7070.>>
+Gryponyx (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 7479.>>
+Caedocyon (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 7724.>>
+Parika (tetraodontiformes|actinopterygii): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 7868.>>
+Coelostegus (testudines|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 7933.>>
+Kepodactylus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 8260.>>
+Predicrostonyx (rodentia|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 8401.>>
+Comonecturoides (caudata|amphibia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 8514.>>
+Rhadinella (squamata|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 8567.>>
+Kogiopsis (cetacea|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 8656.>>
+Lewisuchus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 9160.>>
+Macrochelodina (testudines|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 9434.>>
+Raphictis (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 9497.>>
+Piksi (|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 9668.>>
+Compsemys (testudines|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 9746.>>
+Philotrox (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 9864.>>
+Erythrothlypis (passeriformes|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 10017.>>
+Zarhynchus (passeriformes|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 10111.>>
+Sunkahetanka (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 10452.>>
+Planetetherium (primates|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 10596.>>
+Vanderhoofius (|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 10847.>>
+Brouffia (testudines|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 10930.>>
+Agnosphitys (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 11004.>>
+Nanichthys (beloniformes|actinopterygii): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 11114.>>
+Pseudolagosuchus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 11215.>>
+Laopteryx (|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 11351.>>
+Hypospathe (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 11495.>>
+Limenavis (|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 11738.>>
+Shomronella (anura|amphibia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 11849.>>
+Cornwallius (|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 11904.>>
+Rupelramphastoides (piciformes|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 12026.>>
+Neotherium (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 12156.>>
+Himalayacetus (cetacea|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 12281.>>
+Antifer (artiodactyla|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 12343.>>
+Yixianosaurus (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 12670.>>
+Gastrococcus (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 12973.>>
+Ashoroa (|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 13046.>>
+Torotix (ciconiiformes|aves): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 13159.>>
+Polyandrococcus (|): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 13243.>>
+Saurorictus (testudines|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 13354.>>
+Planicoxa (|reptilia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 13565.>>
+Thoraciliacus (anura|amphibia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 13815.>>
+Euoplocyon (carnivora|mammalia): HTTP error 404 : Not Found | <!DOCTYPE html>
+	<<malformed JSON string, neither array, object, number, string or atom, at character offset 0 (before "HTTP error 404 : Not...") at add_to_common_names.pl line 69, <$fh> line 14000.>>

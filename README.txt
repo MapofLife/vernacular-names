@@ -16,3 +16,9 @@ To blank family, order and class names which ought to be blank
  - UPDATE entries SET tax_class = NULL WHERE tax_class = '';
  - UPDATE entries SET tax_order = NULL WHERE tax_order = '';
  - UPDATE entries SET tax_family = NULL WHERE tax_family = '';
+
+To fill in genera, you can use the following SQL, but it's probably a bad idea, as it means tax_genus comes from scname NOT from the source:
+ - UPDATE entries SET tax_genus = split_part(binomial, ' ', 1) WHERE binomial != 0::text AND tax_genus IS NULL;
+
+If you want to do that, there are exactly 41 rows you need to fix:
+ - SELECT DISTINCT tax_genus, split_part(binomial, ' ', 1) AS tax_genus_implied FROM entries WHERE tax_genus IS NOT NULL AND lower(tax_genus) != lower(split_part(binomial, ' ', 1));
