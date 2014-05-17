@@ -53,6 +53,9 @@ open(my $fh_table, ">:utf8", "$OUTPUT_DIR/mol_table.csv")
 open(my $fh_summary, ">:utf8", "$OUTPUT_DIR/mol_summary.csv")
     or die "Could not create '$OUTPUT_DIR/mol_summary.csv': $!";
 
+open(my $fh_genera, ">:utf8", "$OUTPUT_DIR/mol_genera.csv")
+    or die "Could not create '$OUTPUT_DIR/mol_genera.csv': $!";
+
 open(my $fh_missing, ">:utf8", "$OUTPUT_DIR/mol_missing.csv")
     or die "Could not create '$OUTPUT_DIR/mol_missing.csv': $!";
 
@@ -285,6 +288,7 @@ foreach my $lang (@LANGUAGES) {
 }
 $csv->combine(@HEADER);
 say $fh_summary $csv->string;
+say $fh_genera $csv->string;
 
 foreach my $group (sort keys %groups) {
     my @results = ($group);
@@ -313,11 +317,16 @@ foreach my $group (sort keys %groups) {
     }
 
     $csv->combine(@results);
-    say $fh_summary $csv->string;
+    if($group =~ /as genus$/) {
+        say $fh_genera $csv->string;
+    } else {
+        say $fh_summary $csv->string;
+    }
 }
 
 close($fh_table);
 close($fh_summary);
+close($fh_genera);
 close($fh_missing);
 
 # Report time.
