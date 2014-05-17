@@ -2,6 +2,9 @@ CREATE TABLE IF NOT EXISTS entries (
 	id SERIAL PRIMARY KEY,		-- primary key 
 	scname TEXT NOT NULL,		-- scientific name (canonical name)
 	binomial TEXT NOT NULL, 	-- Binomial name (scname with genus and species)
+	genus TEXT,			-- If a binomial name, set 'genus' here.
+					-- tax_genus is from higher taxonomy information,
+					-- while genus is ONLY derived from scname.
 	cmname TEXT NOT NULL,		-- common name
 	lang TEXT NOT NULL,		-- IETF language tag (e.g. “en”, “en-uk”, “nan-Hant-TW”)
 	source TEXT NOT NULL,		-- A short-title description of the source, e.g. “GBIF Nub 2013-01-12”, “Catalogue of Life Annual Checklist 2012”, etc.

@@ -91,6 +91,8 @@ foreach my $lang (@LANGUAGES) {
         push @HEADER, "$lang\_order_source" if $FLAG_PRINT_SOURCE;
         push @HEADER, "$lang\_family";
         push @HEADER, "$lang\_family_source" if $FLAG_PRINT_SOURCE;
+        push @HEADER, "$lang\_genus";
+        push @HEADER, "$lang\_genus_source" if $FLAG_PRINT_SOURCE;
     }
 }
 $csv->combine(@HEADER);
@@ -130,7 +132,8 @@ foreach my $row (@$scientific_names) {
         . " array_agg(tax_class),"
         . " array_agg(tax_order),"
         . " array_agg(tax_family),"
-        . " array_agg(tax_genus)"
+        . " array_agg(tax_genus),"
+        . " array_agg(genus)"
         . " FROM entries"
         . " WHERE binomial=? AND LOWER(lang) IN ($languages) AND source NOT LIKE 'GBIF%'"
         . " GROUP BY cmname, lang_lower"
@@ -156,7 +159,8 @@ foreach my $row (@$scientific_names) {
         $higher_taxonomy{'class'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[6]};
         $higher_taxonomy{'order'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[7]};
         $higher_taxonomy{'family'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[8]};
-        $higher_taxonomy{'genus'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[9]};
+        $higher_taxonomy{'tax_genus'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[9]};
+        $higher_taxonomy{'genus'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[10]};
 
         if(exists $names{$lang}) {
             if($FLAG_CONCAT_ALL) {
@@ -209,6 +213,7 @@ foreach my $row (@$scientific_names) {
         }
 
         # Add higher taxonomy
+        my $flag_has_genus = 0;
         if($FLAG_PRINT_HIGHER) {
             # Remember, we need to concat onto @results: order, class, family
 
@@ -220,7 +225,7 @@ foreach my $row (@$scientific_names) {
                 . " LIMIT 1"
             );
 
-            foreach my $rank ("class", "order", "family") {
+            foreach my $rank ("class", "order", "family", 'genus') {
                 my @names = sort keys %{$higher_taxonomy{$rank}};
                 my @higher_tax_names = ();
                 my %higher_tax_sources = ();
@@ -236,6 +241,8 @@ foreach my $row (@$scientific_names) {
                     unless(exists $rows->[0]) {
                         # say "\tNot found.";
                     } else {
+                        $flag_has_genus = 1 if $rank eq 'genus';
+
                         my $row = $rows->[0];
                         push @higher_tax_names, ucfirst $row->[0];
                         $higher_tax_sources{$_} = 1 foreach @{$row->[1]};
@@ -262,6 +269,10 @@ foreach my $row (@$scientific_names) {
             unless $str_class eq '';
         add_to_group("order $str_order", $lang, $name_status) 
             unless $str_order eq '';
+
+        add_to_group("all at genus level", $lang, $flag_has_genus ? 'filled' : 'missing');
+        add_to_group("class $str_class at genus level", $lang, $flag_has_genus ? 'filled' : 'missing')
+            unless $str_class eq '';
     }
     $csv->combine(@results);
     say $fh_table $csv->string;
