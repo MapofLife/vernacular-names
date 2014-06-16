@@ -33,7 +33,6 @@ our @LANGUAGES = (
     'fr',
     'de',
     'es',
-    'hi',
     'pt',
     'zh'
 );
@@ -208,6 +207,7 @@ foreach my $row (@$scientific_names) {
                 $scname,
                 $str_class,
                 $str_order,
+                $str_family,
                 $lang,
                 "",
                 ""
