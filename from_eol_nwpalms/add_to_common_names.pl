@@ -54,13 +54,15 @@ while(my $row = $csv->getline_hr($fh)) {
 
     # Some standard ones.
     my $url = "http://eol.org/pages/$eol_best_match_id/names/common_names";
-    my $source = "EOL API calls, May 2, 2014: new_world_palms";
+    my $source = "EOL API calls, May 2, 2014: new_world_palms (updated 2014-June-18)";
     my $source_url = "http://eol.org/api/";
     my $tax_order;
     my $tax_class;
 
     # Add the name into the database using the language 'la'. We need to do
     # this, since none of these names are in the current, tetrapod-only db.
+    # We will do this again later to stuff in some higher taxonomy, but this
+    # will add the name whether there is higher taxonomy to match or not.
     if($FLAG_DEBUG_ONLY) {
         say STDERR "\n\n$row_count.\n\nAdding la name: $canonicalName from $source_url";
     } else {
@@ -104,6 +106,18 @@ while(my $row = $csv->getline_hr($fh)) {
         my $tax_family = $higher_taxonomy{'family'};
         my $tax_genus = $higher_taxonomy{'genus'};
 
+        if($FLAG_DEBUG_ONLY) {
+            say STDERR "\n\n$row_count.\n\nAdding la name: $canonicalName from $source_url";
+        } else {
+            $db->do("INSERT INTO entries " .
+                "(scname, cmname, lang, source, url, source_url, tax_kingdom, tax_phylum, tax_class, tax_order, tax_family, tax_genus) " .
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                {}, 
+                $canonicalName, $canonicalName, 'la', $source, $url, $source_url,
+                $tax_kingdom, $tax_phylum, $tax_class, $tax_order, $tax_family, $tax_genus
+            );
+        }
+
         my $commonNames = $eol_results->{'vernacularNames'};
 
         foreach my $commonName (@$commonNames) {
@@ -128,6 +142,10 @@ while(my $row = $csv->getline_hr($fh)) {
         chomp;
 
         my $header = (split "\n", $json)[0];
+
+        $tax_order ||= "<null>";
+        $tax_class ||= "<null>";
+
         say STDERR "$canonicalName ($tax_order|$tax_class): $header\n\t<<$_>>";
     };
     }
