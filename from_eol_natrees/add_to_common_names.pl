@@ -54,7 +54,7 @@ while(my $row = $csv->getline_hr($fh)) {
 
     # Some standard ones.
     my $url = "http://eol.org/pages/$eol_best_match_id/names/common_names";
-    my $source = "EOL API calls, May 2, 2014: na_trees";
+    my $source = "EOL API calls, May 2, 2014: na_trees (updated 2014-June-18)";
     my $source_url = "http://eol.org/api/";
     my $tax_order;
     my $tax_class;
@@ -100,6 +100,19 @@ while(my $row = $csv->getline_hr($fh)) {
         my $tax_family = $higher_taxonomy{'family'};
         my $tax_genus = $higher_taxonomy{'genus'};
 
+        # Add higher taxonomy to the database, even if there aren't any common names.
+        if($FLAG_DEBUG_ONLY) {
+            say STDERR "  Adding 'la' to $canonicalName from $source_url with higher taxonomy";
+        } else {
+            $db->do("INSERT INTO entries " .
+                "(scname, cmname, lang, source, url, source_url, tax_kingdom, tax_phylum, tax_class, tax_order, tax_family, tax_genus) " .
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                {}, 
+                $canonicalName, $canonicalName, 'la', $source, $url, $source_url,
+                $tax_kingdom, $tax_phylum, $tax_class, $tax_order, $tax_family, $tax_genus
+            );
+        }
+
         my $commonNames = $eol_results->{'vernacularNames'};
 
         foreach my $commonName (@$commonNames) {
@@ -124,6 +137,10 @@ while(my $row = $csv->getline_hr($fh)) {
         chomp;
 
         my $header = (split "\n", $json)[0];
+    
+        $tax_order ||= "<null>";
+        $tax_class ||= "<null>";
+
         say STDERR "$canonicalName ($tax_order|$tax_class): $header\n\t<<$_>>";
     };
     }
