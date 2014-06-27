@@ -1,0 +1,23 @@
+1. Used Ruby gem 'dbf' to convert dbf to csv.
+2. Loaded CSVs into OpenRefine.
+3. HTML-decoded all common names; any with '&' remaining (usually using obscure codes) deleted (~350 rows)
+4. Deleted 115 "unknown" names
+5. Deleted every row from a language with fewer than 15 rows: 435 rows
+
+ -> result: 63,193 rows
+
+6. Species links to genus links to family, which is as high as it goes, so I'm just going to ignore this.
+7. I'm going to create entries from both the scname and acname (accepted name) for each common name.
+8. Uploaded to the database.
+
+ -> source: ARS GRIN taxonomy download on June 26, 2014
+ -> URL: http://www.ars-grin.gov/cgi-bin/npgs/html/taxon.pl?$grin_taxon_id
+
+9. Updated genus names:
+	UPDATE entries SET genus = split_part(scname, ' ', 1) WHERE 
+	genus IS NULL 
+	AND split_part(scname, ' ', 2) != ''
+	AND source = 'ARS GRIN taxonomy download on June 26, 2014';
+
+10. Set up binomial:
+	UPDATE entries SET binomial = split_part(scname, ' ', 1) || ' ' || split_part(scname, ' ', 2) WHERE source='ARS GRIN taxonomy download on June 26, 2014';
