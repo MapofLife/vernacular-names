@@ -1,0 +1,9 @@
+1. Download the following datasets from CartoDB, as mentioned by name in https://github.com/MapofLife/mobile-api/blob/020cf5f296b55cd49e45e29651030386cedf13a2/list_handler.py:
+	- iucn_birds: SELECT DISTINCT binomial FROM iucn_birds
+	- iucn_mammals: SELECT DISTINCT binomial FROM iucn_mammals
+	- iucn_amphibians: SELECT DISTINCT binomial FROM iucn_amphibians
+	- iucn_reptiles: SELECT DISTINCT binomial FROM iucn_reptiles
+	- na_fish: SELECT DISTINCT latin, family FROM na_fish
+	- na_trees: SELECT DISTINCT latin FROM na_trees
+
+2. Combined them all into one giant CSV file.
