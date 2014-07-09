@@ -1,0 +1,299 @@
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/6061725/hierarchy_entries/50799580/overview',
+          'parentNameUsageID' => 0,
+          'taxonConceptID' => 6061725,
+          'taxonID' => 50799580,
+          'scientificName' => 'Cellular organisms',
+          'sourceIdentifier' => '131567'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/2910700/hierarchy_entries/50955056/overview',
+          'parentNameUsageID' => 50806972,
+          'taxonConceptID' => 2910700,
+          'taxonID' => 50955056,
+          'scientificName' => 'Opisthokonta',
+          'sourceIdentifier' => '33154'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/10380067/hierarchy_entries/51048136/overview',
+          'parentNameUsageID' => 51046128,
+          'taxonConceptID' => 10380067,
+          'taxonID' => 51048136,
+          'scientificName' => 'Eumetazoa',
+          'sourceIdentifier' => '6072'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/3014411/hierarchy_entries/51053723/overview',
+          'parentNameUsageID' => 51048136,
+          'taxonConceptID' => 3014411,
+          'taxonID' => 51053723,
+          'scientificName' => 'Bilateria',
+          'sourceIdentifier' => '33213'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/8814528/hierarchy_entries/51314530/overview',
+          'parentNameUsageID' => 51053723,
+          'taxonConceptID' => 8814528,
+          'taxonID' => 51314530,
+          'scientificName' => 'Deuterostomia',
+          'sourceIdentifier' => '33511'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/2774383/hierarchy_entries/51317352/overview',
+          'parentNameUsageID' => 51317351,
+          'taxonConceptID' => 2774383,
+          'taxonID' => 51317352,
+          'scientificName' => 'Vertebrata',
+          'sourceIdentifier' => '7742'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/4656087/hierarchy_entries/51318819/overview',
+          'parentNameUsageID' => 51317353,
+          'taxonConceptID' => 4656087,
+          'taxonID' => 51318819,
+          'scientificName' => 'Teleostomi',
+          'sourceIdentifier' => '117570'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/10459961/hierarchy_entries/51318820/overview',
+          'parentNameUsageID' => 51318819,
+          'taxonConceptID' => 10459961,
+          'taxonID' => 51318820,
+          'scientificName' => 'Euteleostomi',
+          'sourceIdentifier' => '117571'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/8909/hierarchy_entries/51344558/overview',
+          'parentNameUsageID' => 51318820,
+          'taxonConceptID' => 8909,
+          'taxonID' => 51344558,
+          'scientificName' => 'Sarcopterygii',
+          'sourceIdentifier' => '8287'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/40072735/hierarchy_entries/57416729/overview',
+          'parentNameUsageID' => 51344558,
+          'taxonConceptID' => 40072735,
+          'taxonID' => 57416729,
+          'scientificName' => 'Dipnotetrapodomorpha',
+          'sourceIdentifier' => '1338369'
+        };
+
+Could not parse ancestor while processing Cacosternum kinangopensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/4712200/hierarchy_entries/57416756/overview',
+          'parentNameUsageID' => 57416729,
+          'taxonConceptID' => 4712200,
+          'taxonID' => 57416756,
+          'scientificName' => 'Tetrapoda',
+          'sourceIdentifier' => '32523'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/6061725/hierarchy_entries/50799580/overview',
+          'parentNameUsageID' => 0,
+          'taxonConceptID' => 6061725,
+          'taxonID' => 50799580,
+          'scientificName' => 'Cellular organisms',
+          'sourceIdentifier' => '131567'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/2910700/hierarchy_entries/50955056/overview',
+          'parentNameUsageID' => 50806972,
+          'taxonConceptID' => 2910700,
+          'taxonID' => 50955056,
+          'scientificName' => 'Opisthokonta',
+          'sourceIdentifier' => '33154'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/10380067/hierarchy_entries/51048136/overview',
+          'parentNameUsageID' => 51046128,
+          'taxonConceptID' => 10380067,
+          'taxonID' => 51048136,
+          'scientificName' => 'Eumetazoa',
+          'sourceIdentifier' => '6072'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/3014411/hierarchy_entries/51053723/overview',
+          'parentNameUsageID' => 51048136,
+          'taxonConceptID' => 3014411,
+          'taxonID' => 51053723,
+          'scientificName' => 'Bilateria',
+          'sourceIdentifier' => '33213'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/8814528/hierarchy_entries/51314530/overview',
+          'parentNameUsageID' => 51053723,
+          'taxonConceptID' => 8814528,
+          'taxonID' => 51314530,
+          'scientificName' => 'Deuterostomia',
+          'sourceIdentifier' => '33511'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/2774383/hierarchy_entries/51317352/overview',
+          'parentNameUsageID' => 51317351,
+          'taxonConceptID' => 2774383,
+          'taxonID' => 51317352,
+          'scientificName' => 'Vertebrata',
+          'sourceIdentifier' => '7742'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/4656087/hierarchy_entries/51318819/overview',
+          'parentNameUsageID' => 51317353,
+          'taxonConceptID' => 4656087,
+          'taxonID' => 51318819,
+          'scientificName' => 'Teleostomi',
+          'sourceIdentifier' => '117570'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/10459961/hierarchy_entries/51318820/overview',
+          'parentNameUsageID' => 51318819,
+          'taxonConceptID' => 10459961,
+          'taxonID' => 51318820,
+          'scientificName' => 'Euteleostomi',
+          'sourceIdentifier' => '117571'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/8909/hierarchy_entries/51344558/overview',
+          'parentNameUsageID' => 51318820,
+          'taxonConceptID' => 8909,
+          'taxonID' => 51344558,
+          'scientificName' => 'Sarcopterygii',
+          'sourceIdentifier' => '8287'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/40072735/hierarchy_entries/57416729/overview',
+          'parentNameUsageID' => 51344558,
+          'taxonConceptID' => 40072735,
+          'taxonID' => 57416729,
+          'scientificName' => 'Dipnotetrapodomorpha',
+          'sourceIdentifier' => '1338369'
+        };
+
+Could not parse ancestor while processing Dendrophryniscus krausae: $VAR1 = {
+          'source' => 'http://eol.org/pages/4712200/hierarchy_entries/57416756/overview',
+          'parentNameUsageID' => 57416729,
+          'taxonConceptID' => 4712200,
+          'taxonID' => 57416756,
+          'scientificName' => 'Tetrapoda',
+          'sourceIdentifier' => '32523'
+        };
+
+Could not parse taxon hierarchy: <<>> at add_to_common_names.pl line 98, <$fh> line 3266.
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/6061725/hierarchy_entries/50799580/overview',
+          'parentNameUsageID' => 0,
+          'taxonConceptID' => 6061725,
+          'taxonID' => 50799580,
+          'scientificName' => 'Cellular organisms',
+          'sourceIdentifier' => '131567'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/2910700/hierarchy_entries/50955056/overview',
+          'parentNameUsageID' => 50806972,
+          'taxonConceptID' => 2910700,
+          'taxonID' => 50955056,
+          'scientificName' => 'Opisthokonta',
+          'sourceIdentifier' => '33154'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/10380067/hierarchy_entries/51048136/overview',
+          'parentNameUsageID' => 51046128,
+          'taxonConceptID' => 10380067,
+          'taxonID' => 51048136,
+          'scientificName' => 'Eumetazoa',
+          'sourceIdentifier' => '6072'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/3014411/hierarchy_entries/51053723/overview',
+          'parentNameUsageID' => 51048136,
+          'taxonConceptID' => 3014411,
+          'taxonID' => 51053723,
+          'scientificName' => 'Bilateria',
+          'sourceIdentifier' => '33213'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/8814528/hierarchy_entries/51314530/overview',
+          'parentNameUsageID' => 51053723,
+          'taxonConceptID' => 8814528,
+          'taxonID' => 51314530,
+          'scientificName' => 'Deuterostomia',
+          'sourceIdentifier' => '33511'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/2774383/hierarchy_entries/51317352/overview',
+          'parentNameUsageID' => 51317351,
+          'taxonConceptID' => 2774383,
+          'taxonID' => 51317352,
+          'scientificName' => 'Vertebrata',
+          'sourceIdentifier' => '7742'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/4656087/hierarchy_entries/51318819/overview',
+          'parentNameUsageID' => 51317353,
+          'taxonConceptID' => 4656087,
+          'taxonID' => 51318819,
+          'scientificName' => 'Teleostomi',
+          'sourceIdentifier' => '117570'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/10459961/hierarchy_entries/51318820/overview',
+          'parentNameUsageID' => 51318819,
+          'taxonConceptID' => 10459961,
+          'taxonID' => 51318820,
+          'scientificName' => 'Euteleostomi',
+          'sourceIdentifier' => '117571'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/8909/hierarchy_entries/51344558/overview',
+          'parentNameUsageID' => 51318820,
+          'taxonConceptID' => 8909,
+          'taxonID' => 51344558,
+          'scientificName' => 'Sarcopterygii',
+          'sourceIdentifier' => '8287'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/40072735/hierarchy_entries/57416729/overview',
+          'parentNameUsageID' => 51344558,
+          'taxonConceptID' => 40072735,
+          'taxonID' => 57416729,
+          'scientificName' => 'Dipnotetrapodomorpha',
+          'sourceIdentifier' => '1338369'
+        };
+
+Could not parse ancestor while processing Raorchestes munnarensis: $VAR1 = {
+          'source' => 'http://eol.org/pages/4712200/hierarchy_entries/57416756/overview',
+          'parentNameUsageID' => 57416729,
+          'taxonConceptID' => 4712200,
+          'taxonID' => 57416756,
+          'scientificName' => 'Tetrapoda',
+          'sourceIdentifier' => '32523'
+        };
+
+Could not parse taxon hierarchy: <<>> at add_to_common_names.pl line 98, <$fh> line 3793.

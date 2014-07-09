@@ -21,3 +21,4 @@
 
 10. Set up binomial:
 	UPDATE entries SET binomial = split_part(scname, ' ', 1) || ' ' || split_part(scname, ' ', 2) WHERE source='ARS GRIN taxonomy download on June 26, 2014';
+
