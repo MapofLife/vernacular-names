@@ -18,7 +18,6 @@ use JSON;
 use Text::CSV;
 
 # Options
-our $FILE_MASTER_LIST = "./data/combined-2014jul2-0604.txt";
 our $FLAG_CONCAT_ALL = 0;
     # 0 = pick the most popular name for each language
     # 1 = concatenate all the names of each language
@@ -69,28 +68,16 @@ my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432",
     pg_enable_utf8 => 1
 });
 
+# Retrieve a list of all species containing names in Latin, which should
+# only be the index of names which exist in Map of Life.
+my $languages = join(', ', map { "'$_'" } @LANGUAGES);
+my $sth = $db->prepare("SELECT binomial FROM entries WHERE LOWER(lang) = 'la' AND (source = 'EOL API calls week of February 9 to 15, 2014' OR source = 'EOL API calls, March 29 to 30, 2014' OR source = 'EOL API calls, May 2, 2014: new_world_palms (updated 2014-June-18)' OR source = 'EOL API calls, May 2, 2014: na_trees (updated 2014-June-18)') GROUP BY binomial");
+$sth->execute;
+my $scientific_names = $sth->fetchall_arrayref([0]);
+
 # Prepare CSV output.
 use Text::CSV;
-my $csv = Text::CSV->new ( { binary => 1, allow_whitespace => 1 } );
-
-# Retrieve a list of all species that need writing out.
-my %master_list;
-open(my $fh_master, "<:utf8", $FILE_MASTER_LIST) or die "Could not open '$FILE_MASTER_LIST': $!";
-$csv->column_names($csv->getline($fh_master));
-while(my $row = $csv->getline_hr($fh_master)) {
-    my $scname = lc $row->{'binomial'};
-    
-    if(exists $master_list{$scname}) {
-        $master_list{$scname} .= ", " . $row->{'source'};
-    } else {
-        $master_list{$scname} = $row->{'source'};
-    }
-}
-close($fh_master);
-my @scientific_names = keys %master_list;
-
-$csv = Text::CSV->new ( { binary => 1 } );
-my $sth;
+my $csv = Text::CSV->new ( { binary => 1 } );
 
 # Write a header for $fh_table
 my @HEADER = (
@@ -131,13 +118,12 @@ sub add_to_group($$$) {
 
     $groups{$group_name}{$lang}{$name_status}++;
 }
-    
-# Set up languages
-my $languages = join(', ', map { "'$_'" } @LANGUAGES); 
+
 
 # For each name:
 my $count_scname = 0;
-foreach my $scname (@scientific_names) {
+foreach my $row (@$scientific_names) {
+    my $scname = $row->[0];
     $count_scname++;
 
     # Extract all entries for this name for the languages we're interested in.
@@ -151,7 +137,7 @@ foreach my $scname (@scientific_names) {
         . " array_agg(tax_genus),"
         . " array_agg(genus)"
         . " FROM entries"
-        . " WHERE LOWER(binomial)=? AND LOWER(lang) IN ($languages) AND source NOT LIKE 'GBIF%'"
+        . " WHERE binomial=? AND LOWER(lang) IN ($languages) AND source NOT LIKE 'GBIF%'"
         . " GROUP BY cmname, lang_lower"
         . " ORDER BY count_cmname DESC, lang_lower DESC"
     );
@@ -280,9 +266,6 @@ foreach my $scname (@scientific_names) {
                 }
             } 
         }
-
-        my $source_name = $master_list{$scname};
-        add_to_group("source $source_name", $lang, $name_status);
 
         add_to_group('all', $lang, $name_status);
         add_to_group("class $str_class", $lang, $name_status) 
