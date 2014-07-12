@@ -18,7 +18,7 @@ use JSON;
 use Text::CSV;
 
 # Options
-our $FILE_MASTER_LIST = "./data/combined-2014jul2-0604.txt";
+our $FILE_MASTER_LIST = "./data/combined-2014jul11.txt";
 our $FLAG_CONCAT_ALL = 0;
     # 0 = pick the most popular name for each language
     # 1 = concatenate all the names of each language
@@ -74,27 +74,31 @@ use Text::CSV;
 my $csv = Text::CSV->new ( { binary => 1, allow_whitespace => 1 } );
 
 # Retrieve a list of all species that need writing out.
-my %master_list;
+my %distinct_scnames;
+my %scname_source;
 open(my $fh_master, "<:utf8", $FILE_MASTER_LIST) or die "Could not open '$FILE_MASTER_LIST': $!";
 $csv->column_names($csv->getline($fh_master));
 while(my $row = $csv->getline_hr($fh_master)) {
-    my $scname = lc $row->{'binomial'};
+    my $scname = $row->{'binomial'};
+
+    $distinct_scnames{$scname} = 1;
     
-    if(exists $master_list{$scname}) {
-        $master_list{$scname} .= ", " . $row->{'source'};
+    if(exists $scname_source{lc $scname}) {
+        $scname_source{lc $scname} .= ", " . $row->{'source'};
     } else {
-        $master_list{$scname} = $row->{'source'};
+        $scname_source{lc $scname} = $row->{'source'};
     }
 }
 close($fh_master);
-my @scientific_names = keys %master_list;
+
+my @scientific_names = keys %distinct_scnames;
 
 $csv = Text::CSV->new ( { binary => 1 } );
 my $sth;
 
 # Write a header for $fh_table
 my @HEADER = (
-    'scientificname', 'tax_class', 'tax_order', 'tax_family'
+    'scientificname', 'mol_source', 'tax_class', 'tax_order', 'tax_family'
 );
 foreach my $lang (@LANGUAGES) {
     push @HEADER, "$lang\_name";
@@ -114,7 +118,7 @@ $csv->combine(@HEADER);
 say $fh_table $csv->string;
 
 # Write a header for $fh_missing
-@HEADER = ( 'scientificname', 'tax_class', 'tax_order', 'tax_family', 'lang', 'cmname', 'source');
+@HEADER = ( 'scientificname', 'mol_source', 'tax_class', 'tax_order', 'tax_family', 'lang', 'cmname', 'source');
 $csv->combine(@HEADER);
 say $fh_missing $csv->string;
 
@@ -156,7 +160,7 @@ foreach my $scname (@scientific_names) {
         . " ORDER BY count_cmname DESC, lang_lower DESC"
     );
 
-    $sth->execute($scname);
+    $sth->execute(lc $scname);
     my $rows = $sth->fetchall_arrayref();
     my %names = ();
     my %sources = ();
@@ -193,7 +197,7 @@ foreach my $scname (@scientific_names) {
         }
     }
 
-    my @results = ($scname);
+    my @results = ($scname, $scname_source{lc $scname});
     my $str_class = join('|', sort keys %{$higher_taxonomy{'class'}});
     push @results, $str_class;
     my $str_order = join('|', sort keys %{$higher_taxonomy{'order'}});
@@ -219,6 +223,7 @@ foreach my $scname (@scientific_names) {
 
             $csv->combine(
                 $scname,
+                $scname_source{lc $scname},
                 $str_class,
                 $str_order,
                 $str_family,
@@ -281,8 +286,8 @@ foreach my $scname (@scientific_names) {
             } 
         }
 
-        my $source_name = $master_list{$scname};
-        add_to_group("source $source_name", $lang, $name_status);
+        my $source_name = $scname_source{lc $scname};
+        add_to_group("Source $source_name", $lang, $name_status);
 
         add_to_group('all', $lang, $name_status);
         add_to_group("class $str_class", $lang, $name_status) 
@@ -291,6 +296,7 @@ foreach my $scname (@scientific_names) {
             unless $str_order eq '';
 
         add_to_group("all at genus level", $lang, $flag_has_genus ? 'filled' : 'missing');
+        add_to_group("Source $source_name at genus level", $lang, $flag_has_genus ? 'filled' : 'missing');
         add_to_group("class $str_class at genus level", $lang, $flag_has_genus ? 'filled' : 'missing')
             unless $str_class eq '';
     }
