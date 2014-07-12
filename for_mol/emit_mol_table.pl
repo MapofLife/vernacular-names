@@ -18,6 +18,7 @@ use JSON;
 use Text::CSV;
 
 # Options
+our $WARN_IF_CMNAME_LONGER_THAN = 50;
 our $FILE_MASTER_LIST = "./data/combined-2014jul11.txt";
 our $FLAG_CONCAT_ALL = 0;
     # 0 = pick the most popular name for each language
@@ -173,7 +174,7 @@ foreach my $scname (@scientific_names) {
         my $lang = $entry->[1];
         my $count = $entry->[2];
         my $source_list = $entry->[3];
-        
+       
         $higher_taxonomy{'kingdom'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[4]};
         $higher_taxonomy{'phylum'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[5]};
         $higher_taxonomy{'class'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[6]};
@@ -195,6 +196,10 @@ foreach my $scname (@scientific_names) {
             $names{$lang} = $cmname;
             $sources{$lang}{$_} = 1 foreach @$source_list;
         }
+        
+        warn "Common name \"$cmname\" for species $scname is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
+            if length($cmname) > $WARN_IF_CMNAME_LONGER_THAN;
+ 
     }
 
     my @results = ($scname, $scname_source{lc $scname});
@@ -269,7 +274,11 @@ foreach my $scname (@scientific_names) {
                         push @higher_tax_names, ucfirst $row->[0];
                         $higher_tax_sources{$_} = 1 foreach @{$row->[1]};
                         # say "\tNames: " . $row->[0];
-                        # say "\tSources: " . join(', ', @{$row->[1]});
+                        # say "\tSources: " . join(', ', @{$row->[1]});  
+
+                        warn "Common name \"$row->[0]\" for higher taxonomy $name is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
+                            if length($row->[0]) > $WARN_IF_CMNAME_LONGER_THAN;
+
                     } 
 
                 }
