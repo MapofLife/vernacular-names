@@ -119,7 +119,7 @@ $csv->combine(@HEADER);
 say $fh_table $csv->string;
 
 # Write a header for $fh_missing
-@HEADER = ( 'scientificname', 'mol_source', 'tax_class', 'tax_order', 'tax_family', 'lang', 'cmname', 'source');
+@HEADER = ( 'dataset', 'scientificName', 'class', 'order', 'family', 'lang', 'vernacularName', 'url', 'source', 'source_url', 'source_priority' );
 $csv->combine(@HEADER);
 say $fh_missing $csv->string;
 
@@ -209,6 +209,8 @@ foreach my $scname (@scientific_names) {
     push @results, $str_order;
     my $str_family = join('|', sort keys %{$higher_taxonomy{'family'}});
     push @results, $str_family;
+    my $str_tax_genus = join('|', sort keys %{$higher_taxonomy{'tax_genus'}});
+    push @results, $str_tax_genus;
 
     foreach my $lang (@LANGUAGES) {
         my $name_status;
@@ -227,14 +229,17 @@ foreach my $scname (@scientific_names) {
             $name_status = 'missing';
 
             $csv->combine(
-                $scname,
                 $scname_source{lc $scname},
+                $scname,
                 $str_class,
                 $str_order,
                 $str_family,
                 $lang,
                 "",
-                ""
+                "",
+                "",
+                "",
+                0
             );
             say $fh_missing $csv->string;
         }
