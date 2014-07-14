@@ -34,6 +34,6 @@ If you want to do that, there are exactly 41 rows you need to fix:
 CUSTOM OPERATIONS:
  - Names manually deleted because they were too long and other alternatives are available:
 	- "marmosets, tamarins, capuchins, and squirrel monkeys"
-	- "
+	- "Lower California Rattlesnake (furvus: Rosario Rattlesnake; cerralvensis: Cerralvo Rattlesnake; enyo: Baja California Rattlesnake)"
  - MOL taxonomy table: I deleted entries with multiple comma-separated names using this:
 	- UPDATE entries SET cmname = trim(both from split_part(cmname, ',', 1)) WHERE cmname LIKE '%,%' AND source = 'Map of Life ''taxonomy'' table as of February 28, 2014'
