@@ -25,6 +25,9 @@ my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432",
     PrintError => 1
 });
 
+# The time at which this script was run.
+my $script_date = localtime;
+
 # Load the configuration file.
 my %google_datasets;
 open(my $fh_config, "<:encoding(utf8)", "data/google_docs.txt")
@@ -51,6 +54,7 @@ mkdir("data/google_docs");
 
 foreach my $dataset_name (keys %google_datasets) {
     my $dataset_id = $google_datasets{$dataset_name};
+    my $dataset_download_date = $script_date;
 
     say STDERR "Processing $dataset_name ($dataset_id).";
 
@@ -91,7 +95,10 @@ foreach my $dataset_name (keys %google_datasets) {
     say STDERR "    - Column names: " . join(", ", $csv->column_names);
 
     my $flag_first_row = 1;
+    my $row_count = 0;
     while(my $row = $csv->getline_hr($fh)) {
+        $row_count++;
+
         # At a minimum, we need scientificName, lang, vernacularName, source
         my %column_names_used;
         foreach my $colname ('scientificName', 'lang', 'vernacularName', 'source') {
@@ -105,6 +112,26 @@ foreach my $dataset_name (keys %google_datasets) {
         my $lang = $row->{'lang'};
         my $source = $row->{'source'};
 
+        if($scname eq "") {
+            say STDERR " - Skipping row $row_count: no scientific name provided.";
+            next;
+        }
+
+        if(($cmname eq "") or ($lang eq "") or ($source eq "")) {
+            my @fieldnames;
+
+            push @fieldnames, "vernacularName" if $cmname eq "";
+            push @fieldnames, "lang" if $lang eq "";
+            push @fieldnames, "source" if $source eq "";
+
+            say STDERR " - Skipping row $scname: required field(s) " . join(", ", @fieldnames) . " missing.";
+            next;
+        }
+
+        # The 'add_from_google_docs.pl' is how we find records we added, so
+        # make sure that stays in!
+        $source .= ", $dataset_name from $dataset_id downloaded on $dataset_download_date (row $row_count) using add_from_google_docs.pl";
+
         # Look for identifiers.
         my $url = undef;
 
@@ -115,7 +142,7 @@ foreach my $dataset_name (keys %google_datasets) {
 
         # Check for source_url and source_priority.
         my $source_url = undef;
-        my $source_priority = undef;
+        my $source_priority = 0;
 
         if(exists $row->{'source_url'}) {
             $source_url = $row->{'source_url'};
@@ -157,6 +184,19 @@ foreach my $dataset_name (keys %google_datasets) {
 
         say STDERR "    - The following columns were ignored: " . join(', ', @ignored_colnames)
             if $flag_first_row;
+
+        # Write the values into the database.
+        if($FLAG_DEBUG_ONLY) {
+            say " - Adding vernacular name $cmname ($lang) to $scname ('$source' at priority $source_priority)";
+
+            say "\t - Source URL: $source_url" if defined $source_url;
+
+            say "\t - Class: $tax_class." if defined $tax_class;
+            say "\t - Order: $tax_order." if defined $tax_order;
+            say "\t - Family: $tax_family." if defined $tax_family;
+        } else {
+            # TODO: fill in database call.
+        }
 
         # No longer the first row.
         $flag_first_row = 0;
