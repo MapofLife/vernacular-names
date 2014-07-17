@@ -7,6 +7,7 @@ create_mol_table.pl - Create a table of common names for Map of Life
 =cut
 
 use v5.010;
+use utf8;
 
 use strict;
 use warnings;
@@ -29,6 +30,12 @@ our $FLAG_PRINT_SOURCE = 1;
 our $FLAG_PRINT_HIGHER = 1;
     # 0 = don't print higher taxonomy
     # 1 = print higher taxonomy
+our $FLAG_GENUS_CMNAME_IF_NO_SPECIES_CMNAME = 1;
+    # 0 = Show missing species common names as blank.
+    # 1 = If a missing species common name has a genus name, use
+    #       that instead.
+    #   Note that if $FLAG_PRINT_HIGHER is 0, genera won't be
+    #   queried and this functionality will not function.
 our @LANGUAGES = (
     'la',
     'en',
@@ -209,12 +216,83 @@ foreach my $scname (@scientific_names) {
     push @results, $str_order;
     my $str_family = join('|', sort keys %{$higher_taxonomy{'family'}});
     push @results, $str_family;
-    my $str_tax_genus = join('|', sort keys %{$higher_taxonomy{'tax_genus'}});
-    push @results, $str_tax_genus;
 
     foreach my $lang (@LANGUAGES) {
         my $name_status;
 
+        # Add higher taxonomy: we do this first, so that we have
+        # a genus common name if $FLAG_GENUS_CMNAME_IF_NO_SPECIES_CMNAME is
+        # turned on.
+        my $flag_has_genus = 0;
+        my $genus_cmname = undef;
+        my $genus_source = undef;
+
+        my @results_higher = ();
+        if($FLAG_PRINT_HIGHER) {
+            # Remember, we need to concat onto @results: order, class, family
+
+            $sth = $db->prepare("SELECT cmname, array_agg(source), COUNT(*) AS count_cmname"
+                . " FROM entries"
+                . " WHERE LOWER(scname)=? AND LOWER(lang)=?"
+                . " GROUP BY cmname"
+                . " ORDER BY count_cmname DESC"
+                . " LIMIT 1"
+            );
+
+            # Note that this is 'genus', the automatically generated genus
+            # component of a binomial name. If you want the genus according
+            # to the source, you want 'tax_genus'.
+            foreach my $rank ("class", "order", "family", 'genus') {
+                my @names = sort keys %{$higher_taxonomy{$rank}};
+                my @higher_tax_names = ();
+                my %higher_tax_sources = ();
+
+                foreach my $name (@names) {
+                    my $name = lc($name);
+                    next if ($name eq '') or ($name eq 'null');
+
+                    # say "Looking up higher taxonomy: '$name' in $lang.";
+                    $sth->execute($name, $lang);
+                    my $rows = $sth->fetchall_arrayref();
+
+                    unless(exists $rows->[0]) {
+                        # say "\tNot found.";
+                    } else {
+                        my $row = $rows->[0];
+                        my $cmname = ucfirst $row->[0];
+
+                        # Only pick up the first genus; ignore the others.
+                        if(!$flag_has_genus && $rank eq 'genus') {
+                            $genus_cmname = $cmname;
+                            $genus_source = join('|', @{$row->[1]});
+                            $flag_has_genus = 1;
+                        }
+
+                        push @higher_tax_names, $cmname;
+                        $higher_tax_sources{$_} = 1 foreach @{$row->[1]};
+                        # say "\tNames: " . $row->[0];
+                        # say "\tSources: " . join(', ', @{$row->[1]});  
+
+                        warn "Common name '$cmname' for higher taxonomy $name is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
+                            if length($cmname) > $WARN_IF_CMNAME_LONGER_THAN;
+
+                    } 
+
+                }
+
+                my $higher_name = join('|', @names);
+                push @results_higher, join("|", @higher_tax_names);
+                push @results_higher, join("|", sort keys %higher_tax_sources);
+
+                if(0 == scalar @higher_tax_names) {
+                    add_to_group("taxon $higher_name as $rank", $lang, 'missing');
+                } else {
+                    add_to_group("taxon $higher_name as $rank", $lang, 'filled');
+                }
+            } 
+        }
+
+        # Check if we have a common name for this species.
         if(exists $names{$lang}) {
             push @results, ucfirst $names{$lang};
             push @results, join('|', sort keys $sources{$lang})
@@ -222,11 +300,22 @@ foreach my $scname (@scientific_names) {
 
             $name_status = 'filled';
         } else {
-            push @results, undef;
-            push @results, undef 
-                if $FLAG_PRINT_SOURCE;
+            if($FLAG_GENUS_CMNAME_IF_NO_SPECIES_CMNAME && $flag_has_genus) {
+                push @results, "${genus_cmname}";
+                push @results, $genus_source
+                    if $FLAG_PRINT_SOURCE;
 
-            $name_status = 'missing';
+                $name_status = 'filled_genus';
+            } else {
+                push @results, undef;
+                push @results, undef 
+                    if $FLAG_PRINT_SOURCE;
+
+                $name_status = 'missing';
+            }
+
+            # Whether or not genus was matched, this is still a 'missing'
+            # match (and should eventually be filled in).
 
             $csv->combine(
                 $scname_source{lc $scname},
@@ -244,62 +333,10 @@ foreach my $scname (@scientific_names) {
             say $fh_missing $csv->string;
         }
 
-        # Add higher taxonomy
-        my $flag_has_genus = 0;
-        if($FLAG_PRINT_HIGHER) {
-            # Remember, we need to concat onto @results: order, class, family
+        # Now add the higher taxonomy back in.
+        push @results, @results_higher;
 
-            $sth = $db->prepare("SELECT cmname, array_agg(source), COUNT(*) AS count_cmname"
-                . " FROM entries"
-                . " WHERE LOWER(scname)=? AND LOWER(lang)=?"
-                . " GROUP BY cmname"
-                . " ORDER BY count_cmname DESC"
-                . " LIMIT 1"
-            );
-
-            foreach my $rank ("class", "order", "family", 'genus') {
-                my @names = sort keys %{$higher_taxonomy{$rank}};
-                my @higher_tax_names = ();
-                my %higher_tax_sources = ();
-
-                foreach my $name (@names) {
-                    my $name = lc($name);
-                    next if ($name eq '') or ($name eq 'null');
-
-                    # say "Looking up higher taxonomy: '$name' in $lang.";
-                    $sth->execute($name, $lang);
-                    my $rows = $sth->fetchall_arrayref();
-
-                    unless(exists $rows->[0]) {
-                        # say "\tNot found.";
-                    } else {
-                        $flag_has_genus = 1 if $rank eq 'genus';
-
-                        my $row = $rows->[0];
-                        push @higher_tax_names, ucfirst $row->[0];
-                        $higher_tax_sources{$_} = 1 foreach @{$row->[1]};
-                        # say "\tNames: " . $row->[0];
-                        # say "\tSources: " . join(', ', @{$row->[1]});  
-
-                        warn "Common name \"$row->[0]\" for higher taxonomy $name is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
-                            if length($row->[0]) > $WARN_IF_CMNAME_LONGER_THAN;
-
-                    } 
-
-                }
-
-                my $higher_name = join('|', @names);
-                push @results, join("|", @higher_tax_names);
-                push @results, join("|", sort keys %higher_tax_sources);
-
-                if(0 == scalar @higher_tax_names) {
-                    add_to_group("taxon $higher_name as $rank", $lang, 'missing');
-                } else {
-                    add_to_group("taxon $higher_name as $rank", $lang, 'filled');
-                }
-            } 
-        }
-
+        # Add to statistics in fh_summary.
         my $source_name = $scname_source{lc $scname};
         add_to_group("Source $source_name", $lang, $name_status);
 
@@ -321,7 +358,7 @@ foreach my $scname (@scientific_names) {
 # Print the group results.
 @HEADER = ('group');
 foreach my $lang (@LANGUAGES) {
-    push @HEADER, ("$lang\_filled", "$lang\_missing", "$lang\_perc_filled");
+    push @HEADER, ("$lang\_filled", "$lang\_filled_genus", "$lang\_missing", "$lang\_perc_filled");
 }
 $csv->combine(@HEADER);
 say $fh_summary $csv->string;
@@ -332,23 +369,29 @@ foreach my $group (sort keys %groups) {
 
     foreach my $lang (@LANGUAGES) {
         my $count_filled;
+        my $count_filled_genus;
         my $count_missing;
         if(exists $groups{$group}{$lang}) {
             $count_filled = $groups{$group}{$lang}{'filled'} // 0;
+            $count_filled_genus = $groups{$group}{$lang}{'filled_genus'} // 0;
             $count_missing = $groups{$group}{$lang}{'missing'} // 0;
+        } else {
+            die "No group found for $group with language $lang.";
         }
 
-        if(0 == $count_filled + $count_missing) {
+        if(0 == $count_filled + $count_filled_genus + $count_missing) {
             push @results, (
                 $count_filled,
+                $count_filled_genus,
                 $count_missing,
                 "NA"
             );
         } else {
             push @results, (
                 $count_filled,
+                $count_filled_genus,
                 $count_missing,
-                sprintf("%.2f%%", (($count_filled)/($count_filled + $count_missing) * 100))
+                sprintf("%.2f%%", (($count_filled + $count_filled_genus)/($count_filled + $count_filled_genus + $count_missing) * 100))
             );
         }
     }
