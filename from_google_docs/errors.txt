@@ -1,0 +1,2 @@
+Global symbol "$field_name" requires explicit package name at add_from_google_docs.pl line 125.
+Execution of add_from_google_docs.pl aborted due to compilation errors.

@@ -15,7 +15,7 @@ use LWP::UserAgent;
 use File::Path;
 
 # If = 1: no writes to database, only write to STDOUT.
-our $FLAG_DEBUG_ONLY = 1;
+our $FLAG_DEBUG_ONLY = 0;
 
 my $db = DBI->connect("dbi:Pg:dbname=common_names;host=127.0.0.1;port=5432", 
     'vaidyagi', '', 
@@ -48,15 +48,35 @@ close($fh_config);
 # Set up browser.
 my $ua = LWP::UserAgent->new;
 
+# Delete all previous entries.
+my $SOURCE_IDENTIFIER = "$0";
+if($FLAG_DEBUG_ONLY) {
+    say " - Would delete previous records for '%$SOURCE_IDENTIFIER' if not in debug mode.";
+} else {
+    try {
+        my $rows = $db->do("DELETE FROM entries WHERE source LIKE ?", {}, "\%$SOURCE_IDENTIFIER");
+        
+        die $db->err unless $rows;
+
+        say " - Deleted $rows rows containing previous records for '%$SOURCE_IDENTIFIER'.";
+    } catch {
+        die "ERROR: Unable to delete previous records for '%$SOURCE_IDENTIFIER': $_";
+    };
+}
+
 # Make a directory to store the downloads.
 rmtree("data/google_docs");
 mkdir("data/google_docs");
 
+# Count.
+my $count_entries = 0;
+
+# Process each dataset.
 foreach my $dataset_name (keys %google_datasets) {
     my $dataset_id = $google_datasets{$dataset_name};
     my $dataset_download_date = $script_date;
 
-    say STDERR "Processing $dataset_name ($dataset_id).";
+    say STDERR " - Processing $dataset_name ($dataset_id).";
 
     # Download file.
     my $response = $ua->get("https://docs.google.com/spreadsheets/d/$dataset_id/export?format=csv");
@@ -113,7 +133,7 @@ foreach my $dataset_name (keys %google_datasets) {
         my $source = $row->{'source'};
 
         if($scname eq "") {
-            say STDERR " - Skipping row $row_count: no scientific name provided.";
+            say STDERR "   - Skipping row $row_count: no scientific name provided.";
             next;
         }
 
@@ -124,13 +144,13 @@ foreach my $dataset_name (keys %google_datasets) {
             push @fieldnames, "lang" if $lang eq "";
             push @fieldnames, "source" if $source eq "";
 
-            say STDERR " - Skipping row $scname: required field(s) " . join(", ", @fieldnames) . " missing.";
+            say STDERR "   - Skipping row $scname: required field(s) " . join(", ", @fieldnames) . " missing.";
             next;
         }
 
         # The 'add_from_google_docs.pl' is how we find records we added, so
         # make sure that stays in!
-        $source .= ", $dataset_name from $dataset_id downloaded on $dataset_download_date (row $row_count) using add_from_google_docs.pl";
+        $source .= ", $dataset_name from $dataset_id downloaded on $dataset_download_date using $SOURCE_IDENTIFIER";
 
         # Look for identifiers.
         my $url = undef;
@@ -155,9 +175,12 @@ foreach my $dataset_name (keys %google_datasets) {
         }
 
         # See if we can also get higher taxonomy.
+        my $tax_kingdom = undef;
+        my $tax_phylum = undef;
         my $tax_class = undef;
         my $tax_order = undef;
         my $tax_family = undef;
+        my $tax_genus = undef;
 
         if(exists $row->{'class'}) {
             $tax_class = $row->{'class'};
@@ -174,6 +197,10 @@ foreach my $dataset_name (keys %google_datasets) {
             $column_names_used{'family'} = 1;
         }
 
+        # Two other fields we calculate later on.
+        my $binomial = undef;
+        my $genus = undef;
+
         # Ignore everything else.
         my @ignored_colnames = ();
         foreach my $colname ($csv->column_names) {
@@ -186,16 +213,37 @@ foreach my $dataset_name (keys %google_datasets) {
             if $flag_first_row;
 
         # Write the values into the database.
+        $count_entries++;
         if($FLAG_DEBUG_ONLY) {
-            say " - Adding vernacular name $cmname ($lang) to $scname ('$source' at priority $source_priority)";
+            say "   - Adding vernacular name $cmname ($lang) to $scname ('$source' at priority $source_priority)";
+
+            say "\t - URL: $url" if defined $url;
 
             say "\t - Source URL: $source_url" if defined $source_url;
 
             say "\t - Class: $tax_class." if defined $tax_class;
             say "\t - Order: $tax_order." if defined $tax_order;
             say "\t - Family: $tax_family." if defined $tax_family;
+
         } else {
-            # TODO: fill in database call.
+            try {
+                $db->do("INSERT INTO entries " .
+                    "(scname, cmname, lang, source, url, source_url, tax_kingdom, tax_phylum, tax_class, tax_order, tax_family, tax_genus, source_priority, genus) " .
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                    {},
+                    $scname, $cmname, $lang, $source, $url, $source_url, $tax_kingdom,
+                    $tax_phylum, $tax_class, $tax_order, $tax_family, $tax_genus,
+                    $source_priority, $genus
+                );
+
+            } catch {
+                warn "ERROR: could not insert record for $cmname ($lang) to $scname ('$source' at priority $source_priority), skipping dataset.";
+
+                # We don't delete previous records, but rerunning this script
+                # should sort all that out.
+
+                next;
+            };
         }
 
         # No longer the first row.
@@ -203,114 +251,23 @@ foreach my $dataset_name (keys %google_datasets) {
     }
 }
 
-exit;
+# Once we're done, try to set up all binomial names and genus names.
+try {
+    # I don't know what 'binomial' does, but emit_mol_table.pl uses it, and I'm
+    # scared.
+    $db->do("UPDATE entries SET binomial = split_part(scname, ' ', 1) || ' ' || split_part(scname, ' ', 2)" .
+        "WHERE binomial = '0' AND split_part(scname, ' ', 2) != '' AND source LIKE ?;",
+        {},
+        "%$SOURCE_IDENTIFIER"
+    );
 
-my $csv = "";
-my $fh = "";
+    $db->do("UPDATE entries SET genus = split_part(scname, ' ', 1) " .
+        "WHERE genus IS NULL AND split_part(scname, ' ', 2) != '' AND source LIKE ?;",
+        {},
+        "%$SOURCE_IDENTIFIER"
+    );
+} catch {
+    die "ERROR: could not finish binomial and genus updates, reason: $_";
+};
 
-my $row_count = 0;
-while(my $row = $csv->getline_hr($fh)) {
-    $row_count++;
-
-    # Fields we're interested in.
-    my $canonicalName = $row->{'genus'};
-    my $eol_best_match_id = $row->{'eol_best_match_id'};
-    my $json = $row->{'eol_common_name_and_synonyms'};
-
-    # Fix JSON.
-    #$json =~ s/^\s*"//g;
-    #$json =~ s/"\s*$//g;
-    #$json =~ s/""/"/g;
-
-    # Some standard ones.
-    my $url = "http://eol.org/pages/$eol_best_match_id/names/common_names";
-    my $source = "EOL API calls, July 12, 2014: genus names without english common names";
-    my $source_url = "http://eol.org/api/";
-    my $tax_order;
-    my $tax_class;
-
-    # Try to parse the JSON.
-    if($json ne '') {
-    try {
-        my $eol_results = decode_json($json);
-
-        # Look up higher taxonomy.
-        my %higher_taxonomy;
-        my $eol_higher = $row->{'eol_higher_taxonomy'};
-
-        try {
-            my $taxonHierarchy = decode_json($eol_higher);
-            my $ancestors = $taxonHierarchy->{'ancestors'};
-
-            foreach my $ancestor (@$ancestors) {
-                if(exists $ancestor->{'taxonRank'} && exists $ancestor->{'scientificName'}) {
-                    $higher_taxonomy{lc $ancestor->{'taxonRank'}} = lc $ancestor->{'scientificName'};
-                } else {
-                    warn "Could not parse ancestor while processing $canonicalName: " . Dumper($ancestor);
-                }
-            }
-
-        } catch {
-            warn "Could not parse taxon hierarchy: <<$eol_higher>>.";
-        };
-
-        # Display higher taxonomy if debugging.
-        say STDERR "  Higher taxonomy: " . Dumper(\%higher_taxonomy)
-            if $FLAG_DEBUG_ONLY;
-
-        # Store some higher taxonomy.
-        my $tax_kingdom = $higher_taxonomy{'kingdom'};
-        my $tax_phylum = $higher_taxonomy{'phylum'};
-        $tax_class = $higher_taxonomy{'class'};
-        $tax_order = $higher_taxonomy{'order'};
-        my $tax_family = $higher_taxonomy{'family'};
-        my $tax_genus = $higher_taxonomy{'genus'};
-
-        if($FLAG_DEBUG_ONLY) {
-            say STDERR "\n\n$row_count.\n\nAdding la name: $canonicalName from $source_url";
-        } else {
-            $db->do("INSERT INTO entries " .
-                "(scname, cmname, lang, source, url, source_url, tax_kingdom, tax_phylum, tax_class, tax_order, tax_family, tax_genus) " .
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                {}, 
-                $canonicalName, $canonicalName, 'la', $source, $url, $source_url,
-                $tax_kingdom, $tax_phylum, $tax_class, $tax_order, $tax_family, $tax_genus
-            );
-        }
-
-        my $commonNames = $eol_results->{'vernacularNames'};
-
-        foreach my $commonName (@$commonNames) {
-            my $cmname = $commonName->{'vernacularName'};
-            my $lang = $commonName->{'language'};
-
-            # Now add them into the database.
-            if($FLAG_DEBUG_ONLY) {
-                say STDERR "  Adding $lang to $canonicalName: $cmname from $source_url";
-            } else {
-                $db->do("INSERT INTO entries " .
-                    "(scname, cmname, lang, source, url, source_url, tax_kingdom, tax_phylum, tax_class, tax_order, tax_family, tax_genus) " .
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                    {}, 
-                    $canonicalName, $cmname, $lang, $source, $url, $source_url,
-                    $tax_kingdom, $tax_phylum, $tax_class, $tax_order, $tax_family, $tax_genus
-                );
-            }
-        }
-    
-    } catch {
-        chomp;
-
-        my $header = (split "\n", $json)[0];
-
-        $tax_order ||= "<null>";
-        $tax_class ||= "<null>";
-
-        say STDERR "$canonicalName ($tax_order|$tax_class): $header\n\t<<$_>>";
-    };
-    }
-
-}
-
-
-close($fh);
+say STDERR "Completed, $count_entries entries added.";
