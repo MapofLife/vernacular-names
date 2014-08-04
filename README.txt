@@ -6,6 +6,7 @@ to manipulate. We’re going to put it all into a single table with
 the following structure.
 
 Languages: en, es, pt, de, fr, zh
+Current cmname count: 1,388,092 (as of August 4, 2014)
 
 For now, I’m using the language ‘la’ to store the definitive list of
 species currently in Map of Life; I’ll delete it once I have a better
@@ -37,3 +38,7 @@ CUSTOM OPERATIONS:
 	- "Lower California Rattlesnake (furvus: Rosario Rattlesnake; cerralvensis: Cerralvo Rattlesnake; enyo: Baja California Rattlesnake)"
  - MOL taxonomy table: I deleted entries with multiple comma-separated names using this:
 	- UPDATE entries SET cmname = trim(both from split_part(cmname, ',', 1)) WHERE cmname LIKE '%,%' AND source = 'Map of Life ''taxonomy'' table as of February 28, 2014'
+
+HIGHER TAXONOMY TABLE
+ - cat mol_table.csv | csv -f 3-5,18-23,29-33,39-43,49-53,59-63,69-73,79-83 > higher_taxonomy.csv
+ - Sort in Vim so that header can be preserved
