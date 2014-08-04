@@ -211,7 +211,7 @@ foreach my $scname (@scientific_names) {
         }
         
         unless($flag_name_ignored) {
-            warn "Common name \"$cmname\" ($lang) for species $scname is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
+            warn " - $scname ($lang): \"$cmname\" is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
                 if length($cmname) > $WARN_IF_CMNAME_LONGER_THAN;
         } 
     }
@@ -280,7 +280,7 @@ foreach my $scname (@scientific_names) {
                         # say "\tNames: " . $row->[0];
                         # say "\tSources: " . join(', ', @{$row->[1]});  
 
-                        warn "Common name '$cmname' ($lang) for higher taxonomy $name is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
+                        warn " - $name ($lang): '$cmname' (higher taxonomy) is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
                             if length($cmname) > $WARN_IF_CMNAME_LONGER_THAN;
 
                     } 

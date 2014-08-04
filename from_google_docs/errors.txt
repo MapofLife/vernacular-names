@@ -1,5 +1,5 @@
 Deleting previous entries.
- - Deleted 33 rows containing previous records for '%add_from_google_docs.pl'.
+ - Deleted 34 rows containing previous records for '%add_from_google_docs.pl'.
 
 Processing 'Very long common names' (1v2wGVxhxiwyofIk6KKk2zKANoCDYH5UC5WA1fejrnJ0).
  - Downloading Google Doc.
@@ -13,8 +13,8 @@ Processing 'Unorganized Vernacular Name Overrides' (1exN8a2zH9pOOFOZxVVWR4FxF6r1
  - Downloading Google Doc.
  - Google Doc downloaded.
  - Reading CSV.
-    - Column names: dataset, scientificName, class, order, family, lang, vernacularName, url, source, source_url, source_priority
-    - The following columns were ignored: dataset
- - 2 entries added.
+    - Column names: dataset, scientificName, class, order, family, lang, vernacularName, url, source, source_url, source_priority, reason
+    - The following columns were ignored: dataset, reason
+ - 3 entries added.
 
-Completed, 34 entries added.
+Completed, 35 entries added.
