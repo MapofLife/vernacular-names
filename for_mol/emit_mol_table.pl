@@ -49,6 +49,9 @@ our @LANGUAGES = (
 # Start counting.
 my $start_time = time;
 
+# Set up STDOUT for utf8 so that we can print out unicode names.
+binmode(STDOUT, ":encoding(utf8)");
+
 # Set up results folder.
 mkdir("results");
 our $OUTPUT_DIR = "results/" . time;
@@ -153,7 +156,7 @@ foreach my $scname (@scientific_names) {
     $count_scname++;
 
     # Extract all entries for this name for the languages we're interested in.
-    $sth = $db->prepare("SELECT cmname, LOWER(lang) AS lang_lower, COUNT(*) AS count_cmname,"
+    $sth = $db->prepare("SELECT cmname, LOWER(lang) AS lang_lower, COUNT(*) AS count_cmname, source_priority,"
         . " array_agg(source) AS sources, "
         . " array_agg(tax_kingdom),"
         . " array_agg(tax_phylum),"
@@ -164,8 +167,8 @@ foreach my $scname (@scientific_names) {
         . " array_agg(genus)"
         . " FROM entries"
         . " WHERE LOWER(binomial)=? AND LOWER(lang) IN ($languages) AND source NOT LIKE 'GBIF%'"
-        . " GROUP BY cmname, lang_lower"
-        . " ORDER BY count_cmname DESC, lang_lower DESC"
+        . " GROUP BY source_priority, cmname, lang_lower"
+        . " ORDER BY source_priority DESC, count_cmname DESC, lang_lower DESC"
     );
 
     $sth->execute(lc $scname);
@@ -180,16 +183,18 @@ foreach my $scname (@scientific_names) {
         my $cmname = $entry->[0];
         my $lang = $entry->[1];
         my $count = $entry->[2];
-        my $source_list = $entry->[3];
+        my $source_priority = $entry->[3];
+        my $source_list = $entry->[4];
        
-        $higher_taxonomy{'kingdom'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[4]};
-        $higher_taxonomy{'phylum'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[5]};
-        $higher_taxonomy{'class'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[6]};
-        $higher_taxonomy{'order'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[7]};
-        $higher_taxonomy{'family'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[8]};
-        $higher_taxonomy{'tax_genus'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[9]};
-        $higher_taxonomy{'genus'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[10]};
+        $higher_taxonomy{'kingdom'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[5]};
+        $higher_taxonomy{'phylum'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[6]};
+        $higher_taxonomy{'class'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[7]};
+        $higher_taxonomy{'order'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[8]};
+        $higher_taxonomy{'family'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[9]};
+        $higher_taxonomy{'tax_genus'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[10]};
+        $higher_taxonomy{'genus'}{lc $_} = 1 foreach grep {defined($_)} @{$entry->[11]};
 
+        my $flag_name_ignored = 0;
         if(exists $names{$lang}) {
             if($FLAG_CONCAT_ALL) {
                 # Concat the new name at the end of the previous name
@@ -197,6 +202,7 @@ foreach my $scname (@scientific_names) {
                 $sources{$lang}{$_} = 1 foreach @$source_list;
             } else {
                 # Ignore all but the first name.
+                $flag_name_ignored = 1;
             }
         } else {
             # Add the first common name.
@@ -204,9 +210,10 @@ foreach my $scname (@scientific_names) {
             $sources{$lang}{$_} = 1 foreach @$source_list;
         }
         
-        warn "Common name \"$cmname\" for species $scname is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
-            if length($cmname) > $WARN_IF_CMNAME_LONGER_THAN;
- 
+        unless($flag_name_ignored) {
+            warn "Common name \"$cmname\" ($lang) for species $scname is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
+                if length($cmname) > $WARN_IF_CMNAME_LONGER_THAN;
+        } 
     }
 
     my @results = ($scname, $scname_source{lc $scname});
@@ -231,11 +238,11 @@ foreach my $scname (@scientific_names) {
         if($FLAG_PRINT_HIGHER) {
             # Remember, we need to concat onto @results: order, class, family
 
-            $sth = $db->prepare("SELECT cmname, array_agg(source), COUNT(*) AS count_cmname"
+            $sth = $db->prepare("SELECT cmname, array_agg(source), COUNT(*) AS count_cmname, source_priority"
                 . " FROM entries"
                 . " WHERE LOWER(scname)=? AND LOWER(lang)=?"
-                . " GROUP BY cmname"
-                . " ORDER BY count_cmname DESC"
+                . " GROUP BY source_priority, cmname"
+                . " ORDER BY source_priority DESC, count_cmname DESC"
                 . " LIMIT 1"
             );
 
@@ -273,7 +280,7 @@ foreach my $scname (@scientific_names) {
                         # say "\tNames: " . $row->[0];
                         # say "\tSources: " . join(', ', @{$row->[1]});  
 
-                        warn "Common name '$cmname' for higher taxonomy $name is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
+                        warn "Common name '$cmname' ($lang) for higher taxonomy $name is longer than $WARN_IF_CMNAME_LONGER_THAN characters"
                             if length($cmname) > $WARN_IF_CMNAME_LONGER_THAN;
 
                     } 
