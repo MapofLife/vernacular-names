@@ -49,16 +49,17 @@ close($fh_config);
 my $ua = LWP::UserAgent->new;
 
 # Delete all previous entries.
+say STDERR "Deleting previous entries.";
 my $SOURCE_IDENTIFIER = "$0";
 if($FLAG_DEBUG_ONLY) {
-    say " - Would delete previous records for '%$SOURCE_IDENTIFIER' if not in debug mode.";
+    say STDERR " - Would delete previous records for '%$SOURCE_IDENTIFIER' if not in debug mode.";
 } else {
     try {
         my $rows = $db->do("DELETE FROM entries WHERE source LIKE ?", {}, "\%$SOURCE_IDENTIFIER");
         
         die $db->err unless $rows;
 
-        say " - Deleted $rows rows containing previous records for '%$SOURCE_IDENTIFIER'.";
+        say STDERR " - Deleted $rows rows containing previous records for '%$SOURCE_IDENTIFIER'.";
     } catch {
         die "ERROR: Unable to delete previous records for '%$SOURCE_IDENTIFIER': $_";
     };
@@ -73,10 +74,11 @@ my $count_entries = 0;
 
 # Process each dataset.
 foreach my $dataset_name (keys %google_datasets) {
+    my $count_per_file = 0;
     my $dataset_id = $google_datasets{$dataset_name};
     my $dataset_download_date = $script_date;
 
-    say STDERR " - Processing $dataset_name ($dataset_id).";
+    say STDERR "\nProcessing '$dataset_name' ($dataset_id).";
 
     # Download file.
     my $response = $ua->get("https://docs.google.com/spreadsheets/d/$dataset_id/export?format=csv");
@@ -214,6 +216,7 @@ foreach my $dataset_name (keys %google_datasets) {
 
         # Write the values into the database.
         $count_entries++;
+        $count_per_file++;
         if($FLAG_DEBUG_ONLY) {
             say "   - Adding vernacular name $cmname ($lang) to $scname ('$source' at priority $source_priority)";
 
@@ -249,6 +252,8 @@ foreach my $dataset_name (keys %google_datasets) {
         # No longer the first row.
         $flag_first_row = 0;
     }
+
+    say STDERR " - $count_per_file entries added.";
 }
 
 # Once we're done, try to set up all binomial names and genus names.
@@ -270,4 +275,4 @@ try {
     die "ERROR: could not finish binomial and genus updates, reason: $_";
 };
 
-say STDERR "Completed, $count_entries entries added.";
+say STDERR "\nCompleted, $count_entries entries added.";

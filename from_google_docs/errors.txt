@@ -1,2 +1,20 @@
-Global symbol "$field_name" requires explicit package name at add_from_google_docs.pl line 125.
-Execution of add_from_google_docs.pl aborted due to compilation errors.
+Deleting previous entries.
+ - Deleted 33 rows containing previous records for '%add_from_google_docs.pl'.
+
+Processing 'Very long common names' (1v2wGVxhxiwyofIk6KKk2zKANoCDYH5UC5WA1fejrnJ0).
+ - Downloading Google Doc.
+ - Google Doc downloaded.
+ - Reading CSV.
+    - Column names: scientificName, class, order, family, lang, vernacularName, url, source, source_url, source_priority
+    - The following columns were ignored: 
+ - 32 entries added.
+
+Processing 'Unorganized Vernacular Name Overrides' (1exN8a2zH9pOOFOZxVVWR4FxF6r1eYhtEI8_-F0WpHOQ).
+ - Downloading Google Doc.
+ - Google Doc downloaded.
+ - Reading CSV.
+    - Column names: dataset, scientificName, class, order, family, lang, vernacularName, url, source, source_url, source_priority
+    - The following columns were ignored: dataset
+ - 2 entries added.
+
+Completed, 34 entries added.
