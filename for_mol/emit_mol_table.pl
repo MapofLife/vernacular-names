@@ -19,7 +19,7 @@ use JSON;
 use Text::CSV;
 
 # Options
-our $WARN_IF_CMNAME_LONGER_THAN = 50;
+our $WARN_IF_CMNAME_LONGER_THAN = 40;
 our $FILE_MASTER_LIST = "./data/combined-2014jul11.txt";
 our $FLAG_CONCAT_ALL = 0;
     # 0 = pick the most popular name for each language

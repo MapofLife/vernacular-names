@@ -1,2 +1,721 @@
- - Mystacina tuberculata (fr): "Petite Chauve-souris à queue courte de Nlle Zélande" is longer than 50 characters at emit_mol_table.pl line 214.
- - Mystacina robusta (fr): "Grande Chauve-souris à queue courte de Nlle Zélande" is longer than 50 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Enhydrina schistosa (en): "Common or beaked seasnake, Hook-nosed sea snake" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Dobsonia chapmani (fr): "Chauve-souris frugivore à dos nu des Philippines" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Cincloramphus mathewsi (de): "Rostbürzel-LerchesängerMartinique-Spottdrossel" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Phrynosoma platyrhinos (en): "platyrhinos: Northern Desert Horned Lizard" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Nectarinia mediocris (en): "Eastern Double-collared Sunbird (Eastern)" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Sceloporus magister (en): "cephaloflavus: Orange-headed Spiny Lizard" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Salamandra lanzai (en): "Lanza's Alpine Salamander; Salamandra di Lanza" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Bolitoglossa engelhardti (es): "Salamandra-lengua hongueada de Engelhardt" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Dendroica coronata (fr): "Paruline à croupion jaune (forme nominale)" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Vipera ammodytes (de): "Europaische Hornotter, Europaische Sandotter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Lithobates areolatus (en): "Northern Crawfish Frog (<i>R. a. circulosus</i>)" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Sceloporus occidentalis (en): "Western Fence Lizard, Pacific blue-bellied lizard" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - calotes (de): 'Emmas Schonechse, Hinterindische Schonechse' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Isoodon obesulus (fr): "Pãƒâ©ramãƒâ¨le obãƒâ©se ãƒâ€ ventre sombre" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Pteropus admiralitatum (es): "Zorro volador de las islas de almirantazgo" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Mystacina tuberculata (fr): "Petite Chauve-souris à queue courte de Nlle Zélande" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Bolitoglossa flavimembris (es): "Salamandra-lengua hongueada patas amarillas" is longer than 40 characters at emit_mol_table.pl line 214.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Menetes berdmorei (en): "Indo-Chinese ground squirrel, Berdmore's palm squ" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Dasypeltis fasciata (de): "Gestreifte Eierschlange, Westafrikanische Eierschl" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Saltuarius cornutus (en): "Northern Leaf-tail Gecko, Leaf-tailed Gecko" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Lamprotornis chloropterus (es): "Estornino Brillante de Orejas Azules Chico" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Nerodia erythrogaster (de): "Rotbauch-Wassernatter, Rotbauchige Schwimmnatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Lasiurus blossevillii (es): "Murciélago-cola peluda ââ‚¬¢ââ‚¬¢ââ‚¬¢de Blossevil" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Polypedates maculatus (en): "Himalayan tree frog (<i>p. m. himalayensis</i>)" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Podarcis erhardii (de): "Kykladen-Mauereidechse, Agaische Mauereidechse" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Rhynchocalamus melanocephalus (de): "Schwarzkopf-Zwergnatter, Schwarzkopfnatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Anaxyrus debilis (en): "Eastern Green Toad (<i>B. d. debilis</i>)" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Crotalus lepidus (de): "Felsen-Klapperschlange, Gebirgsklapperschlange" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - leiopelmatidae (en): 'Tailed Frogs, Leiopelmatids, Ribbed Frogs' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Thamnophis melanogaster (de): "Mexikanische Schwarzbauch-Strumpfbandnatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Bogertophis subocularis (de): "Transpecos-Kletternatter, Transpecos-Rattennatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Lampropeltis calligaster (en): "occipitolineata: South Florida Mole Kingsnake" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Cyanoramphus novaezelandiae (la): "Cyanoramphus novaezelandiae novaezelandiae" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - calotes (de): 'Emmas Schonechse, Hinterindische Schonechse' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Nerodia cyclopion (de): "Grune Wasserschlange, Grune Schwimmnatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Allactaga elater (es): "Jerboa cinco-tocado con la punta del pie pequeño" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Nerodia taxispilota (de): "Braune Wasserschlange, Braune Schwimmnatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Bothriechis aurifer (de): "Guatemala-Lanzenotter, Gelbgefleckte Lanzenotter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Leptodactylus rhodomerus (es): "Rana-de-dedos-delgados-de-coxas-vermelhas" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Storeria occipitomaculata (en): "occipitomaculata: Northern Redbelly Snake" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Sceloporus stejnegeri (es): "Lagartija espinosa de collar negro de Stejneger" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Aspidoscelis inornata (en): "heptagrammus: Trans-Pecos Striped Whiptail" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Mystacina robusta (fr): "Grande Chauve-souris à queue courte de Nlle Zélande" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - leiopelmatidae (en): 'Tailed Frogs, Leiopelmatids, Ribbed Frogs' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Strophurus ciliaris (en): "Northern Spiny-tailed Gecko, Spiny-tailed Gecko" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Vipera dinniki (de): "Westkaukasische-Kreuzotter, Dinnikis Kaukasusotter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Cryptobranchus alleganiensis (la): "Cryptobranchus alleganiensis alleganiensis" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Peromyscus pseudocrinitus (es): "Ratón de los cañones de la isla Coronados" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Ochthoeca cinnamomeiventris (la): "Ochthoeca cinnamomeiventris cinnamomeiventris" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Heloderma suspectum (fr): "Gila monstreux or Lézard venimeux d' l' Arizona" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Trimeresurus gramineus (de): "Grüne Bambusotter, Gewöhnliche Bambusotter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Campylorhynchus rufinucha (fr): "Troglodyte à nuque rousse (forme de Veracruz)" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - leiopelmatidae (en): 'Tailed Frogs, Leiopelmatids, Ribbed Frogs' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Leptodactylus peritoaktites (es): "Rana ahumada de la selva costera de ecuador" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Saimiri oerstedii (en): "Black-crowned central american squirrel monkey" is longer than 40 characters at emit_mol_table.pl line 214.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Platypelis tetra (en): "Four-spotted tree cophyline frog (English)" is longer than 40 characters at emit_mol_table.pl line 214.
+ - leiopelmatidae (en): 'Tailed Frogs, Leiopelmatids, Ribbed Frogs' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Cercopithecus hamlyni (fr): "Cercopithèque de Hamlyn ou à tête de hibou" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Lamprotornis elisabeth (en): "Southern Lesser Blue-eared Glossy Starling" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Prosthemadera novaeseelandiae (la): "Prosthemadera novaeseelandiae novaeseelandiae" is longer than 40 characters at emit_mol_table.pl line 214.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Peromyscus interparietalis (es): "Ratón de los cactus de Isla San Lorenzo Sur" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Hyalosaurus koellikeri (de): "Marokko-Panzerschleiche, Marokko-Glasschleiche" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Rhinomyias brunneatus (es): "Papamoscas Selvático de Gargantilla Blanca" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Grallaricula ferrugineipectus (la): "Grallaricula ferrugineipectus ferrugineipectus" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Peromyscus sejugis (es): "Ratón de campo de isla Santa Cruz y San Diego" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Algyroides moreoticus (de): "Peloponnesische Kieleidechse, Ionische Kieleidechs" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Acrochordus granulatus (en): "Little filesnake, Marine File Snake, Wart Snake" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Acrochordus granulatus (de): "Warzenschlange, Südostasiatische Warzenschlange" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Chrysopelea pelias (de): "Rote Schmuckbaumnatter, Gebanderte Schmuckbaumnatt" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Tachybaptus novaehollandiae (la): "Tachybaptus novaehollandiae novaehollandiae" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Abronia ochoterenai (en): "Northern Chiapas Arboreal Alligator Lizard" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Vipera darevskii (de): "Darevski-Kreuzotter, Darevsky's Kaukasusotter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Homalopsis buccata (en): "Puff-faced Water Snake, Masked Water Snake" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Strophurus taenicauda (en): "Golden Spiny-tailed Gecko, Golden-tailed Gecko" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - leiopelmatidae (en): 'Tailed Frogs, Leiopelmatids, Ribbed Frogs' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Eptesicus andinus (en): "Little Black Serotinelittle Black Serotine" is longer than 40 characters at emit_mol_table.pl line 214.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Dipus sagitta (es): "Jerboa tres-tocado con la punta del pie norteño" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Spermophilus lateralis (en): "Green river basin golden-mantled ground squirrel" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Cyanolanius madagascarinus (la): "Cyanolanius madagascarinus madagascarinus" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Hydrophis semperi (de): "Sempersche Ruderschlange, Taal-Seeschlange" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Cyrtopodion caspium (de): "Kaspischer Nacktfingergecko, Bogenfingergecko" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Bolitoglossa flaviventris (es): "Salamandra-lengua hongueada vientre amarillo" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Nerodia fasciata (de): "Gebänderte Wassernatter, Südliche Schwimmnatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Colobus polykomos (fr): "Colobe blanc et noir d'afrique occidentale" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Colobus polykomos (es): "Colobo blanco y negro de africa occidental" is longer than 40 characters at emit_mol_table.pl line 214.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Thamnophis pulchrilatus (es): "Culebra-listonada de tierras altas-mexicana" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Cyrtopodion kotschyi (de): "Europäischer Nacktfinger, Ägäischer Bogenfinger" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Neotoma albigula (es): "Rata de campo de garganta blanca de isla Dátil" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Oreophrynella nigra (en): "Sapito rugoso del Kukenán; Venezeulan pebble toad" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Ophisaurus koellikeri (de): "Marokko-Panzerschleiche, Marokko-Glasschleiche" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Leptodactylus fallax (en): "Mountain Chicken; Giant Ditch Frog; Crapaud" is longer than 40 characters at emit_mol_table.pl line 214.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Lampornis castaneoventris (la): "Lampornis castaneoventris castaneoventris" is longer than 40 characters at emit_mol_table.pl line 214.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Porthidium nasutum (de): "Nasenlanzenotter, Regenwald-Stülpnasenotter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Thamnophis valida (de): "Mexikanische Westküsten-Strumpfbandnatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Heteromys anomalus (en): "Northern South American spiny pocket mouse" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Timon princeps (de): "Zagroseidechse; kurdistanica: Kurdische Zagroseide" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Nerodia rhombifer (de): "Diamant Wassernatter, Rauten-Schwimmnatter" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - petauridae (en): 'Gliders, Leadbeater's possum, and striped possums' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Crotalus durissus (de): "Cascabel-Tropische - Schauer-Klapperschlange" is longer than 40 characters at emit_mol_table.pl line 214.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - leiopelmatidae (en): 'Tailed Frogs, Leiopelmatids, Ribbed Frogs' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Campylorhynchus brunneicapillus (la): "Campylorhynchus brunneicapillus brunneicapillus" is longer than 40 characters at emit_mol_table.pl line 214.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Cryptelytrops albolabris (en): "White-lipped Tree Viper, White-lipped pitviper" is longer than 40 characters at emit_mol_table.pl line 214.
+ - Xiphorhynchus erythropygius (la): "Xiphorhynchus erythropygius aequatorialis" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Pachyptila salvini (es): "Petrel-paloma de pico ancho (o De Salvin)" is longer than 40 characters at emit_mol_table.pl line 214.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Coleonyx reticulatus (de): "Genetzter Wüstengecko, Genetzter Krallengecko" is longer than 40 characters at emit_mol_table.pl line 214.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - procyonidae (en): 'Cacomistle, coatis, raccoons, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - hipposideridae (en): 'Leaf-nosed bats, roundleaf bats, and trident bats' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - nesomyidae (en): 'African and Malagasy endemic rats and mice' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - phasianidae (en): 'Turkeys, grouse, pheasants, and partridges' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - Leptasthenura aegithaloides (la): "Leptasthenura aegithaloides aegithaloides" is longer than 40 characters at emit_mol_table.pl line 214.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - rallidae (en): 'Rails, crakes, gallinules, moorhens and coots' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
+ - diprotodontia (en): 'Kangaroos, possums, wallabies, and relatives' (higher taxonomy) is longer than 40 characters at emit_mol_table.pl line 283.
