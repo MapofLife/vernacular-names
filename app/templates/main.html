@@ -1,6 +1,8 @@
 <html>
     <head>
         <title>Welcome to the Vernacular Name Editor</title>
+
+        <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
     </head>
     <body>
 
@@ -11,7 +13,8 @@
         <h1>Vernacular Name Editor</h1>
 
         <form>
-            Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Look up"> <input type="submit" name="clear" value="Clear">
+            Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Search"> <input type="submit" name="clear" value="Clear">
+        </form>
 
         {% if current_search %}
 
@@ -22,6 +25,7 @@
             {% if not search_results %}
                 <tr><td colspan="1"><em>No results</em></td></tr>
             {% else %}
+                <form><input type="hidden" name="search" value="{{current_search}}">
                 {% for result in search_results %}
                     <tr>
                         <td><input style="font-style: italic; width:100%; text-align: left;" type="submit" name="lookup" value="{{ result.scname }}">
@@ -31,6 +35,7 @@
                         </td>
                     </tr>
                 {% endfor %}
+                </form>
             {% endif %}
             </table>
             </td>
@@ -41,20 +46,52 @@
                     <div style="float: right; padding: 0.5em; border: 1px; background: #ddd">
                         <center><strong>Languages</strong></center>
                         {% for language in lookup_results_languages %}
-                            <a href="#lang-{{language}}">{{lookup_results_language_names[language]}}</a><br>
+                            <a href="#lang-{{language}}">{{lookup_results_language_names[language]}}</a>
+                            <br>
                         {% endfor %}
                     </div>
 
                     {% for language in lookup_results_languages %}
-                        <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}</h3>
+                        <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: {{ lookup_results[language][0].cmname }}</h3>
                         <ul>
-                            {% if not lookup_results[language] %}
-                                <li><em>No names</em></li>
-                            {% else %}
-                                {% for cmname in lookup_results[language] %}
-                                    <li>{{ cmname }}</li>
-                                {% endfor %}
-                            {% endif %}
+                            {% for result in lookup_results[language] %}
+                                <li>
+                                    <div class="display_name" id="display_name_{{language}}_{{loop.index}}">
+                                        {% if loop.first %}<strong>{% endif %}
+                                        <a href="#" onclick="$('.display_name').show(); $('.edit_name').hide(); $('#display_name_{{language}}_{{loop.index}}').hide(); $('#edit_name_{{language}}_{{loop.index}}').show(); $('#edit_name_{{language}}_{{loop.index}} input:first').focus();">{{ result.cmname }}</a>
+                                        {% if loop.first %}</strong>{% endif %}
+                                        {% if result.source_priority != 0 %}
+                                            (priority: {{result.source_priority_repr}})
+                                        {% endif %}
+                                    </div>
+                                    <div class="edit_name" id="edit_name_{{language}}_{{loop.index}}" style="display: none">
+                                        <form method="post">
+                                            <input name="name_to_add" value="{{result.cmname}}" size=40>
+                                            <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.source}}">
+                                            <input name="priority" value="80" size="4">
+     
+                                            <input type="hidden" name="search" value="{{current_search}}">
+                                            <input type="hidden" name="lookup" value="{{lookup_search}}">
+                                            <input type="hidden" name="lang" value="{{language}}">
+                                            <input name="add_to_current_lookup_in_{{language}}" 
+                                                value="Add" type="submit">
+                                        </form>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                            <li><a href="#" onclick="$('#add_new_{{language}}').toggle(); $('#name_to_add_{{language}}').focus()"><em>Add another</em></a>
+                                <div id='add_new_{{language}}' style="display:none">
+                                    <form method="post">
+                                        <input name="name_to_add" id="name_to_add_{{language}}">
+                                        <input name="source" size=50 value="Source">
+                                        <input name="priority" value="80" size="4">
+                                        <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                                        <input type="hidden" name="search" value="{{current_search}}">
+                                        <input type="hidden" name="lookup" value="{{lookup_search}}">
+                                        <input type="hidden" name="lang" value="{{language}}">
+                                    </form>
+                                </div>
+                            </li>
                         </ul>
                     {% endfor %}
                     </tr>
@@ -65,9 +102,6 @@
             </tr>
             </table>
         {% endif %}
-
-        </form>
-
 
     </body>
 </html>

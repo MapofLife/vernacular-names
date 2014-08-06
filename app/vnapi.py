@@ -25,16 +25,19 @@ def sortNames(rows):
         lang = row['lang']                                                  
 
         if not lang in result_table:                                        
-            result_table[lang] = []                                         
+            result_table[lang] = []
 
-        result_table[lang].append(row['cmname'] + " [" + row['source_priority'] + "]")
+        result_table[lang].append(dict(
+            cmname = row['cmname'],
+            source = row['source'],
+            source_priority = int(row['source_priority'])
+        ))
 
     return result_table 
 
-
 def getVernacularNames(name):
     # TODO: sanitize input                                                  
-    sql = "SELECT DISTINCT lang, cmname, source_priority FROM %s WHERE scname = '%s' ORDER BY source_priority ASC"
+    sql = "SELECT DISTINCT lang, cmname, source, source_priority FROM %s WHERE scname = '%s' ORDER BY source_priority DESC"
     response = url_get(access.CDB_URL % urllib.urlencode(
         dict(q = sql % (access.ALL_NAMES_TABLE, name))
     ))
@@ -54,6 +57,5 @@ def searchForName(name):
 
     sql = "SELECT DISTINCT scname, cmname FROM %s WHERE scname LIKE '%%%s%%' OR cmname LIKE '%%%s%%' ORDER BY scname ASC"
     return url_get(access.CDB_URL % urllib.urlencode(
-        dict(q = sql % (
-            access.ALL_NAMES_TABLE, name, name                                    
-        ))))
+        dict(q = sql % (access.ALL_NAMES_TABLE, name, name))
+    ))
