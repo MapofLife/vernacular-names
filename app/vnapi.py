@@ -56,6 +56,23 @@ def searchForName(name):
     search_pattern = name.replace("_", "__").replace("%", "%%")             
 
     sql = "SELECT DISTINCT scname, cmname FROM %s WHERE scname LIKE '%%%s%%' OR cmname LIKE '%%%s%%' ORDER BY scname ASC"
-    return url_get(access.CDB_URL % urllib.urlencode(
+    response = url_get(access.CDB_URL % urllib.urlencode(
         dict(q = sql % (access.ALL_NAMES_TABLE, name, name))
     ))
+
+    if response.status_code != 200:
+        raise "Could not read server response: " + response.content
+
+    matches = json.loads(response.content)['rows']  
+
+    match_table = dict()
+    for match in matches:
+        scname = match['scname']
+
+        if not scname in match_table:
+            match_table[scname] = []
+
+        if match['cmname'].find(name) >= 0:
+            match_table[scname].append(match['cmname'])
+
+    return match_table

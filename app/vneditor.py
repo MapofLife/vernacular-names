@@ -85,11 +85,10 @@ class MainPage(BaseHandler):
             current_search = ''
 
         # Do the search.
-        search_results = []
+        search_results = dict()
         if current_search != '':
-            search_response = vnapi.searchForName(current_search)
-            if search_response.status_code == 200:
-                search_results = json.loads(search_response.content)['rows']
+            search_results = vnapi.searchForName(current_search)
+            search_results_scnames = sorted(search_results.keys())
 
         # Do the lookup
         lookup_search = self.request.get('lookup')
@@ -120,6 +119,7 @@ class MainPage(BaseHandler):
             'user_name': user_name,
             'current_search': current_search,
             'search_results': search_results,
+            'search_results_scnames': search_results_scnames,
             'lookup_search': lookup_search,
             'lookup_results': lookup_results,
             'lookup_results_languages': sorted(lookup_results.keys()),

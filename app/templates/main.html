@@ -19,19 +19,19 @@
         {% if current_search %}
 
             <table width="100%" style="margin: 2em 0em">
-            <tr><td width="20%">
+            <tr><td width="20%" valign="top">
             <h2> Searching for '{{ current_search }}'</h2>
             <table>
             {% if not search_results %}
                 <tr><td colspan="1"><em>No results</em></td></tr>
             {% else %}
                 <form><input type="hidden" name="search" value="{{current_search}}">
-                {% for result in search_results %}
+                {% for scname in search_results_scnames %}
                     <tr>
-                        <td><input style="font-style: italic; width:100%; text-align: left;" type="submit" name="lookup" value="{{ result.scname }}">
-                        {% if result.cmname %}
-                            <div style="font-height: 50%; width: auto; text-align: right">{{ result.cmname }}</div>
-                        {% endif %}
+                        <td><input style="font-style: italic; width:100%; text-align: left;" type="submit" name="lookup" value="{{ scname }}">
+                        {% for cmname in search_results[scname] %}
+                            <div style="font-height: 50%; width: auto; text-align: right">{{ cmname }}</div>
+                        {% endfor %}
                         </td>
                     </tr>
                 {% endfor %}
