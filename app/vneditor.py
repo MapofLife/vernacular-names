@@ -1,3 +1,5 @@
+# vim: set fileencoding=utf-8 :
+
 from google.appengine.api import users, urlfetch
 
 import os
@@ -7,8 +9,7 @@ import json
 import urllib
 
 # Configuration
-CDB_URL = "http://mol.cartodb.com/api/v2/sql?%s"
-DB_TABLE_NAME = "vernacular_names_no_newlines_top1m"
+import access
 
 # Check whether we're in production (PROD = True) or not.
 if 'SERVER_SOFTWARE' in os.environ:
@@ -93,6 +94,22 @@ class MainPage(BaseHandler):
         if lookup_search != '':
             lookup_results = self.getNamesLookup(lookup_search)
 
+        lookup_results_lang_names = dict()
+        language_names = {
+            'en': u'English',
+            'es': u'Spanish (Español)',
+            'pt': u'Portuguese (Português)',
+            'de': u'German (Deutsch)',
+            'fr': u'French (le Français)',
+            'zh': u'Chinese (中文)'
+        }
+
+        for lang in lookup_results:
+            if lang in language_names:
+                lookup_results_lang_names[lang] = language_names[lang] + ", " + lang
+            else:
+                lookup_results_lang_names[lang] = lang
+
         self.render_template('main.html', {
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
@@ -102,14 +119,15 @@ class MainPage(BaseHandler):
             'search_results': search_results,
             'lookup_search': lookup_search,
             'lookup_results': lookup_results,
-            'lookup_results_languages': sorted(lookup_results.keys())
+            'lookup_results_languages': sorted(lookup_results.keys()),
+            'lookup_results_language_names': lookup_results_lang_names
         })
 
     def getNamesLookup(self, name):
         # TODO: sanitize input
         sql = "SELECT DISTINCT lang, cmname, source_priority FROM %s WHERE scname = '%s' ORDER BY source_priority ASC"
-        response = urlfetch.fetch(CDB_URL % urllib.urlencode(dict(q = sql % (
-            DB_TABLE_NAME, name
+        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(dict(q = sql % (
+            access.DB_TABLE_NAME, name
         ))), deadline=60)
         if response.status_code != 200:
             return dict()
@@ -136,8 +154,8 @@ class MainPage(BaseHandler):
         search_pattern = name.replace("_", "__").replace("%", "%%")
 
         sql = "SELECT DISTINCT scname, cmname FROM %s WHERE scname LIKE '%%%s%%' OR cmname LIKE '%%%s%%' ORDER BY scname ASC"
-        return urlfetch.fetch(CDB_URL % urllib.urlencode(dict(q = sql % (
-            DB_TABLE_NAME, name, name
+        return urlfetch.fetch(access.CDB_URL % urllib.urlencode(dict(q = sql % (
+            access.DB_TABLE_NAME, name, name
         ))))
 
 class GetVernacularNames(BaseHandler):

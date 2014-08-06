@@ -38,23 +38,22 @@
             {% if lookup_results %}
             <td valign="top" width="80%">
                 <h2>Looking up <em>{{ lookup_search }}</em></h2>
-                <table border="1" width="80%" style="width: auto; margin: 0em 3em">
-                    <tr>
-                        {% for language in lookup_results_languages %}
-                        <th>{{ language }}</th>
-                        {% endfor %}
-                    </tr>
-                    <tr>
+                    <center>[ {% for language in lookup_results_languages %}
+                        <a href="#lang-{{language}}">{{lookup_results_language_names[language]}}</a> 
+                        {% if not loop.last %} | {% endif %}
+                    {% endfor %} ]</center>
+
                     {% for language in lookup_results_languages %}
-                        <td valign="top"> 
+                        <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}</h3>
+                        <ul>
                             {% if not lookup_results[language] %}
-                                <em>No names</em>
+                                <li><em>No names</em></li>
                             {% else %}
                                 {% for cmname in lookup_results[language] %}
-                                    {{ cmname }}<br>
+                                    <li>{{ cmname }}</li>
                                 {% endfor %}
                             {% endif %}
-                        </td>
+                        </ul>
                     {% endfor %}
                     </tr>
                 </table>
