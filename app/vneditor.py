@@ -2,11 +2,13 @@
 
 from google.appengine.api import users, urlfetch
 
+import base64
 import os
 import webapp2
 import jinja2
 import json
 import urllib
+import re
 
 # Configuration
 import access
@@ -48,6 +50,8 @@ class BaseHandler(webapp2.RequestHandler):
         if not users.is_current_user_admin():
             self.redirect('/page/private')
 
+        return user
+
 # The StaticPages handler handles our static pages by providing them
 # with a set of default variables.
 class StaticPages(BaseHandler):
@@ -77,7 +81,7 @@ class MainPage(BaseHandler):
         self.response.headers['Content-type'] = 'text/html'
         
         user = self.check_user()
-        user_name = user.nickname() if user else "no user logged in"
+        user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
         current_search = self.request.get('search')
@@ -86,6 +90,7 @@ class MainPage(BaseHandler):
 
         # Do the search.
         search_results = dict()
+        search_results_scnames = []
         if current_search != '':
             search_results = vnapi.searchForName(current_search)
             search_results_scnames = sorted(search_results.keys())
@@ -113,6 +118,7 @@ class MainPage(BaseHandler):
                 lookup_results_lang_names[lang] = lang
 
         self.render_template('main.html', {
+            'message': self.request.get('msg'),
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
@@ -126,8 +132,71 @@ class MainPage(BaseHandler):
             'lookup_results_language_names': lookup_results_lang_names
         })
 
+
+class AddNameHandler(BaseHandler):
+    def post(self):
+        # Fail without login.
+        current_user = self.check_user()
+
+        # Retrieve state
+        search = self.request.get('search')
+        lookup = self.request.get('lookup')
+
+        # Retrieve name to add
+        scname = lookup
+        cmname = self.request.get('name_to_add')
+        lang = self.request.get('lang')
+        source = self.request.get('source')
+        try:
+            source_priority = int(self.request.get('priority'))
+        except ValueError:
+            source_priority = 0
+
+        # Metadata
+        added_by = current_user.nickname()
+
+        # Base64 anything we don't absolutely trust
+        added_by_b64 = vnapi.encode_b64_for_psql(added_by)
+        scname_b64 = vnapi.encode_b64_for_psql(scname)
+        cmname_b64 = vnapi.encode_b64_for_psql(cmname)
+        lang_b64 = vnapi.encode_b64_for_psql(lang)
+        source_b64 = vnapi.encode_b64_for_psql(source)
+
+        # Synthesize SQL
+        sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority) VALUES (%s, %s, %s, %s, NULL, %s, 'https://github.com/gaurav/vernacular-names', %d);"
+        sql_query = sql % (
+            access.ALL_NAMES_TABLE,
+            added_by_b64,
+            scname_b64,
+            lang_b64,
+            cmname_b64,
+            source_b64,
+            source_priority
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+            dict(
+                q = sql_query,
+                api_key = access.CARTODB_API_KEY
+            )
+        ))
+
+        if response.status_code != 200:
+            message = "Error: server returned error " + response.status_code + ": " + response.content
+        else:
+            message = "Name added to language '" + lang + "'."
+
+        # Redirect to the main page.
+        self.redirect("/?" + urllib.urlencode(dict(
+            msg = message,
+            search = search,
+            lookup = lookup
+        )))
+
 application = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/index.html', MainPage),
+    ('/add/name', AddNameHandler),
     ('/page/private', StaticPages)
 ], debug=not PROD)
