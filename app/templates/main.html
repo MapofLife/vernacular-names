@@ -1,0 +1,72 @@
+<html>
+    <head>
+        <title>Welcome to the Vernacular Name Editor</title>
+    </head>
+    <body>
+
+        <div style="float:right">
+            <a href="{{ user_url }}">{{ user_name }}</a> | <a href="{{ logout_url }}">Logout</a>
+        </div>
+
+        <h1>Vernacular Name Editor</h1>
+
+        <form>
+            Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Look up"> <input type="submit" name="clear" value="Clear">
+
+        {% if current_search %}
+
+            <table width="100%" style="margin: 2em 0em">
+            <tr><td>
+            <h2> Searching for '{{ current_search }}'</h2>
+            <table>
+            {% if not search_results %}
+                <tr><td colspan="1"><em>No results</em></td></tr>
+            {% else %}
+                {% for result in search_results %}
+                    <tr>
+                        <td><input style="font-style: italic; width:100%; text-align: left;" type="submit" name="lookup" value="{{ result.scname }}">
+                        {% if result.cmname %}
+                            <div style="font-height: 50%; width: auto; text-align: right">{{ result.cmname }}</div>
+                        {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+            </table>
+            </td>
+
+            {% if lookup_results %}
+            <td valign="top" width="80%">
+                <h2>Looking up <em>{{ lookup_search }}</em></h2>
+                <table border="1" width="80%" style="width: auto; margin: 0em 3em">
+                    <tr>
+                        {% for language in lookup_results_languages %}
+                        <th>{{ language }}</th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                    {% for language in lookup_results_languages %}
+                        <td valign="top"> 
+                            {% if not lookup_results[language] %}
+                                <em>No names</em>
+                            {% else %}
+                                {% for cmname in lookup_results[language] %}
+                                    {{ cmname }}<br>
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    </tr>
+                </table>
+            </td>
+            {% endif %}
+            
+            </tr>
+            </table>
+        {% endif %}
+
+        </form>
+
+
+    </body>
+</html>
