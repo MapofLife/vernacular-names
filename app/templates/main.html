@@ -16,7 +16,7 @@
         {% if current_search %}
 
             <table width="100%" style="margin: 2em 0em">
-            <tr><td>
+            <tr><td width="20%">
             <h2> Searching for '{{ current_search }}'</h2>
             <table>
             {% if not search_results %}
@@ -38,10 +38,12 @@
             {% if lookup_results %}
             <td valign="top" width="80%">
                 <h2>Looking up <em>{{ lookup_search }}</em></h2>
-                    <center>[ {% for language in lookup_results_languages %}
-                        <a href="#lang-{{language}}">{{lookup_results_language_names[language]}}</a> 
-                        {% if not loop.last %} | {% endif %}
-                    {% endfor %} ]</center>
+                    <div style="float: right; padding: 0.5em; border: 1px; background: #ddd">
+                        <center><strong>Languages</strong></center>
+                        {% for language in lookup_results_languages %}
+                            <a href="#lang-{{language}}">{{lookup_results_language_names[language]}}</a><br>
+                        {% endfor %}
+                    </div>
 
                     {% for language in lookup_results_languages %}
                         <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}</h3>

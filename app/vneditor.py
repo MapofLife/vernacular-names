@@ -11,6 +11,9 @@ import urllib
 # Configuration
 import access
 
+# Our libraries
+import vnapi
+
 # Check whether we're in production (PROD = True) or not.
 if 'SERVER_SOFTWARE' in os.environ:
     PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
@@ -84,7 +87,7 @@ class MainPage(BaseHandler):
         # Do the search.
         search_results = []
         if current_search != '':
-            search_response = self.getNames(current_search)
+            search_response = vnapi.searchForName(current_search)
             if search_response.status_code == 200:
                 search_results = json.loads(search_response.content)['rows']
 
@@ -92,7 +95,7 @@ class MainPage(BaseHandler):
         lookup_search = self.request.get('lookup')
         lookup_results = {}
         if lookup_search != '':
-            lookup_results = self.getNamesLookup(lookup_search)
+            lookup_results = vnapi.getVernacularNames(lookup_search)
 
         lookup_results_lang_names = dict()
         language_names = {
@@ -106,7 +109,7 @@ class MainPage(BaseHandler):
 
         for lang in lookup_results:
             if lang in language_names:
-                lookup_results_lang_names[lang] = language_names[lang] + ", " + lang
+                lookup_results_lang_names[lang] = language_names[lang]
             else:
                 lookup_results_lang_names[lang] = lang
 
@@ -123,51 +126,8 @@ class MainPage(BaseHandler):
             'lookup_results_language_names': lookup_results_lang_names
         })
 
-    def getNamesLookup(self, name):
-        # TODO: sanitize input
-        sql = "SELECT DISTINCT lang, cmname, source_priority FROM %s WHERE scname = '%s' ORDER BY source_priority ASC"
-        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(dict(q = sql % (
-            access.DB_TABLE_NAME, name
-        ))), deadline=60)
-        if response.status_code != 200:
-            return dict()
-        results = json.loads(response.content)
-
-        result_table = dict()
-        for row in results['rows']:
-            lang = row['lang']
-
-            if not lang in result_table:
-                result_table[lang] = []
-
-            result_table[lang].append(row['cmname'] + " [" + row['source_priority'] + "]")
-
-            # TODO: source
-
-        return result_table
-
-    def getNames(self, name):
-        # TODO: sanitize input
-        
-        # Escape any characters that might be used in a LIKE pattern
-        # From http://www.postgresql.org/docs/9.1/static/functions-matching.html
-        search_pattern = name.replace("_", "__").replace("%", "%%")
-
-        sql = "SELECT DISTINCT scname, cmname FROM %s WHERE scname LIKE '%%%s%%' OR cmname LIKE '%%%s%%' ORDER BY scname ASC"
-        return urlfetch.fetch(access.CDB_URL % urllib.urlencode(dict(q = sql % (
-            access.DB_TABLE_NAME, name, name
-        ))))
-
-class GetVernacularNames(BaseHandler):
-    def get(self):
-        user = self.check_user()
-
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.write('[{"scientificName": "Panthera tigris", "vernacularName": "tiger", "lang": "en", "source": "me"}]')
-
 application = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/index.html', MainPage),
-    ('/page/private', StaticPages),
-    ('/get', GetVernacularNames),
+    ('/page/private', StaticPages)
 ], debug=not PROD)
