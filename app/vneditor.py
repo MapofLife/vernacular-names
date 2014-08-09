@@ -150,7 +150,8 @@ class AddNameHandler(BaseHandler):
         try:
             source_priority = int(self.request.get('priority'))
         except ValueError:
-            source_priority = 0
+            # All manual sources come in with a default priority of 80
+            source_priority = 80
 
         # Metadata
         added_by = current_user.nickname()
@@ -192,7 +193,7 @@ class AddNameHandler(BaseHandler):
             msg = message,
             search = search,
             lookup = lookup
-        )))
+        )) + "#lang-" + lang)
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
