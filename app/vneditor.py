@@ -12,6 +12,7 @@ import re
 
 # Configuration
 import access
+import version
 
 # Our libraries
 import vnapi
@@ -129,7 +130,8 @@ class MainPage(BaseHandler):
             'lookup_search': lookup_search,
             'lookup_results': lookup_results,
             'lookup_results_languages': sorted(lookup_results.keys()),
-            'lookup_results_language_names': lookup_results_lang_names
+            'lookup_results_language_names': lookup_results_lang_names,
+            'vneditor_version': version.VNEDITOR_VERSION
         })
 
 
