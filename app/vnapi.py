@@ -62,6 +62,35 @@ def getVernacularNames(name):
     results = json.loads(response.content)                                  
     return sortNames(results['rows'])
 
+def getDatasets():
+    # TODO: sanitize input
+    sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
+    response = url_get(access.CDB_URL % urllib.urlencode(
+        dict(q = sql % (access.MASTER_LIST))
+    ))
+
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
+
+    results = json.loads(response.content)
+
+    return results['rows']
+
+def getSpeciesInDataset(dataset):
+    # TODO: sanitize input
+    sql = "SELECT scientificname FROM %s WHERE dataset=%s ORDER BY lower(scientificname) ASC"
+    response = url_get(access.CDB_URL % urllib.urlencode(
+        dict(q = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset)))
+    ))
+
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
+
+    results = json.loads(response.content)
+    scnames = map(lambda x: x['scientificname'], results['rows'])
+
+    return scnames
+
 def searchForName(name):
     # TODO: sanitize input                                                  
 

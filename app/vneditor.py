@@ -96,6 +96,19 @@ class MainPage(BaseHandler):
             search_results = vnapi.searchForName(current_search)
             search_results_scnames = sorted(search_results.keys())
 
+        # Check for dataset_filter
+        dataset_filter = self.request.get('dataset')
+        if dataset_filter != '':
+            if current_search != '':
+                # If there is a search, filter it using dataset_filter.
+                search_results_scnames = sorted(search_results_scnames)
+            else:
+                # If not, search by dataset.
+                search_results_scnames = vnapi.getSpeciesInDataset(dataset_filter)
+                search_results = dict()
+                for scname in search_results_scnames:
+                    search_results[scname] = []
+
         # Do the lookup
         lookup_search = self.request.get('lookup')
         lookup_results = {}
@@ -120,6 +133,8 @@ class MainPage(BaseHandler):
 
         self.render_template('main.html', {
             'message': self.request.get('msg'),
+            'datasets': vnapi.getDatasets(),
+            'dataset_filter': dataset_filter,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
