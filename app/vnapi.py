@@ -76,7 +76,7 @@ def getDatasets():
 
     return results['rows']
 
-def getSpeciesInDataset(dataset):
+def getNamesInDataset(dataset):
     # TODO: sanitize input
     sql = "SELECT scientificname FROM %s WHERE dataset=%s ORDER BY lower(scientificname) ASC"
     response = url_get(access.CDB_URL % urllib.urlencode(
@@ -90,6 +90,19 @@ def getSpeciesInDataset(dataset):
     scnames = map(lambda x: x['scientificname'], results['rows'])
 
     return scnames
+
+# Check if a dataset contains name. It caches the entire list
+# of names in that dataset to make its job easier.
+def datasetContainsName(dataset, scname):
+    if dataset not in datasetContainsName.cache:
+        datasetContainsName.cache[dataset] = dict()
+        for scname in getNamesInDataset(dataset):
+            datasetContainsName.cache[dataset][scname.lower()] = []
+
+    return scname.lower() in datasetContainsName.cache[dataset]
+
+# Initialize cache
+datasetContainsName.cache = dict()
 
 def searchForName(name):
     # TODO: sanitize input                                                  

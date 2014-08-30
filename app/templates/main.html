@@ -47,10 +47,11 @@ table.search_results tr:nth-child(even) {
 
         <form>
             Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Search"> <input type="submit" name="clear" value="Clear">
+            <input name="dataset" type="hidden" value="{{dataset_filter}}">
         </form>
 
         <div>
-            <p><a href="#" onclick="$('#dataset-list').toggle(); return false;">{{ datasets|length }} datasets</a>{% if dataset_filter %}, filtering by <em>{{dataset_filter}}</em>.{% endif %}</p>
+            <p><a href="#" onclick="$('#dataset-list').toggle(); return false;">{{ datasets|length }} datasets</a>{% if dataset_filter %}, filtering by <em>{{dataset_filter}}</em> (<a href="?dataset=">reset</a>).{% endif %}</p>
             <div id="dataset-list" style="display: none">
                 <table>
                     {% for dataset in datasets %}
@@ -65,34 +66,36 @@ table.search_results tr:nth-child(even) {
             </div>
         </div>
 
-        {% if search_results %}
+        {% if not search_results %}
+            {% if current_search or dataset_filter %}
+                <p><strong>No results found.</strong></p>
+            {% endif %}
+
+        {% else %}
 
             <table width="100%" style="margin: 2em 0em">
             <tr><td width="20%" valign="top">
             <div id="scrolled_search_results" style="overflow: scroll; height: 600px;">
             <table class="search_results">
-            {% if not search_results %}
-                <tr><td colspan="1"><em>No results</em></td></tr>
-            {% else %}
-                <form onsubmit="window.location.hash = ''">
-                <input type="hidden" name="search" value="{{current_search}}">
-                {% for scname in search_results_scnames %}
-                    <tr class="{% if scname == lookup_search %}selected{% endif %}">
-                        <td><em>{{scname}}</em> <a style="float: right" href="?search={{current_search}}&lookup={{scname}}">View</a>
-                        <div style="font-size: 90%; width: auto;">
-                            {% if search_results[scname] %}<br><strong>Matched common name</strong>
-                            <ul>
-                            {% for cmname in search_results[scname] %}
-                                <li>{{ cmname }}</li>
-                            {% endfor %}
-                            </ul>
-                            {% endif %}
-                        </div>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </form>
-            {% endif %}
+            <form onsubmit="window.location.hash = ''">
+            <input type="hidden" name="search" value="{{current_search}}">
+            {% for scname in search_results_scnames %}
+                <tr class="{% if scname == lookup_search %}selected{% endif %}">
+                    <!-- TODO: these should be URL encoded before being used in a link -->
+                    <td><em>{{scname}}</em> <a style="float: right" href="?dataset={{dataset_filter}}&search={{current_search}}&lookup={{scname}}">View</a>
+                    <div style="font-size: 90%; width: auto;">
+                        {% if search_results[scname] %}<br><strong>Matched common name</strong>
+                        <ul>
+                        {% for cmname in search_results[scname] %}
+                            <li>{{ cmname }}</li>
+                        {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </form>
             </table>
             </div>
             </td>
@@ -137,6 +140,7 @@ table.search_results tr:nth-child(even) {
                                             <input name="name_to_add" value="{{result.cmname}}" size=40>
                                             <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.source}}">
      
+                                            <input type="hidden" name="dataset" value="{{dataset_filter}}">
                                             <input type="hidden" name="search" value="{{current_search}}">
                                             <input type="hidden" name="lookup" value="{{lookup_search}}">
                                             <input type="hidden" name="lang" value="{{language}}">
@@ -153,6 +157,7 @@ table.search_results tr:nth-child(even) {
                                         <input name="name_to_add" id="name_to_add_{{language}}">
                                         <input name="source" size=50 value="Source">
                                         <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                                        <input type="hidden" name="dataset" value="{{dataset_filter}}">
                                         <input type="hidden" name="search" value="{{current_search}}">
                                         <input type="hidden" name="lookup" value="{{lookup_search}}">
                                         <input type="hidden" name="lang" value="{{language}}">
@@ -169,6 +174,7 @@ table.search_results tr:nth-child(even) {
                             Name: <input name="name_to_add" id="name_to_add_completely-new">
                             Source: <input name="source" size=50 value="Source">
                             <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                            <input type="hidden" name="dataset" value="{{dataset_filter}}">
                             <input type="hidden" name="search" value="{{current_search}}">
                             <input type="hidden" name="lookup" value="{{lookup_search}}">
                         </form>

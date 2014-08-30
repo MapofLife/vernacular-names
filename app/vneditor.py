@@ -101,13 +101,17 @@ class MainPage(BaseHandler):
         if dataset_filter != '':
             if current_search != '':
                 # If there is a search, filter it using dataset_filter.
-                search_results_scnames = sorted(search_results_scnames)
+                search_results_scnames = filter(
+                    lambda scname: vnapi.datasetContainsName(dataset_filter, scname),
+                    search_results_scnames
+                )
             else:
                 # If not, search by dataset.
-                search_results_scnames = vnapi.getSpeciesInDataset(dataset_filter)
-                search_results = dict()
-                for scname in search_results_scnames:
-                    search_results[scname] = []
+                search_results_scnames = vnapi.getNamesInDataset(dataset_filter)
+
+            search_results = dict()
+            for scname in search_results_scnames:
+                search_results[scname] = []
 
         # Do the lookup
         lookup_search = self.request.get('lookup')
