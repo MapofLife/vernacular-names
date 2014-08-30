@@ -76,6 +76,9 @@ def getDatasets():
 
     return results['rows']
 
+def getDatasetCoverage(dname, lang):
+    return 101
+
 def getNamesInDataset(dataset):
     # TODO: sanitize input
     sql = "SELECT scientificname FROM %s WHERE dataset=%s ORDER BY lower(scientificname) ASC"
@@ -97,9 +100,11 @@ def datasetContainsName(dataset, scname):
     if dataset not in datasetContainsName.cache:
         datasetContainsName.cache[dataset] = dict()
         for scname in getNamesInDataset(dataset):
-            datasetContainsName.cache[dataset][scname.lower()] = []
+            datasetContainsName.cache[dataset][scname.lower()] = 1
 
-    return scname.lower() in datasetContainsName.cache[dataset]
+    result = (scname.lower() in datasetContainsName.cache[dataset])
+
+    return result
 
 # Initialize cache
 datasetContainsName.cache = dict()
