@@ -1,2 +1,7 @@
+0.2-alpha-1: August 30, 2014
+ - Added support for filtering by dataset.
+ - Improved display of sources and sorting of common names.
+ - Added a warning for source_priority > 100.
+ - Improved display of languages.
 0.1-alpha-1: August 8, 2014
  - Initial draft release after a week of hacking.
