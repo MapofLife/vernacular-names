@@ -114,8 +114,9 @@ table.search_results tr:nth-child(even) {
             {% if lookup_results %}
             <td valign="top" width="80%">
                 <h2><em>{{ lookup_search }}</em>
-                <select id="select_lang_list" onchange="var val = $(this).val(); if(val == 'all') { $('.results-lang').show(); } else { $('.results-lang').hide(); $('#results-lang-' + val).show() }">
-                    <option selected="1" value="all">All</option>
+                <select id="select_lang_list" onchange="var val = $(this).val(); if(val == 'all') { $('.results-lang').show(); } else if(val == 'mol') { $('.results-lang').hide(); $('.results-lang-mol').show() } else { $('.results-lang').hide(); $('#results-lang-' + val).show() }">
+                    <option selected="1" value="mol">MOL languages</option>
+                    <option value="all">All</option>
                     {% for language in lookup_results_languages %}
                     <option value="{{language}}">{{lookup_results_language_names[language]}}</option>
                     {% endfor %}
@@ -136,7 +137,7 @@ table.search_results tr:nth-child(even) {
 -->
 
                     {% for language in lookup_results_languages %}
-                        <div class="results-lang" id="results-lang-{{language}}">
+                        <div class="results-lang{% if language in language_names_list %} results-lang-mol{% endif %}" id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}>
                         <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: {{ lookup_results[language][0].cmname }}</h3>
                         <ul>
                             {% for result in lookup_results[language] %}
