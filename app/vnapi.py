@@ -41,15 +41,16 @@ def sortNames(rows):
 
         result_table[lang].append(dict(
             cmname = row['cmname'],
-            source = row['source'],
-            source_priority = int(row['source_priority'])
+            sources = row['sources'],
+            max_updated_at = row['max_updated_at'],
+            max_source_priority = int(row['max_source_priority'])
         ))
 
     return result_table 
 
 def getVernacularNames(name):
     # TODO: sanitize input                                                  
-    sql = "SELECT DISTINCT lang, cmname, source, source_priority, updated_at FROM %s WHERE LOWER(scname) = %s ORDER BY updated_at DESC, source_priority DESC"
+    sql = "SELECT lang, cmname, array_agg(source) AS sources, max(source_priority) AS max_source_priority, max(updated_at) AS max_updated_at FROM %s WHERE LOWER(scname) = %s GROUP BY lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
     response = url_get(access.CDB_URL % urllib.urlencode(
         dict(q = sql % (access.ALL_NAMES_TABLE, encode_b64_for_psql(name.lower())))
     ))
