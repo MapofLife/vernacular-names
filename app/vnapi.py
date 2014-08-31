@@ -49,9 +49,7 @@ def sortNames(rows):
 
 def getVernacularNames(name):
     # TODO: sanitize input                                                  
-    # TODO: sort this by updated_at, so we get consistent order AND
-    # the most recent of two equally-scoring priorities rise to the top.
-    sql = "SELECT DISTINCT lang, cmname, source, source_priority FROM %s WHERE LOWER(scname) = %s ORDER BY source_priority DESC"
+    sql = "SELECT DISTINCT lang, cmname, source, source_priority, updated_at FROM %s WHERE LOWER(scname) = %s ORDER BY updated_at DESC, source_priority DESC"
     response = url_get(access.CDB_URL % urllib.urlencode(
         dict(q = sql % (access.ALL_NAMES_TABLE, encode_b64_for_psql(name.lower())))
     ))
