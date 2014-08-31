@@ -145,6 +145,7 @@ table.search_results tr:nth-child(even) {
                                         {% if loop.first %}<strong>{% endif %}
                                         <a class="nohistory" href="#" onclick="$('.display_name').show(); $('.edit_name').hide(); $('#display_name_{{language}}_{{loop.index}}').hide(); $('#edit_name_{{language}}_{{loop.index}}').show(); $('#edit_name_{{language}}_{{loop.index}} input:first').focus(); return false">{{ result.cmname }}</a>
                                         {% if loop.first %}</strong>{% endif %}
+                                        <span style="font: 80% small-caps">{{ result.source }}</span>
                                     </div>
                                     <div class="edit_name" id="edit_name_{{language}}_{{loop.index}}" style="display: none">
                                         <form method="post" action="/add/name">
