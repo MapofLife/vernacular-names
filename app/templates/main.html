@@ -47,36 +47,66 @@ table.search_results tr:nth-child(even) {
 
         <form>
             Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Search"> <input type="submit" name="clear" value="Clear">
+            <input name="dataset" type="hidden" value="{{dataset_filter}}">
         </form>
 
-        {% if current_search %}
+        <div>
+            <p><a href="#" onclick="$('#dataset-list').toggle(); return false;">{{ datasets|length }} datasets</a>{% if dataset_filter %}, filtering by <em>{{dataset_filter}}</em> (<a href="?dataset=&search={{current_search}}&lookup={{lookup_search}}">reset</a>).{% endif %}</p>
+            <div id="dataset-list" style="display: none">
+                <table border="1">
+                    <tr>
+                        <th>Dataset</th>
+                        <th>Names</th>
+                        {% for lang in language_names %}
+                            <th>{{language_names[lang]}}</th>
+                        {% endfor %}
+                    </tr>
+                    {% for dataset in datasets %}
+                        <tr>
+                            <td align="left">
+                                <!-- TODO: Add URL encoding here -->
+                                <a href="?dataset={{dataset['dataset']|trim}}&search={{current_search}}&lookup={{lookup_search}}">{{ dataset['dataset']|trim }}</a>
+                            </td>
+                            <td>{{ dataset['count'] }} names</td>
+                            {% for lang in language_names_list %}
+                                <td>{{ datasets_coverage[dataset['dataset']][lang] }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        
+        {% if not search_results %}
+            {% if current_search or dataset_filter %}
+                <p><strong>No results found.</strong></p>
+            {% endif %}
+
+        {% else %}
 
             <table width="100%" style="margin: 2em 0em">
             <tr><td width="20%" valign="top">
             <div id="scrolled_search_results" style="overflow: scroll; height: 600px;">
             <table class="search_results">
-            {% if not search_results %}
-                <tr><td colspan="1"><em>No results</em></td></tr>
-            {% else %}
-                <form onsubmit="window.location.hash = ''">
-                <input type="hidden" name="search" value="{{current_search}}">
-                {% for scname in search_results_scnames %}
-                    <tr class="{% if scname == lookup_search %}selected{% endif %}">
-                        <td><em>{{scname}}</em> <a style="float: right" href="?search={{current_search}}&lookup={{scname}}">View</a>
-                        <div style="font-size: 90%; width: auto;">
-                            {% if search_results[scname] %}<br><strong>Matched common name</strong>
-                            <ul>
-                            {% for cmname in search_results[scname] %}
-                                <li>{{ cmname }}</li>
-                            {% endfor %}
-                            </ul>
-                            {% endif %}
-                        </div>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </form>
-            {% endif %}
+            <form onsubmit="window.location.hash = ''">
+            <input type="hidden" name="search" value="{{current_search}}">
+            {% for scname in search_results_scnames %}
+                <tr class="{% if scname == lookup_search %}selected{% endif %}">
+                    <!-- TODO: these should be URL encoded before being used in a link -->
+                    <td><em>{{scname}}</em> <a style="float: right" href="?dataset={{dataset_filter}}&search={{current_search}}&lookup={{scname}}">View</a>
+                    <div style="font-size: 90%; width: auto;">
+                        {% if search_results[scname] %}<br><strong>Matched common name</strong>
+                        <ul>
+                        {% for cmname in search_results[scname] %}
+                            <li>{{ cmname }}</li>
+                        {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </form>
             </table>
             </div>
             </td>
@@ -84,8 +114,9 @@ table.search_results tr:nth-child(even) {
             {% if lookup_results %}
             <td valign="top" width="80%">
                 <h2><em>{{ lookup_search }}</em>
-                <select id="select_lang_list" onchange="var val = $(this).val(); if(val == 'all') { $('.results-lang').show(); } else { $('.results-lang').hide(); $('#results-lang-' + val).show() }">
-                    <option selected="1" value="all">All</option>
+                <select id="select_lang_list" onchange="var val = $(this).val(); if(val == 'all') { $('.results-lang').show(); } else if(val == 'mol') { $('.results-lang').hide(); $('.results-lang-mol').show() } else { $('.results-lang').hide(); $('#results-lang-' + val).show() }">
+                    <option selected="1" value="mol">MOL languages</option>
+                    <option value="all">All</option>
                     {% for language in lookup_results_languages %}
                     <option value="{{language}}">{{lookup_results_language_names[language]}}</option>
                     {% endfor %}
@@ -106,7 +137,7 @@ table.search_results tr:nth-child(even) {
 -->
 
                     {% for language in lookup_results_languages %}
-                        <div class="results-lang" id="results-lang-{{language}}">
+                        <div class="results-lang{% if language in language_names_list %} results-lang-mol{% endif %}" id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}>
                         <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: {{ lookup_results[language][0].cmname }}</h3>
                         <ul>
                             {% for result in lookup_results[language] %}
@@ -115,12 +146,21 @@ table.search_results tr:nth-child(even) {
                                         {% if loop.first %}<strong>{% endif %}
                                         <a class="nohistory" href="#" onclick="$('.display_name').show(); $('.edit_name').hide(); $('#display_name_{{language}}_{{loop.index}}').hide(); $('#edit_name_{{language}}_{{loop.index}}').show(); $('#edit_name_{{language}}_{{loop.index}} input:first').focus(); return false">{{ result.cmname }}</a>
                                         {% if loop.first %}</strong>{% endif %}
+                                        {% if result.max_source_priority > 80 %}
+                                            <strong>(This name cannot be overridden! Please contact an administrator to edit it)</strong>
+                                        {% endif %}
+                                        <ul>
+                                            {% for source in result.sources %}
+                                                <li><span style="font: 80% small-caps">{{ source }}</span></li>
+                                            {% endfor %}
+                                        </ul>
                                     </div>
                                     <div class="edit_name" id="edit_name_{{language}}_{{loop.index}}" style="display: none">
                                         <form method="post" action="/add/name">
                                             <input name="name_to_add" value="{{result.cmname}}" size=40>
                                             <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.source}}">
      
+                                            <input type="hidden" name="dataset" value="{{dataset_filter}}">
                                             <input type="hidden" name="search" value="{{current_search}}">
                                             <input type="hidden" name="lookup" value="{{lookup_search}}">
                                             <input type="hidden" name="lang" value="{{language}}">
@@ -137,6 +177,7 @@ table.search_results tr:nth-child(even) {
                                         <input name="name_to_add" id="name_to_add_{{language}}">
                                         <input name="source" size=50 value="Source">
                                         <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                                        <input type="hidden" name="dataset" value="{{dataset_filter}}">
                                         <input type="hidden" name="search" value="{{current_search}}">
                                         <input type="hidden" name="lookup" value="{{lookup_search}}">
                                         <input type="hidden" name="lang" value="{{language}}">
@@ -153,6 +194,7 @@ table.search_results tr:nth-child(even) {
                             Name: <input name="name_to_add" id="name_to_add_completely-new">
                             Source: <input name="source" size=50 value="Source">
                             <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                            <input type="hidden" name="dataset" value="{{dataset_filter}}">
                             <input type="hidden" name="search" value="{{current_search}}">
                             <input type="hidden" name="lookup" value="{{lookup_search}}">
                         </form>

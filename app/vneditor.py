@@ -96,6 +96,23 @@ class MainPage(BaseHandler):
             search_results = vnapi.searchForName(current_search)
             search_results_scnames = sorted(search_results.keys())
 
+        # Check for dataset_filter
+        dataset_filter = self.request.get('dataset')
+        if dataset_filter != '':
+            if current_search != '':
+                # If there is a search, filter it using dataset_filter.
+                search_results_scnames = filter(
+                    lambda scname: vnapi.datasetContainsName(dataset_filter, scname),
+                    search_results_scnames
+                )
+            else:
+                # If not, search by dataset.
+                search_results_scnames = vnapi.getNamesInDataset(dataset_filter)
+
+                search_results = dict()
+                for scname in search_results_scnames:
+                    search_results[scname] = []
+
         # Do the lookup
         lookup_search = self.request.get('lookup')
         lookup_results = {}
@@ -103,6 +120,7 @@ class MainPage(BaseHandler):
             lookup_results = vnapi.getVernacularNames(lookup_search)
 
         lookup_results_lang_names = dict()
+        language_names_list = ['en', 'es', 'pt', 'de', 'fr', 'zh']
         language_names = {
             'en': u'English',
             'es': u'Spanish (Español)',
@@ -118,8 +136,21 @@ class MainPage(BaseHandler):
             else:
                 lookup_results_lang_names[lang] = lang
 
+        # Calculate dataset coverage stats
+        datasets = vnapi.getDatasets()
+        datasets_coverage = {}
+        for dataset in datasets:
+            dname = dataset['dataset']
+
+            datasets_coverage[dname] = dict()
+            for lang in language_names:
+                datasets_coverage[dname][lang] = vnapi.getDatasetCoverage(dname, lang)
+
         self.render_template('main.html', {
             'message': self.request.get('msg'),
+            'datasets': datasets,
+            'datasets_coverage': datasets_coverage,
+            'dataset_filter': dataset_filter,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
@@ -131,6 +162,8 @@ class MainPage(BaseHandler):
             'lookup_results': lookup_results,
             'lookup_results_languages': sorted(lookup_results.keys()),
             'lookup_results_language_names': lookup_results_lang_names,
+            'language_names': language_names,
+            'language_names_list': language_names_list,
             'vneditor_version': version.VNEDITOR_VERSION
         })
 

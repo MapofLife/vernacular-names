@@ -41,17 +41,16 @@ def sortNames(rows):
 
         result_table[lang].append(dict(
             cmname = row['cmname'],
-            source = row['source'],
-            source_priority = int(row['source_priority'])
+            sources = row['sources'],
+            max_updated_at = row['max_updated_at'],
+            max_source_priority = int(row['max_source_priority'])
         ))
 
     return result_table 
 
 def getVernacularNames(name):
     # TODO: sanitize input                                                  
-    # TODO: sort this by updated_at, so we get consistent order AND
-    # the most recent of two equally-scoring priorities rise to the top.
-    sql = "SELECT DISTINCT lang, cmname, source, source_priority FROM %s WHERE LOWER(scname) = %s ORDER BY source_priority DESC"
+    sql = "SELECT lang, cmname, array_agg(source) AS sources, max(source_priority) AS max_source_priority, max(updated_at) AS max_updated_at FROM %s WHERE LOWER(scname) = %s GROUP BY lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
     response = url_get(access.CDB_URL % urllib.urlencode(
         dict(q = sql % (access.ALL_NAMES_TABLE, encode_b64_for_psql(name.lower())))
     ))
@@ -61,6 +60,53 @@ def getVernacularNames(name):
 
     results = json.loads(response.content)                                  
     return sortNames(results['rows'])
+
+def getDatasets():
+    # TODO: sanitize input
+    sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
+    response = url_get(access.CDB_URL % urllib.urlencode(
+        dict(q = sql % (access.MASTER_LIST))
+    ))
+
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
+
+    results = json.loads(response.content)
+
+    return results['rows']
+
+def getDatasetCoverage(dname, lang):
+    return 101
+
+def getNamesInDataset(dataset):
+    # TODO: sanitize input
+    sql = "SELECT scientificname FROM %s WHERE dataset=%s ORDER BY lower(scientificname) ASC"
+    response = url_get(access.CDB_URL % urllib.urlencode(
+        dict(q = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset)))
+    ))
+
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
+
+    results = json.loads(response.content)
+    scnames = map(lambda x: x['scientificname'], results['rows'])
+
+    return scnames
+
+# Check if a dataset contains name. It caches the entire list
+# of names in that dataset to make its job easier.
+def datasetContainsName(dataset, scname):
+    if dataset not in datasetContainsName.cache:
+        datasetContainsName.cache[dataset] = dict()
+        for scname in getNamesInDataset(dataset):
+            datasetContainsName.cache[dataset][scname.lower()] = 1
+
+    result = (scname.lower() in datasetContainsName.cache[dataset])
+
+    return result
+
+# Initialize cache
+datasetContainsName.cache = dict()
 
 def searchForName(name):
     # TODO: sanitize input                                                  
