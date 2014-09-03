@@ -17,6 +17,9 @@ import version
 # Our libraries
 import vnapi
 
+# Set up URLfetch settings
+urlfetch.set_default_fetch_deadline(60)
+
 # Check whether we're in production (PROD = True) or not.
 if 'SERVER_SOFTWARE' in os.environ:
     PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
@@ -260,6 +263,8 @@ class GenerateTaxonomyTranslations(BaseHandler):
             )
         ))
 
+        # TODO: Check for success.
+
         # Prepare to write out error messages.
         self.response.headers['Content-Type'] = 'text/html'
         self.response.out.write("<html>")
@@ -268,12 +273,33 @@ class GenerateTaxonomyTranslations(BaseHandler):
             self.response.out.write("<h2>Error: server returned error " + response.status_code + ": " + response.content + "</h2></html>")
             return
 
-        # Step 3. Start inserting the names back in with all the other information.
+        # Code to submit bulk SQL to CartoDB.
         failed_additions = []
         failed_additions_errors = []
+        def submit_bulk_sql(sql_query):
+            response = urlfetch.fetch(access.CDB_URL,
+                payload = urllib.urlencode(
+                    dict(
+                        q = sql_query,
+                        api_key = access.CARTODB_API_KEY
+                    )
+                ),
+                method = urlfetch.POST,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            )
+
+            if response.status_code != 200:
+                failed_additions += scientificname
+                failed_additions_errors += "Error: server returned error " + response.status_code + ": " + response.content
+                self.response.out.write("<h2>ERROR: " + response.content + "</h2>")
+                return
+
+        # Step 3. Start inserting the names back in with all the other information.
         end_at = 10000
+        submit_bulk_at = 50
 
         self.response.out.write("<ol>")
+        bulk_sql = ""
         row = 0
         for name in sorted(names):
             row += 1
@@ -322,7 +348,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 tax_class = clean_agg(result['agg_class'])
 
             # Insert into TAXONOMY_TRANSLATIONS_TEMP
-            sql = "INSERT INTO %s (scientificname, tax_class, tax_order, tax_family) VALUES (%s, %s, %s, %s);"
+            sql = "INSERT INTO %s (scientificname, tax_class, tax_order, tax_family) VALUES (%s, %s, %s, %s); "
             sql_query = sql % (
                 access.TAXONOMY_TRANSLATIONS_TEMP,
                 vnapi.encode_b64_for_psql(scientificname),
@@ -330,20 +356,11 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 vnapi.encode_b64_for_psql("|".join(tax_order)),
                 vnapi.encode_b64_for_psql("|".join(tax_family))
             )
+            bulk_sql += sql_query
 
-            # Make it so.
-            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
-                dict(
-                    q = sql_query,
-                    api_key = access.CARTODB_API_KEY
-                )
-            ))
-
-            if response.status_code != 200:
-                failed_additions += scientificname
-                failed_additions_errors += "Error: server returned error " + response.status_code + ": " + response.content
-                self.response.out.write("<h2>ERROR: " + response.content)
-                return
+            if row % submit_bulk_at == 0:
+                submit_bulk_sql(bulk_sql)
+                bulk_sql = ""
 
             self.response.out.write("<li><em>%s</em> (%s, %s, %s)" % (
                 scientificname,
@@ -351,6 +368,9 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 ", ".join(tax_order),
                 ", ".join(tax_class)
             ))
+
+        if bulk_sql != "":
+            submit_bulk_sql(bulk_sql)
 
         self.response.out.write("</html>")
 
