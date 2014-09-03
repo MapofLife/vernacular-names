@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8 :
 
-from google.appengine.api import users, urlfetch
+from google.appengine.api import users, urlfetch, taskqueue
 
 import base64
 import os
@@ -230,9 +230,134 @@ class AddNameHandler(BaseHandler):
             lookup = lookup
         )) + "#lang-" + lang)
 
+class GenerateTaxonomyTranslations(BaseHandler):
+    # For debugging purposes
+    def get(self):
+        return self.post()
+
+    # Task! Should be run on the 'generate-taxonomy-translations'
+    def post(self): 
+        # We have no parameters. We just generate.
+        # Fail without login.
+        current_user = self.check_user()
+        
+        # Step 1. Obtain a list of every species name we need to generate.
+        datasets = vnapi.getDatasets()
+        names = set()
+        for dataset in datasets:
+            names.update(vnapi.getNamesInDataset(dataset['dataset']))
+
+        # Step 2. Delete everything in the dataset.
+        sql = "DELETE FROM %s;"
+        sql_query = sql % (
+            access.TAXONOMY_TRANSLATIONS_TEMP
+        )
+
+        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+            dict(
+                q = sql_query,
+                api_key = access.CARTODB_API_KEY
+            )
+        ))
+
+        # Prepare to write out error messages.
+        self.response.headers['Content-Type'] = 'text/html'
+        self.response.out.write("<html>")
+
+        if response.status_code != 200:
+            self.response.out.write("<h2>Error: server returned error " + response.status_code + ": " + response.content + "</h2></html>")
+            return
+
+        # Step 3. Start inserting the names back in with all the other information.
+        failed_additions = []
+        failed_additions_errors = []
+        end_at = 10000
+
+        self.response.out.write("<ol>")
+        row = 0
+        for name in sorted(names):
+            row += 1
+
+            if row > end_at:
+                break
+
+            scientificname = name
+            mol_source = "no longer in use" # TODO
+
+            tax_family = ""
+            tax_order = ""
+            tax_class = ""
+    
+            # Get the family, class, order.
+            sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family FROM vernacular_names WHERE binomial=%s GROUP BY binomial"
+            sql_query = sql % (
+                vnapi.encode_b64_for_psql(scientificname)
+            )
+
+            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+                dict(
+                    q = sql_query
+                )
+            ))
+ 
+            if response.status_code != 200:
+                self.response.out.write("<h2>Error during lookup of '" + scientificname  + "': server returned error " + response.status_code + ": " + response.content + "</h2></html>")
+                return
+                
+            results = json.loads(response.content)
+
+            if len(results['rows']) > 1:
+                self.response.out.write("<h2>Error during lookup of '" + scientificname + "': server returned more than one row: <pre>" + str(results) + "</pre></h2>")
+                return
+
+            def clean_agg(list):
+                # This was already lowercased by the SQL
+                no_blanks = filter(lambda x: x is not None and x != '', list)
+                return set(no_blanks)
+
+            if len(results['rows']) > 0:
+                result = results['rows'][0]
+                tax_family = clean_agg(result['agg_family'])
+                tax_order = clean_agg(result['agg_order'])
+                tax_class = clean_agg(result['agg_class'])
+
+            # Insert into TAXONOMY_TRANSLATIONS_TEMP
+            sql = "INSERT INTO %s (scientificname, tax_class, tax_order, tax_family) VALUES (%s, %s, %s, %s);"
+            sql_query = sql % (
+                access.TAXONOMY_TRANSLATIONS_TEMP,
+                vnapi.encode_b64_for_psql(scientificname),
+                vnapi.encode_b64_for_psql("|".join(tax_class)),
+                vnapi.encode_b64_for_psql("|".join(tax_order)),
+                vnapi.encode_b64_for_psql("|".join(tax_family))
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+                dict(
+                    q = sql_query,
+                    api_key = access.CARTODB_API_KEY
+                )
+            ))
+
+            if response.status_code != 200:
+                failed_additions += scientificname
+                failed_additions_errors += "Error: server returned error " + response.status_code + ": " + response.content
+                self.response.out.write("<h2>ERROR: " + response.content)
+                return
+
+            self.response.out.write("<li><em>%s</em> (%s, %s, %s)" % (
+                scientificname,
+                ", ".join(tax_family),
+                ", ".join(tax_order),
+                ", ".join(tax_class)
+            ))
+
+        self.response.out.write("</html>")
+
 application = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/index.html', MainPage),
     ('/add/name', AddNameHandler),
-    ('/page/private', StaticPages)
+    ('/page/private', StaticPages),
+    ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)
