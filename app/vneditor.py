@@ -250,56 +250,12 @@ class GenerateTaxonomyTranslations(BaseHandler):
         for dataset in datasets:
             names.update(vnapi.getNamesInDataset(dataset['dataset']))
 
-        # Step 2. Delete everything in the dataset.
-        sql = "DELETE FROM %s;"
-        sql_query = sql % (
-            access.TAXONOMY_TRANSLATIONS_TEMP
-        )
+        # Prepare to write out CSV.
+        self.response.headers['Content-Type'] = 'text/plain'
 
-        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
-            dict(
-                q = sql_query,
-                api_key = access.CARTODB_API_KEY
-            )
-        ))
+        self.response.out.write("scientificname,mol_source,tax_family,tax_order,tax_class\n")
 
-        # TODO: Check for success.
-
-        # Prepare to write out error messages.
-        self.response.headers['Content-Type'] = 'text/html'
-        self.response.out.write("<html>")
-
-        if response.status_code != 200:
-            self.response.out.write("<h2>Error: server returned error " + response.status_code + ": " + response.content + "</h2></html>")
-            return
-
-        # Code to submit bulk SQL to CartoDB.
-        failed_additions = []
-        failed_additions_errors = []
-        def submit_bulk_sql(sql_query):
-            response = urlfetch.fetch(access.CDB_URL,
-                payload = urllib.urlencode(
-                    dict(
-                        q = sql_query,
-                        api_key = access.CARTODB_API_KEY
-                    )
-                ),
-                method = urlfetch.POST,
-                headers={'Content-Type': 'application/x-www-form-urlencoded'}
-            )
-
-            if response.status_code != 200:
-                failed_additions += scientificname
-                failed_additions_errors += "Error: server returned error " + response.status_code + ": " + response.content
-                self.response.out.write("<h2>ERROR: " + response.content + "</h2>")
-                return
-
-        # Step 3. Start inserting the names back in with all the other information.
-        end_at = 10000
-        submit_bulk_at = 50
-
-        self.response.out.write("<ol>")
-        bulk_sql = ""
+        end_at = 1000
         row = 0
         for name in sorted(names):
             row += 1
@@ -347,32 +303,14 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 tax_order = clean_agg(result['agg_order'])
                 tax_class = clean_agg(result['agg_class'])
 
-            # Insert into TAXONOMY_TRANSLATIONS_TEMP
-            sql = "INSERT INTO %s (scientificname, tax_class, tax_order, tax_family) VALUES (%s, %s, %s, %s); "
-            sql_query = sql % (
-                access.TAXONOMY_TRANSLATIONS_TEMP,
-                vnapi.encode_b64_for_psql(scientificname),
-                vnapi.encode_b64_for_psql("|".join(tax_class)),
-                vnapi.encode_b64_for_psql("|".join(tax_order)),
-                vnapi.encode_b64_for_psql("|".join(tax_family))
+            # Write to CSV.
+            self.response.out.write(
+                scientificname + "," +
+                "|".join(tax_class) + "," + 
+                "|".join(tax_order) + "," +
+                "|".join(tax_family) +
+                "\n"
             )
-            bulk_sql += sql_query
-
-            if row % submit_bulk_at == 0:
-                submit_bulk_sql(bulk_sql)
-                bulk_sql = ""
-
-            self.response.out.write("<li><em>%s</em> (%s, %s, %s)" % (
-                scientificname,
-                ", ".join(tax_family),
-                ", ".join(tax_order),
-                ", ".join(tax_class)
-            ))
-
-        if bulk_sql != "":
-            submit_bulk_sql(bulk_sql)
-
-        self.response.out.write("</html>")
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
