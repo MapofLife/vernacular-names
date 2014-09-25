@@ -9,6 +9,7 @@ import jinja2
 import json
 import urllib
 import re
+import logging
 
 # Configuration
 import access
@@ -246,24 +247,30 @@ class GenerateTaxonomyTranslations(BaseHandler):
         
         # Step 1. Obtain a list of every species name we need to generate.
         datasets = vnapi.getDatasets()
-        names = set()
+        all_names = set()
         for dataset in datasets:
-            names.update(vnapi.getNamesInDataset(dataset['dataset']))
+            all_names.update(vnapi.getNamesInDataset(dataset['dataset']))
 
         # Prepare to write out CSV.
         self.response.headers['Content-Type'] = 'text/plain'
 
         self.response.out.write("scientificname,mol_source,tax_family,tax_order,tax_class\n")
 
-        end_at = 1000
+        # From http://stackoverflow.com/a/312464/27310
+        def chunks(items, size):
+            for i in xrange(0, len(items), size):
+                yield items[i:i+size]
+
+        # end_at = 100000
         row = 0
-        for name in sorted(names):
-            row += 1
+        for names in chunks(sorted(all_names), 1000):
+            row += len(names)
 
-            if row > end_at:
-                break
+            logging.info("Downloaded %d rows of %d names." % (row, len(all_names)))
 
-            scientificname = name
+            #if row > end_at:
+            #    break
+
             mol_source = "no longer in use" # TODO
 
             tax_family = ""
@@ -271,26 +278,29 @@ class GenerateTaxonomyTranslations(BaseHandler):
             tax_class = ""
     
             # Get the family, class, order.
-            sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family FROM vernacular_names WHERE binomial=%s GROUP BY binomial"
+            scientificname_list = ", ".join(map(lambda x: vnapi.encode_b64_for_psql(x), names))
+            sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family FROM vernacular_names WHERE binomial IN (%s) GROUP BY binomial"
             sql_query = sql % (
-                vnapi.encode_b64_for_psql(scientificname)
+                scientificname_list
             )
 
-            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
-                dict(
+            response = urlfetch.fetch(access.CDB_URL,
+                payload=urllib.urlencode(dict(
                     q = sql_query
-                )
-            ))
+                )),
+                method=urlfetch.POST,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            )
  
             if response.status_code != 200:
-                self.response.out.write("<h2>Error during lookup of '" + scientificname  + "': server returned error " + response.status_code + ": " + response.content + "</h2></html>")
+                self.response.out.write("<h2>Error during lookup of '" + ', '.join(names) + "': server returned error " + str(response.status_code) + ": " + str(response.content) + "</h2></html>")
                 return
                 
             results = json.loads(response.content)
 
-            if len(results['rows']) > 1:
-                self.response.out.write("<h2>Error during lookup of '" + scientificname + "': server returned more than one row: <pre>" + str(results) + "</pre></h2>")
-                return
+            #if len(results['rows']) > 1:
+            #    self.response.out.write("<h2>Error during lookup of '" + ', '.join(names) + "': server returned more than one row: <pre>" + str(results) + "</pre></h2>")
+            #    return
 
             def clean_agg(list):
                 # This was already lowercased by the SQL
@@ -305,7 +315,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
 
             # Write to CSV.
             self.response.out.write(
-                scientificname + "," +
+                ', '.join(names) + "," +
                 "|".join(tax_class) + "," + 
                 "|".join(tax_order) + "," +
                 "|".join(tax_family) +
