@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 :
 
 from google.appengine.api import users, urlfetch, taskqueue
+from google.appengine.api.mail import EmailMessage
 
 import base64
 import os
@@ -236,15 +237,17 @@ class AddNameHandler(BaseHandler):
         )) + "#lang-" + lang)
 
 class GenerateTaxonomyTranslations(BaseHandler):
-    # For debugging purposes
+    # Activates the 
     def get(self):
-        return self.post()
+        taskqueue.add(url='/generate/taxonomy_translations', queue_name='generate-taxonomy-translations', method='POST')
 
     # Task! Should be run on the 'generate-taxonomy-translations'
     def post(self): 
         # We have no parameters. We just generate.
         # Fail without login.
         current_user = self.check_user()
+
+        response = ""
         
         # Step 1. Obtain a list of every species name we need to generate.
         datasets = vnapi.getDatasets()
@@ -253,12 +256,10 @@ class GenerateTaxonomyTranslations(BaseHandler):
             all_names.update(vnapi.getNamesInDataset(dataset['dataset']))
 
         # Prepare to write out CSV.
-        self.response.headers['Content-Type'] = 'text/plain'
-
-        self.response.out.write("scientificname\ttax_family\ttax_order\ttax_class\t")
+        response += "scientificname\ttax_family\ttax_order\ttax_class\t"
         for lang in language_names_list:
-            self.response.out.write(lang + "\t" + lang + "_source\t")
-        self.response.out.write("empty\n")
+            response += lang + "\t" + lang + "_source\t"
+        response += "empty\n"
 
         # From http://stackoverflow.com/a/312464/27310
         def chunks(items, size):
@@ -289,7 +290,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 scientificname_list
             )
 
-            response = urlfetch.fetch(access.CDB_URL,
+            urlresponse = urlfetch.fetch(access.CDB_URL,
                 payload=urllib.urlencode(dict(
                     q = sql_query
                 )),
@@ -297,11 +298,12 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 headers={'Content-Type': 'application/x-www-form-urlencoded'}
             )
  
-            if response.status_code != 200:
+            if urlresponse.status_code != 200:
+                self.response.set_status(500)
                 self.response.out.write("<h2>Error during lookup of '" + ', '.join(names) + "': server returned error " + str(response.status_code) + ": " + str(response.content) + "</h2></html>")
                 return
                 
-            results = json.loads(response.content)
+            results = json.loads(urlresponse.content)
             rows_by_name = vnapi.groupBy(results['rows'], 'binomial')
 
             #if len(results['rows']) > 1:
@@ -317,25 +319,24 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 results = rows_by_name[name]
                 sorted_names = vnapi.sortNames(results)
 
-                self.response.out.write(
-                    name + "\t" +
-                    "|".join(tax_class) + "\t" + 
-                    "|".join(tax_order) + "\t" +
-                    "|".join(tax_family) + "\t"
-                )
+                response += name + "\t" + "|".join(tax_class) + "\t" + "|".join(tax_order) + "\t" + "|".join(tax_family) + "\t"
 
                 for lang in language_names_list:
                     if lang in sorted_names:
-                        self.response.out.write(
-                            sorted_names[lang][0]['cmname'] + "\t" +
-                            "|".join(clean_agg(sorted_names[lang][0]['sources'])) + "\t"
-                        )
+                        response += sorted_names[lang][0]['cmname'] + "\t" + "|".join(clean_agg(sorted_names[lang][0]['sources'])) + "\t"
                     else:
-                        self.response.out.write(
-                            "\t\t"
-                        )
+                        response += "\t\t"
 
-                self.response.out.write("\n")
+                response += "\n"
+
+        # E-mail the response to someone.
+        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS, subject = 'generate-taxonomy-translations response',
+            body = 'Look! A file!',
+            attachments = [ ('response.tsv', response) ])
+        email.send()
+
+        self.response.set_status(200)
+        self.response.out.write("OK")
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
