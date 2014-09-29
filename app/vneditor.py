@@ -21,6 +21,17 @@ import vnapi
 # Set up URLfetch settings
 urlfetch.set_default_fetch_deadline(60)
 
+# Constants.
+language_names_list = ['en', 'es', 'pt', 'de', 'fr', 'zh']
+language_names = {
+    'en': u'English',
+    'es': u'Spanish (Español)',
+    'pt': u'Portuguese (Português)',
+    'de': u'German (Deutsch)',
+    'fr': u'French (le Français)',
+    'zh': u'Chinese (中文)'
+}
+
 # Check whether we're in production (PROD = True) or not.
 if 'SERVER_SOFTWARE' in os.environ:
     PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
@@ -124,16 +135,6 @@ class MainPage(BaseHandler):
             lookup_results = vnapi.getVernacularNames(lookup_search)
 
         lookup_results_lang_names = dict()
-        language_names_list = ['en', 'es', 'pt', 'de', 'fr', 'zh']
-        language_names = {
-            'en': u'English',
-            'es': u'Spanish (Español)',
-            'pt': u'Portuguese (Português)',
-            'de': u'German (Deutsch)',
-            'fr': u'French (le Français)',
-            'zh': u'Chinese (中文)'
-        }
-
         for lang in lookup_results:
             if lang in language_names:
                 lookup_results_lang_names[lang] = language_names[lang]
@@ -254,7 +255,10 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Prepare to write out CSV.
         self.response.headers['Content-Type'] = 'text/plain'
 
-        self.response.out.write("scientificname,mol_source,tax_family,tax_order,tax_class\n")
+        self.response.out.write("scientificname\ttax_family\ttax_order\ttax_class\t")
+        for lang in language_names_list:
+            self.response.out.write(lang + "\t" + lang + "_source\t")
+        self.response.out.write("empty\n")
 
         # From http://stackoverflow.com/a/312464/27310
         def chunks(items, size):
@@ -279,8 +283,9 @@ class GenerateTaxonomyTranslations(BaseHandler):
     
             # Get the family, class, order.
             scientificname_list = ", ".join(map(lambda x: vnapi.encode_b64_for_psql(x), names))
-            sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family FROM vernacular_names WHERE binomial IN (%s) GROUP BY binomial"
+            sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family, lang, cmname, array_agg(source) AS sources, array_agg(url) AS urls, MAX(updated_at) AS max_updated_at, MAX(source_priority) AS max_source_priority FROM %s WHERE binomial IN (%s) GROUP BY binomial, lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
             sql_query = sql % (
+                access.ALL_NAMES_TABLE,
                 scientificname_list
             )
 
@@ -297,6 +302,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 return
                 
             results = json.loads(response.content)
+            rows_by_name = vnapi.groupBy(results['rows'], 'binomial')
 
             #if len(results['rows']) > 1:
             #    self.response.out.write("<h2>Error during lookup of '" + ', '.join(names) + "': server returned more than one row: <pre>" + str(results) + "</pre></h2>")
@@ -307,20 +313,29 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 no_blanks = filter(lambda x: x is not None and x != '', list)
                 return set(no_blanks)
 
-            if len(results['rows']) > 0:
-                result = results['rows'][0]
-                tax_family = clean_agg(result['agg_family'])
-                tax_order = clean_agg(result['agg_order'])
-                tax_class = clean_agg(result['agg_class'])
+            for name in rows_by_name:
+                results = rows_by_name[name]
+                sorted_names = vnapi.sortNames(results)
 
-            # Write to CSV.
-            self.response.out.write(
-                ', '.join(names) + "," +
-                "|".join(tax_class) + "," + 
-                "|".join(tax_order) + "," +
-                "|".join(tax_family) +
-                "\n"
-            )
+                self.response.out.write(
+                    name + "\t" +
+                    "|".join(tax_class) + "\t" + 
+                    "|".join(tax_order) + "\t" +
+                    "|".join(tax_family) + "\t"
+                )
+
+                for lang in language_names_list:
+                    if lang in sorted_names:
+                        self.response.out.write(
+                            sorted_names[lang][0]['cmname'] + "\t" +
+                            "|".join(clean_agg(sorted_names[lang][0]['sources'])) + "\t"
+                        )
+                    else:
+                        self.response.out.write(
+                            "\t\t"
+                        )
+
+                self.response.out.write("\n")
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),

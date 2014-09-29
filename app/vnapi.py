@@ -5,6 +5,7 @@
 # on CartoDB.
 
 from google.appengine.api import urlfetch
+from operator import itemgetter
 
 import base64
 import json
@@ -21,32 +22,53 @@ def url_get(url):
     return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
 
 def encode_b64_for_psql(text):
-    return decode_b64_on_psql(base64.b64encode(text))
+    return decode_b64_on_psql(base64.b64encode(text.encode('UTF-8')))
 
 def decode_b64_on_psql(text):                                         
-    base64_only = re.compile(r"^[a-zA-Z0-9=]*$")                            
+    base64_only = re.compile(r"^[a-zA-Z0-9=]*$")
     if not base64_only.match(text):                                         
         raise RuntimeError("Error: '" + text + "' sent to decode_b64_on_psql is not base64!")
 
     return "convert_from(decode('" + text + "', 'base64'), 'utf-8')"        
 
 def sortNames(rows):
-    result_table = dict()                                                   
+    result_table = dict()
         
     for row in rows:                                             
         lang = row['lang']                                                  
 
+        # TODO: see if we can move this to SQL.
+        sources = set(filter(lambda x: x is not None and x != '', row['sources']))
+
         if not lang in result_table:                                        
             result_table[lang] = []
 
+
         result_table[lang].append(dict(
             cmname = row['cmname'],
-            sources = row['sources'],
+            sources = sources,
+            source_count = len(sources),
             max_updated_at = row['max_updated_at'],
             max_source_priority = int(row['max_source_priority'])
         ))
 
+    for lang in result_table:
+        result_table[lang].sort(key=itemgetter('source_count'), reverse=True)
+
     return result_table 
+
+def groupBy(rows, colName):
+    result_table = dict()
+
+    for row in rows:
+        val = row[colName]
+
+        if not val in result_table:
+            result_table[val] = []
+
+        result_table[val].append(row)
+
+    return result_table
 
 def getVernacularNames(name):
     # TODO: sanitize input                                                  
