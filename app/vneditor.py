@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8 :
 
-from google.appengine.api import users, urlfetch, taskqueue
+from google.appengine.api import users, urlfetch, taskqueue, app_identity
 from google.appengine.api.mail import EmailMessage
 
 import base64
@@ -237,7 +237,7 @@ class AddNameHandler(BaseHandler):
         )) + "#lang-" + lang)
 
 class GenerateTaxonomyTranslations(BaseHandler):
-    # Activates the 
+    # Activates the taxonomy_translations taskqueue task.
     def get(self):
         taskqueue.add(url='/generate/taxonomy_translations', queue_name='generate-taxonomy-translations', method='POST')
 
@@ -260,6 +260,40 @@ class GenerateTaxonomyTranslations(BaseHandler):
         for lang in language_names_list:
             response += lang + "\t" + lang + "_source\t"
         response += "empty\n"
+
+        ListViewHandler.iterateOver(all_names, lambda name, sorted_names:
+            response += scname + "\t\t\t\t";
+
+            for lang in language_names_list:
+                if 'lang_' + lang in sorted_names:
+                    vname = sorted_names['lang_' + lang]['vernacularname']
+                    sources = sorted_names['lang_' + lang]['sources']
+
+                    response += vname + "\t" + "|".join(sources) + "\t"
+                else:
+                    response += "\t\t"
+
+            response += "\n"
+        )
+
+        # E-mail the response to someone.
+        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS, subject = 'generate-taxonomy-translations response',
+            body = 'Look! A file!',
+            attachments = [ ('response.tsv', response) ])
+        email.send()
+
+        self.response.set_status(200)
+        self.response.out.write("OK")
+
+# Display a section of the Big List as a table.
+class ListViewHandler(BaseHandler):
+    # Display
+    def get(self):
+        taskqueue.add(url='/generate/taxonomy_translations', queue_name='generate-taxonomy-translations', method='POST')
+
+    # Generate a list of accepted vernacular names for a list of scientific names.
+    @staticmethod
+    def iterateOver(all_names, fn_name_iterate):
 
         # From http://stackoverflow.com/a/312464/27310
         def chunks(items, size):
@@ -322,26 +356,13 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 response += name + "\t" + "|".join(tax_class) + "\t" + "|".join(tax_order) + "\t" + "|".join(tax_family) + "\t"
 
                 for lang in language_names_list:
-                    if lang in sorted_names:
-                        response += sorted_names[lang][0]['cmname'] + "\t" + "|".join(clean_agg(sorted_names[lang][0]['sources'])) + "\t"
-                    else:
-                        response += "\t\t"
-
-                response += "\n"
-
-        # E-mail the response to someone.
-        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS, subject = 'generate-taxonomy-translations response',
-            body = 'Look! A file!',
-            attachments = [ ('response.tsv', response) ])
-        email.send()
-
-        self.response.set_status(200)
-        self.response.out.write("OK")
+                    fn_name_iterate(name, sorted_names[lang])
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/index.html', MainPage),
     ('/add/name', AddNameHandler),
     ('/page/private', StaticPages),
+    ('/list', ListViewHandler),
     ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)
