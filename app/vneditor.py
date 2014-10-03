@@ -11,6 +11,7 @@ import json
 import urllib
 import re
 import logging
+import random
 
 # Configuration
 import access
@@ -249,32 +250,26 @@ class GenerateTaxonomyTranslations(BaseHandler):
 
         response = ""
         
-        # Step 1. Obtain a list of every species name we need to generate.
-        datasets = vnapi.getDatasets()
-        all_names = set()
-        for dataset in datasets:
-            all_names.update(vnapi.getNamesInDataset(dataset['dataset']))
-
         # Prepare to write out CSV.
         response += "scientificname\ttax_family\ttax_order\ttax_class\t"
         for lang in language_names_list:
             response += lang + "\t" + lang + "_source\t"
         response += "empty\n"
 
-        ListViewHandler.iterateOver(all_names, lambda name, sorted_names:
-            response += scname + "\t\t\t\t";
+        def add_name(name, sorted_names):
+            response += name + "\t\t\t\t";
 
             for lang in language_names_list:
-                if 'lang_' + lang in sorted_names:
-                    vname = sorted_names['lang_' + lang]['vernacularname']
-                    sources = sorted_names['lang_' + lang]['sources']
+                if lang in sorted_names:
+                    vname = sorted_names[lang]['vernacularname']
+                    sources = sorted_names[lang]['sources']
 
                     response += vname + "\t" + "|".join(sources) + "\t"
                 else:
                     response += "\t\t"
 
             response += "\n"
-        )
+        ListViewHandler.iterateOverAll(add_name)
 
         # E-mail the response to someone.
         email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS, subject = 'generate-taxonomy-translations response',
@@ -289,11 +284,60 @@ class GenerateTaxonomyTranslations(BaseHandler):
 class ListViewHandler(BaseHandler):
     # Display
     def get(self):
-        taskqueue.add(url='/generate/taxonomy_translations', queue_name='generate-taxonomy-translations', method='POST')
+        self.response.headers['Content-type'] = 'text/html'
+
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        search_criteria = "Listing all names alphabetically"
+
+        name_list = ListViewHandler.getNames(0, -1, lambda name: random.randint(1, 21000) <= 250)
+
+        self.render_template('list.html', {
+            'vneditor_version': version.VNEDITOR_VERSION,
+            'user_url': user_url,
+            'search_criteria': search_criteria,
+            'name_list': name_list,
+            'language_names_list': language_names_list,
+            'language_names': language_names
+        }) 
 
     # Generate a list of accepted vernacular names for a list of scientific names.
     @staticmethod
-    def iterateOver(all_names, fn_name_iterate):
+    def getNames(name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
+        results = dict()
+
+        def addToDict(name, sorted_names):
+            if name in results:
+                raise RuntimeError("Duplicate name in getNames")
+
+            results[name] = sorted_names
+
+        ListViewHandler.iterateOver(addToDict, name_from, name_size, fn_name_filter)
+
+        return results
+
+    # Iterate over names for a particular list.
+    @staticmethod
+    def iterateOver(fn_name_iterate, name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
+        # Step 1. Obtain a list of every species name we need to generate.
+        datasets = vnapi.getDatasets()
+        all_names = set()
+        for dataset in datasets:
+            all_names.update(vnapi.getNamesInDataset(dataset['dataset']))
+
+        # Filter names as instructed
+        all_names = filter(fn_name_filter, sorted(all_names))
+
+        # Limit names as instructed
+        if name_size != -1:
+            all_names = all_names[name_from:name_from + name_size + 1]
+        else:
+            all_names = all_names[name_from:]
+
+        # Reassert set-ness.
+        all_names = set(all_names)
 
         # From http://stackoverflow.com/a/312464/27310
         def chunks(items, size):
@@ -351,12 +395,21 @@ class ListViewHandler(BaseHandler):
 
             for name in rows_by_name:
                 results = rows_by_name[name]
-                sorted_names = vnapi.sortNames(results)
+                sorted_results = vnapi.sortNames(results)
+                best_names = dict()
 
-                response += name + "\t" + "|".join(tax_class) + "\t" + "|".join(tax_order) + "\t" + "|".join(tax_family) + "\t"
+                for lang in sorted_results:
+                    lang_results = sorted_results[lang]
 
-                for lang in language_names_list:
-                    fn_name_iterate(name, sorted_names[lang])
+                    if len(lang_results) == 0:
+                        continue
+
+                    best_names[lang] = {
+                        'vernacularname': lang_results[0]['cmname'],
+                        'sources': lang_results[0]['sources']
+                    }
+
+                fn_name_iterate(name, best_names)
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
