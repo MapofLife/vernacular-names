@@ -290,9 +290,13 @@ class ListViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
-        search_criteria = "Listing all names alphabetically"
+        # List iucn_amphibian and iucn_reptiles
+        search_criteria = "Listing iucn_amphibian and iucn_reptiles"
 
-        name_list = ListViewHandler.getNames(0, -1, lambda name: random.randint(1, 21000) <= 250)
+        iucn_reptile_names = set(vnapi.getNamesInDataset('iucn_reptiles'))
+        iucn_amphibian_names = set(vnapi.getNamesInDataset('iucn_amphibian'))
+
+        name_list = ListViewHandler.getNames(0, -1, lambda name: (name in iucn_reptile_names or name in iucn_amphibian_names) and random.randint(1, 8600) <= 250)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
