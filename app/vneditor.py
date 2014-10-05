@@ -137,6 +137,11 @@ class MainPage(BaseHandler):
         # Do the lookup
         lookup_search = self.request.get('lookup')
         lookup_results = {}
+
+        # During the initial search, automatically pick identical matches.
+        if lookup_search == '' and current_search != '':
+            lookup_search = current_search
+
         if lookup_search != '':
             lookup_results = vnapi.getVernacularNames(lookup_search)
 

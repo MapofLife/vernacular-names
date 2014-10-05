@@ -92,7 +92,7 @@ table.search_results tr:nth-child(even) {
             <form onsubmit="window.location.hash = ''">
             <input type="hidden" name="search" value="{{current_search}}">
             {% for scname in search_results_scnames %}
-                <tr class="{% if scname == lookup_search %}selected{% endif %}">
+                <tr class="{% if scname|lower == lookup_search|lower %}selected{% endif %}">
                     <!-- TODO: these should be URL encoded before being used in a link -->
                     <td><em>{{scname}}</em> <a style="float: right" href="?dataset={{dataset_filter}}&search={{current_search}}&lookup={{scname}}">View</a>
                     <div style="font-size: 90%; width: auto;">
