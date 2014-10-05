@@ -1,6 +1,8 @@
 # vim: set fileencoding=utf-8 :
 
-from google.appengine.api import users, urlfetch
+from google.appengine.api import users, urlfetch, taskqueue, app_identity
+from google.appengine.api.mail import EmailMessage
+from google.appengine.ext import blobstore
 
 import base64
 import os
@@ -9,6 +11,10 @@ import jinja2
 import json
 import urllib
 import re
+import logging
+import random
+import cStringIO
+import gzip
 
 # Configuration
 import access
@@ -16,6 +22,20 @@ import version
 
 # Our libraries
 import vnapi
+
+# Set up URLfetch settings
+urlfetch.set_default_fetch_deadline(60)
+
+# Constants.
+language_names_list = ['en', 'es', 'pt', 'de', 'fr', 'zh']
+language_names = {
+    'en': u'English',
+    'es': u'Spanish (Español)',
+    'pt': u'Portuguese (Português)',
+    'de': u'German (Deutsch)',
+    'fr': u'French (le Français)',
+    'zh': u'Chinese (中文)'
+}
 
 # Check whether we're in production (PROD = True) or not.
 if 'SERVER_SOFTWARE' in os.environ:
@@ -88,6 +108,7 @@ class MainPage(BaseHandler):
         current_search = self.request.get('search')
         if self.request.get('clear') != '':
             current_search = ''
+        current_search = current_search.strip()
 
         # Do the search.
         search_results = dict()
@@ -116,20 +137,15 @@ class MainPage(BaseHandler):
         # Do the lookup
         lookup_search = self.request.get('lookup')
         lookup_results = {}
+
+        # During the initial search, automatically pick identical matches.
+        if lookup_search == '' and current_search != '':
+            lookup_search = current_search
+
         if lookup_search != '':
             lookup_results = vnapi.getVernacularNames(lookup_search)
 
         lookup_results_lang_names = dict()
-        language_names_list = ['en', 'es', 'pt', 'de', 'fr', 'zh']
-        language_names = {
-            'en': u'English',
-            'es': u'Spanish (Español)',
-            'pt': u'Portuguese (Português)',
-            'de': u'German (Deutsch)',
-            'fr': u'French (le Français)',
-            'zh': u'Chinese (中文)'
-        }
-
         for lang in lookup_results:
             if lang in language_names:
                 lookup_results_lang_names[lang] = language_names[lang]
@@ -230,9 +246,206 @@ class AddNameHandler(BaseHandler):
             lookup = lookup
         )) + "#lang-" + lang)
 
+class GenerateTaxonomyTranslations(BaseHandler):
+    # Activates the taxonomy_translations taskqueue task.
+    def get(self):
+        task = taskqueue.add(url='/generate/taxonomy_translations', queue_name='generate-taxonomy-translations', method='POST')
+
+        self.response.set_status(200)
+        self.response.out.write("OK queued (" + task.name + ")")
+
+    # Task! Should be run on the 'generate-taxonomy-translations'
+    def post(self): 
+        # We have no parameters. We just generate.
+        # Fail without login.
+        current_user = self.check_user()
+
+        # Create file into gcs_bucket_name
+        fgz = cStringIO.StringIO()
+        csv_filename = "output.csv"
+        gzfile = gzip.GzipFile(filename=csv_filename, mode='wb', fileobj=fgz)
+        
+        # Prepare to write out CSV.
+        gzfile.write("scientificname\ttax_family\ttax_order\ttax_class\t")
+        for lang in language_names_list:
+            gzfile.write(lang + "\t" + lang + "_source\t")
+        gzfile.write("empty\n")
+
+        def add_name(name, higher_taxonomy, sorted_names):
+            gzfile.write(name + "\t" + 
+                "|".join(higher_taxonomy['family']) + "\t" +
+                "|".join(higher_taxonomy['order']) + "\t" +
+                "|".join(higher_taxonomy['class']) + "\t")
+
+            for lang in language_names_list:
+                if lang in sorted_names:
+                    vname = sorted_names[lang]['vernacularname']
+                    sources = sorted_names[lang]['sources']
+
+                    gzfile.write((vname + "\t" + "|".join(sources) + "\t").encode('utf-8'))
+                else:
+                    gzfile.write("\t\t")
+
+            gzfile.write("\n")
+        ListViewHandler.iterateOver(add_name)
+        gzfile.close()
+
+        # E-mail the response to someone.
+        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS, 
+            subject = 'generate-taxonomy-translations response',
+            body = 'Look! A file!',
+            attachments = (csv_filename + ".gzip", fgz.getvalue()))
+        email.send()
+
+        self.response.set_status(200)
+        self.response.out.write("OK")
+
+# Display a section of the Big List as a table.
+class ListViewHandler(BaseHandler):
+    # Display
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # List iucn_amphibian and iucn_reptiles
+        search_criteria = "Listing iucn_amphibian and iucn_reptiles"
+
+        iucn_reptile_names = set(vnapi.getNamesInDataset('iucn_reptiles'))
+        iucn_amphibian_names = set(vnapi.getNamesInDataset('iucn_amphibian'))
+
+        name_list = ListViewHandler.getNames(0, -1, lambda name: (name in iucn_reptile_names or name in iucn_amphibian_names) and random.randint(1, 8600) <= 250)
+
+        self.render_template('list.html', {
+            'vneditor_version': version.VNEDITOR_VERSION,
+            'user_url': user_url,
+            'search_criteria': search_criteria,
+            'name_list': name_list,
+            'language_names_list': language_names_list,
+            'language_names': language_names
+        }) 
+
+    # Generate a list of accepted vernacular names for a list of scientific names.
+    @staticmethod
+    def getNames(name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
+        results = dict()
+
+        def addToDict(name, higher_taxonomy, sorted_names):
+            if name in results:
+                raise RuntimeError("Duplicate name in getNames")
+
+            results[name] = sorted_names
+
+        ListViewHandler.iterateOver(addToDict, name_from, name_size, fn_name_filter)
+
+        return results
+
+    # Iterate over names for a particular list.
+    @staticmethod
+    def iterateOver(fn_name_iterate, name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
+        # Step 1. Obtain a list of every species name we need to generate.
+        datasets = vnapi.getDatasets()
+        all_names = set()
+        for dataset in datasets:
+            all_names.update(vnapi.getNamesInDataset(dataset['dataset']))
+
+        # Filter names as instructed
+        all_names = filter(fn_name_filter, sorted(all_names))
+
+        # Limit names as instructed
+        if name_size != -1:
+            all_names = all_names[name_from:name_from + name_size + 1]
+        else:
+            all_names = all_names[name_from:]
+
+        # Reassert set-ness.
+        all_names = set(all_names)
+
+        # From http://stackoverflow.com/a/312464/27310
+        def chunks(items, size):
+            for i in xrange(0, len(items), size):
+                yield items[i:i+size]
+
+        # end_at = 100000
+        row = 0
+        for names in chunks(sorted(all_names), 1000):
+            row += len(names)
+
+            logging.info("Downloaded %d rows of %d names." % (row, len(all_names)))
+
+            #if row > end_at:
+            #    break
+
+            mol_source = "no longer in use" # TODO
+
+            tax_family = ""
+            tax_order = ""
+            tax_class = ""
+    
+            # Get higher taxonomy, language, common name.
+            scientificname_list = ", ".join(map(lambda x: vnapi.encode_b64_for_psql(x), names))
+            sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family, lang, cmname, array_agg(source) AS sources, array_agg(url) AS urls, MAX(updated_at) AS max_updated_at, MAX(source_priority) AS max_source_priority FROM %s WHERE binomial IN (%s) GROUP BY binomial, lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                scientificname_list
+            )
+
+            urlresponse = urlfetch.fetch(access.CDB_URL,
+                payload=urllib.urlencode(dict(
+                    q = sql_query
+                )),
+                method=urlfetch.POST,
+                headers={'Content-Type': 'application/x-www-form-urlencoded'}
+            )
+ 
+            if urlresponse.status_code != 200:
+                self.response.set_status(500)
+                self.response.out.write("<h2>Error during lookup of '" + ', '.join(names) + "': server returned error " + str(response.status_code) + ": " + str(response.content) + "</h2></html>")
+                return
+                
+            results = json.loads(urlresponse.content)
+            rows_by_name = vnapi.groupBy(results['rows'], 'binomial')
+
+            def clean_agg(list):
+                # This was already lowercased by the SQL
+                no_blanks = filter(lambda x: x is not None and x != '', list)
+                return set(no_blanks)
+
+            for name in rows_by_name:
+                results = rows_by_name[name]
+                sorted_results = vnapi.sortNames(results)
+                best_names = dict()
+                taxonomy = {
+                    'order': set(),
+                    'class': set(),
+                    'family': set()
+                }
+
+                for lang in sorted_results:
+                    lang_results = sorted_results[lang]
+
+                    if len(lang_results) == 0:
+                        continue
+
+                    best_names[lang] = {
+                        'vernacularname': lang_results[0]['cmname'],
+                        'sources': lang_results[0]['sources']
+                    }
+
+                    for result in lang_results:
+                        taxonomy['order'].update(clean_agg(result['agg_order']))
+                        taxonomy['class'].update(clean_agg(result['agg_class']))
+                        taxonomy['family'].update(clean_agg(result['agg_family']))
+
+                fn_name_iterate(name, taxonomy, best_names)
+
 application = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/index.html', MainPage),
     ('/add/name', AddNameHandler),
-    ('/page/private', StaticPages)
+    ('/page/private', StaticPages),
+    ('/list', ListViewHandler),
+    ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)

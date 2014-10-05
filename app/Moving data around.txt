@@ -1,0 +1,4 @@
+Current size: ~400 MB in CartoDB
+
+1. Store names in Google Datastore, then upload to CartoDB
+ - $0.18/GB/month (0.09$/mo)

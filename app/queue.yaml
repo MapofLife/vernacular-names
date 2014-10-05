@@ -1,0 +1,5 @@
+total_storage_limit: 10M
+queue:
+- name: generate-taxonomy-translations
+  rate: 1/m
+  max_concurrent_requests: 1
