@@ -43,11 +43,23 @@ def sortNames(rows):
         if not lang in result_table:                                        
             result_table[lang] = []
 
+        agg_order = []
+        if 'agg_order' in row:
+            agg_order = row['agg_order']
+
+        agg_class = []
+        if 'agg_class' in row:
+            agg_class = row['agg_class']
+
+        agg_family = []
+        if 'agg_family' in row:
+            agg_family = row['agg_family']
+
         result_table[lang].append(dict(
             cmname = row['cmname'],
-            agg_order = row['agg_order'],
-            agg_class = row['agg_class'],
-            agg_family = row['agg_family'],
+            agg_order = agg_order,
+            agg_class = agg_class,
+            agg_family = agg_family,
             sources = sources,
             source_count = len(sources),
             max_updated_at = row['max_updated_at'],
