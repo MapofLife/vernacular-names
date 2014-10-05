@@ -265,8 +265,11 @@ class GenerateTaxonomyTranslations(BaseHandler):
             gzfile.write(lang + "\t" + lang + "_source\t")
         gzfile.write("empty\n")
 
-        def add_name(name, sorted_names):
-            gzfile.write(name + "\t\t\t\t")
+        def add_name(name, higher_taxonomy, sorted_names):
+            gzfile.write(name + "\t" + 
+                "|".join(higher_taxonomy['family']) + "\t" +
+                "|".join(higher_taxonomy['order']) + "\t" +
+                "|".join(higher_taxonomy['class']) + "\t")
 
             for lang in language_names_list:
                 if lang in sorted_names:
@@ -323,7 +326,7 @@ class ListViewHandler(BaseHandler):
     def getNames(name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
         results = dict()
 
-        def addToDict(name, sorted_names):
+        def addToDict(name, higher_taxonomy, sorted_names):
             if name in results:
                 raise RuntimeError("Duplicate name in getNames")
 
@@ -375,7 +378,7 @@ class ListViewHandler(BaseHandler):
             tax_order = ""
             tax_class = ""
     
-            # Get the family, class, order.
+            # Get higher taxonomy, language, common name.
             scientificname_list = ", ".join(map(lambda x: vnapi.encode_b64_for_psql(x), names))
             sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family, lang, cmname, array_agg(source) AS sources, array_agg(url) AS urls, MAX(updated_at) AS max_updated_at, MAX(source_priority) AS max_source_priority FROM %s WHERE binomial IN (%s) GROUP BY binomial, lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
             sql_query = sql % (
@@ -399,10 +402,6 @@ class ListViewHandler(BaseHandler):
             results = json.loads(urlresponse.content)
             rows_by_name = vnapi.groupBy(results['rows'], 'binomial')
 
-            #if len(results['rows']) > 1:
-            #    self.response.out.write("<h2>Error during lookup of '" + ', '.join(names) + "': server returned more than one row: <pre>" + str(results) + "</pre></h2>")
-            #    return
-
             def clean_agg(list):
                 # This was already lowercased by the SQL
                 no_blanks = filter(lambda x: x is not None and x != '', list)
@@ -412,6 +411,11 @@ class ListViewHandler(BaseHandler):
                 results = rows_by_name[name]
                 sorted_results = vnapi.sortNames(results)
                 best_names = dict()
+                taxonomy = {
+                    'order': set(),
+                    'class': set(),
+                    'family': set()
+                }
 
                 for lang in sorted_results:
                     lang_results = sorted_results[lang]
@@ -424,7 +428,12 @@ class ListViewHandler(BaseHandler):
                         'sources': lang_results[0]['sources']
                     }
 
-                fn_name_iterate(name, best_names)
+                    for result in lang_results:
+                        taxonomy['order'].update(clean_agg(result['agg_order']))
+                        taxonomy['class'].update(clean_agg(result['agg_class']))
+                        taxonomy['family'].update(clean_agg(result['agg_family']))
+
+                fn_name_iterate(name, taxonomy, best_names)
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
