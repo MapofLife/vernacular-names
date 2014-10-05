@@ -108,6 +108,7 @@ class MainPage(BaseHandler):
         current_search = self.request.get('search')
         if self.request.get('clear') != '':
             current_search = ''
+        current_search = current_search.strip()
 
         # Do the search.
         search_results = dict()
