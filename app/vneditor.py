@@ -2,6 +2,7 @@
 
 from google.appengine.api import users, urlfetch, taskqueue, app_identity
 from google.appengine.api.mail import EmailMessage
+from google.appengine.ext import blobstore
 
 import base64
 import os
@@ -12,6 +13,8 @@ import urllib
 import re
 import logging
 import random
+import cStringIO
+import gzip
 
 # Configuration
 import access
@@ -240,7 +243,10 @@ class AddNameHandler(BaseHandler):
 class GenerateTaxonomyTranslations(BaseHandler):
     # Activates the taxonomy_translations taskqueue task.
     def get(self):
-        taskqueue.add(url='/generate/taxonomy_translations', queue_name='generate-taxonomy-translations', method='POST')
+        task = taskqueue.add(url='/generate/taxonomy_translations', queue_name='generate-taxonomy-translations', method='POST')
+
+        self.response.set_status(200)
+        self.response.out.write("OK queued (" + task.name + ")")
 
     # Task! Should be run on the 'generate-taxonomy-translations'
     def post(self): 
@@ -248,33 +254,38 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Fail without login.
         current_user = self.check_user()
 
-        response = ""
+        # Create file into gcs_bucket_name
+        fgz = cStringIO.StringIO()
+        csv_filename = "output.csv"
+        gzfile = gzip.GzipFile(filename=csv_filename, mode='wb', fileobj=fgz)
         
         # Prepare to write out CSV.
-        response += "scientificname\ttax_family\ttax_order\ttax_class\t"
+        gzfile.write("scientificname\ttax_family\ttax_order\ttax_class\t")
         for lang in language_names_list:
-            response += lang + "\t" + lang + "_source\t"
-        response += "empty\n"
+            gzfile.write(lang + "\t" + lang + "_source\t")
+        gzfile.write("empty\n")
 
         def add_name(name, sorted_names):
-            response += name + "\t\t\t\t";
+            gzfile.write(name + "\t\t\t\t")
 
             for lang in language_names_list:
                 if lang in sorted_names:
                     vname = sorted_names[lang]['vernacularname']
                     sources = sorted_names[lang]['sources']
 
-                    response += vname + "\t" + "|".join(sources) + "\t"
+                    gzfile.write((vname + "\t" + "|".join(sources) + "\t").encode('utf-8'))
                 else:
-                    response += "\t\t"
+                    gzfile.write("\t\t")
 
-            response += "\n"
-        ListViewHandler.iterateOverAll(add_name)
+            gzfile.write("\n")
+        ListViewHandler.iterateOver(add_name)
+        gzfile.close()
 
         # E-mail the response to someone.
-        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS, subject = 'generate-taxonomy-translations response',
+        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS, 
+            subject = 'generate-taxonomy-translations response',
             body = 'Look! A file!',
-            attachments = [ ('response.tsv', response) ])
+            attachments = (csv_filename + ".gzip", fgz.getvalue()))
         email.send()
 
         self.response.set_status(200)
