@@ -469,12 +469,12 @@ class ListViewHandler(BaseHandler):
                         taxonomy['class'].update(clean_agg(result['agg_class']))
                         taxonomy['family'].update(clean_agg(result['agg_family']))
 
-                    # Prevent recursion: remove any higher taxonomy
-                    # that is part of our current query.
-                    # TODO: make this case-insensitive.
-                    taxonomy['class'] = set(filter(lambda x: not x in all_names, taxonomy['class']))
-                    taxonomy['order'] = set(filter(lambda x: not x in all_names, taxonomy['order']))
-                    taxonomy['family'] = set(filter(lambda x: not x in all_names, taxonomy['family']))
+                # Prevent recursion: remove any higher taxonomy
+                # that is part of our current query.
+                # TODO: make this case-insensitive.
+                taxonomy['class'] = set(filter(lambda x: not x in all_names, taxonomy['class']))
+                taxonomy['order'] = set(filter(lambda x: not x in all_names, taxonomy['order']))
+                taxonomy['family'] = set(filter(lambda x: not x in all_names, taxonomy['family']))
 
                 for lang in sorted_results:
                     lang_results = sorted_results[lang]
@@ -502,6 +502,8 @@ class ListViewHandler(BaseHandler):
                     if len(lang_results) > 0:
                         result['vernacularname'] = lang_results[0]['cmname']
                         result['sources'] = lang_results[0]['sources']
+
+                    best_names[lang] = result
 
                 fn_name_iterate(name, taxonomy, best_names)
 
