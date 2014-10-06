@@ -390,8 +390,8 @@ class ListViewHandler(BaseHandler):
             tax_class = ""
     
             # Get higher taxonomy, language, common name.
-            scientificname_list = ", ".join(map(lambda x: vnapi.encode_b64_for_psql(x.lower()), names))
-            sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family, lang, cmname, array_agg(source) AS sources, array_agg(url) AS urls, MAX(updated_at) AS max_updated_at, MAX(source_priority) AS max_source_priority FROM %s WHERE LOWER(binomial) IN (%s) GROUP BY binomial, lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
+            scientificname_list = ", ".join(map(lambda x: vnapi.encode_b64_for_psql(x), names))
+            sql = "SELECT binomial, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family, lang, cmname, array_agg(source) AS sources, array_agg(url) AS urls, MAX(updated_at) AS max_updated_at, MAX(source_priority) AS max_source_priority FROM %s WHERE (binomial) IN (%s) GROUP BY binomial, lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
             sql_query = sql % (
                 access.ALL_NAMES_TABLE,
                 scientificname_list
