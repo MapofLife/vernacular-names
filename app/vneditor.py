@@ -278,9 +278,9 @@ class GenerateTaxonomyTranslations(BaseHandler):
 
         def add_name(name, higher_taxonomy, sorted_names):
             row = [name, 
-                "|".join(higher_taxonomy['family']),
-                "|".join(higher_taxonomy['order']),
-                "|".join(higher_taxonomy['class'])]
+                "|".join(sorted(higher_taxonomy['family'])),
+                "|".join(sorted(higher_taxonomy['order'])),
+                "|".join(sorted(higher_taxonomy['class']))]
 
             for lang in language_names_list:
                 if lang in sorted_names:
@@ -289,10 +289,10 @@ class GenerateTaxonomyTranslations(BaseHandler):
 
                     row.extend([
                         vname.encode('utf-8'), 
-                        "|".join(sources).encode('utf-8'),
-                        "|".join(sorted_names[lang]['tax_family']).encode('utf-8'),
-                        "|".join(sorted_names[lang]['tax_order']).encode('utf-8'),
-                        "|".join(sorted_names[lang]['tax_class']).encode('utf-8')
+                        "|".join(sorted(sources)).encode('utf-8'),
+                        "|".join(sorted(sorted_names[lang]['tax_family'])).encode('utf-8'),
+                        "|".join(sorted(sorted_names[lang]['tax_order'])).encode('utf-8'),
+                        "|".join(sorted(sorted_names[lang]['tax_class'])).encode('utf-8')
                     ])
                 else:
                     row.extend([None, None, None, None, None])
