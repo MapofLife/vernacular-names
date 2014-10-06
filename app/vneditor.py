@@ -15,6 +15,7 @@ import logging
 import random
 import cStringIO
 import gzip
+import csv
 
 # Configuration
 import access
@@ -265,28 +266,32 @@ class GenerateTaxonomyTranslations(BaseHandler):
         csv_filename = "output.csv"
         gzfile = gzip.GzipFile(filename=csv_filename, mode='wb', fileobj=fgz)
         
+        # Prepare csv writer.
+        csvfile = csv.writer(gzfile)
+
         # Prepare to write out CSV.
-        gzfile.write("scientificname\ttax_family\ttax_order\ttax_class\t")
+        header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
         for lang in language_names_list:
-            gzfile.write(lang + "\t" + lang + "_source\t")
-        gzfile.write("empty\n")
+            header.extend([lang, lang + '_source'])
+        header.extend(['empty'])
+        csvfile.writerow(header)
 
         def add_name(name, higher_taxonomy, sorted_names):
-            gzfile.write(name + "\t" + 
-                "|".join(higher_taxonomy['family']) + "\t" +
-                "|".join(higher_taxonomy['order']) + "\t" +
-                "|".join(higher_taxonomy['class']) + "\t")
+            row = [name, 
+                "|".join(higher_taxonomy['family']),
+                "|".join(higher_taxonomy['order']),
+                "|".join(higher_taxonomy['class'])]
 
             for lang in language_names_list:
                 if lang in sorted_names:
                     vname = sorted_names[lang]['vernacularname']
                     sources = sorted_names[lang]['sources']
 
-                    gzfile.write((vname + "\t" + "|".join(sources) + "\t").encode('utf-8'))
+                    row.extend([vname.encode('utf-8'), "|".join(sources).encode('utf-8')])
                 else:
-                    gzfile.write("\t\t")
+                    row.extend([None, None])
 
-            gzfile.write("\n")
+            csvfile.writerow(row)
         ListViewHandler.iterateOver(add_name)
         gzfile.close()
 
