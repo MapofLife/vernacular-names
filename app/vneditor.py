@@ -460,17 +460,24 @@ class ListViewHandler(BaseHandler):
                     'class': set(),
                     'family': set()
                 }
-
+                
                 for lang in sorted_results:
                     lang_results = sorted_results[lang]
-
-                    if len(lang_results) == 0:
-                        continue
 
                     for result in lang_results:
                         taxonomy['order'].update(clean_agg(result['agg_order']))
                         taxonomy['class'].update(clean_agg(result['agg_class']))
                         taxonomy['family'].update(clean_agg(result['agg_family']))
+
+                    # Prevent recursion: remove any higher taxonomy
+                    # that is part of our current query.
+                    # TODO: make this case-insensitive.
+                    taxonomy['class'] = set(filter(lambda x: not x in all_names, taxonomy['class']))
+                    taxonomy['order'] = set(filter(lambda x: not x in all_names, taxonomy['order']))
+                    taxonomy['family'] = set(filter(lambda x: not x in all_names, taxonomy['family']))
+
+                for lang in sorted_results:
+                    lang_results = sorted_results[lang]
 
                     def simplify_to_list(results):
                         vnames = set()
@@ -480,19 +487,21 @@ class ListViewHandler(BaseHandler):
                                 continue
 
                             if 'vernacularname' in results[scname][lang]:
-                                vnames.update(results[scname][lang]['vernacularname'])
+                                vnames.add(results[scname][lang]['vernacularname'])
                             else:
                                 raise RuntimeError("What is this I don't even: " + str(results[scname][lang]) + ".")
 
                         return vnames
 
-                    best_names[lang] = {
-                        'vernacularname': lang_results[0]['cmname'],
-                        'sources': lang_results[0]['sources'],
+                    result = {
                         'tax_order': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['order'])),
                         'tax_class': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['class'])),
                         'tax_family': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['family']))
                     }
+
+                    if len(lang_results) > 0:
+                        result['vernacularname'] = lang_results[0]['cmname']
+                        result['sources'] = lang_results[0]['sources']
 
                 fn_name_iterate(name, taxonomy, best_names)
 
