@@ -272,7 +272,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
         for lang in language_names_list:
-            header.extend([lang, lang + '_source'])
+            header.extend([lang, lang + '_source', lang + '_family', lang + '_order', lang + '_class'])
         header.extend(['empty'])
         csvfile.writerow(header)
 
@@ -287,9 +287,15 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     vname = sorted_names[lang]['vernacularname']
                     sources = sorted_names[lang]['sources']
 
-                    row.extend([vname.encode('utf-8'), "|".join(sources).encode('utf-8')])
+                    row.extend([
+                        vname.encode('utf-8'), 
+                        "|".join(sources).encode('utf-8'),
+                        "|".join(sorted_names[lang]['tax_family']).encode('utf-8'),
+                        "|".join(sorted_names[lang]['tax_order']).encode('utf-8'),
+                        "|".join(sorted_names[lang]['tax_class']).encode('utf-8')
+                    ])
                 else:
-                    row.extend([None, None])
+                    row.extend([None, None, None, None, None])
 
             csvfile.writerow(row)
         ListViewHandler.iterateOver(add_name)
@@ -304,6 +310,9 @@ class GenerateTaxonomyTranslations(BaseHandler):
 
         self.response.set_status(200)
         self.response.out.write("OK")
+
+# TODO fix hack
+vnameCache = dict()
 
 # Display a section of the Big List as a table.
 class ListViewHandler(BaseHandler):
@@ -347,6 +356,25 @@ class ListViewHandler(BaseHandler):
 
         return results
 
+    @staticmethod
+    def getVernacularNames(names):
+        namekey = "|".join(sorted(names))
+        if namekey in vnameCache:
+            return vnameCache[namekey]
+
+        results = dict()
+
+        def addToDict(name, higher_taxonomy, sorted_names):
+            if name in results:
+                raise RuntimeError("Duplicate name in getNames")
+
+            results[name] = sorted_names
+
+        ListViewHandler.iterateOverNames(addToDict, names)
+
+        vnameCache[namekey] = results
+        return results
+
     # Iterate over names for a particular list.
     @staticmethod
     def iterateOver(fn_name_iterate, name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
@@ -365,6 +393,10 @@ class ListViewHandler(BaseHandler):
         else:
             all_names = all_names[name_from:]
 
+        return ListViewHandler.iterateOverNames(fn_name_iterate, all_names)
+
+    @staticmethod
+    def iterateOverNames(fn_name_iterate, all_names):
         # Reassert set-ness.
         all_names = set(all_names)
 
@@ -434,15 +466,32 @@ class ListViewHandler(BaseHandler):
                     if len(lang_results) == 0:
                         continue
 
-                    best_names[lang] = {
-                        'vernacularname': lang_results[0]['cmname'],
-                        'sources': lang_results[0]['sources']
-                    }
-
                     for result in lang_results:
                         taxonomy['order'].update(clean_agg(result['agg_order']))
                         taxonomy['class'].update(clean_agg(result['agg_class']))
                         taxonomy['family'].update(clean_agg(result['agg_family']))
+
+                    def simplify_to_list(results):
+                        vnames = set()
+
+                        for scname in results:
+                            if not lang in results[scname]:
+                                continue
+
+                            if 'vernacularname' in results[scname][lang]:
+                                vnames.update(results[scname][lang]['vernacularname'])
+                            else:
+                                raise RuntimeError("What is this I don't even: " + str(results[scname][lang]) + ".")
+
+                        return vnames
+
+                    best_names[lang] = {
+                        'vernacularname': lang_results[0]['cmname'],
+                        'sources': lang_results[0]['sources'],
+                        'tax_order': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['order'])),
+                        'tax_class': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['class'])),
+                        'tax_family': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['family']))
+                    }
 
                 fn_name_iterate(name, taxonomy, best_names)
 

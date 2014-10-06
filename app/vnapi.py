@@ -35,7 +35,7 @@ def sortNames(rows):
     result_table = dict()
         
     for row in rows:                                             
-        lang = row['lang']                                                  
+        lang = row['lang']
 
         # TODO: see if we can move this to SQL.
         sources = set(filter(lambda x: x is not None and x != '', row['sources']))
