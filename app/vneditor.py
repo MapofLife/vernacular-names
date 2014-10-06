@@ -272,7 +272,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
         for lang in language_names_list:
-            header.extend([lang, lang + '_source', lang + '_family', lang + '_order', lang + '_class'])
+            header.extend([lang + '_name', lang + '_source', lang + '_family', lang + '_order', lang + '_class'])
         header.extend(['empty'])
         csvfile.writerow(header)
 
