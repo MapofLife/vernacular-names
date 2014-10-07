@@ -407,8 +407,8 @@ class ListViewHandler(BaseHandler):
 
         # end_at = 100000
         row = 0
-        for names in chunks(sorted(all_names), 1000):
-            row += len(names)
+        for chunk_names in chunks(sorted(all_names), 1000):
+            row += len(chunk_names)
 
             logging.info("Downloaded %d rows of %d names." % (row, len(all_names)))
 
@@ -423,7 +423,7 @@ class ListViewHandler(BaseHandler):
     
             # Get higher taxonomy, language, common name.
             # TODO: fallback to binomial names (where we have Panthera tigris tigris but not Panthera tigris.
-            scientificname_list = ", ".join(map(lambda name: vnapi.encode_b64_for_psql(name.lower()), names))
+            scientificname_list = ", ".join(map(lambda name: vnapi.encode_b64_for_psql(name.lower()), chunk_names))
             sql = "SELECT scname, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family, lang, cmname, array_agg(source) AS sources, array_agg(url) AS urls, MAX(updated_at) AS max_updated_at, MAX(source_priority) AS max_source_priority FROM %s WHERE (LOWER(scname)) IN (%s) GROUP BY scname, lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
             sql_query = sql % (
                 access.ALL_NAMES_TABLE,
@@ -440,7 +440,7 @@ class ListViewHandler(BaseHandler):
  
             if urlresponse.status_code != 200:
                 self.response.set_status(500)
-                self.response.out.write("<h2>Error during lookup of '" + ', '.join(names) + "': server returned error " + str(response.status_code) + ": " + str(response.content) + "</h2></html>")
+                self.response.out.write("<h2>Error during lookup of '" + ', '.join(chunk_names) + "': server returned error " + str(response.status_code) + ": " + str(response.content) + "</h2></html>")
                 return
                 
             results = json.loads(urlresponse.content)
@@ -451,8 +451,10 @@ class ListViewHandler(BaseHandler):
                 no_blanks = filter(lambda x: x is not None and x != '', list)
                 return set(no_blanks)
 
-            for name in rows_by_name:
-                results = rows_by_name[name]
+            for name in chunk_names:
+                results = []
+                if name in rows_by_name:
+                    results = rows_by_name[name]
                 sorted_results = vnapi.sortNames(results)
                 best_names = dict()
                 taxonomy = {
@@ -465,9 +467,9 @@ class ListViewHandler(BaseHandler):
                     lang_results = sorted_results[lang]
 
                     for result in lang_results:
-                        taxonomy['order'].update(clean_agg(result['agg_order']))
-                        taxonomy['class'].update(clean_agg(result['agg_class']))
-                        taxonomy['family'].update(clean_agg(result['agg_family']))
+                        taxonomy['order'].update(map(lambda x: x.lower(), clean_agg(result['agg_order'])))
+                        taxonomy['class'].update(map(lambda x: x.lower(), clean_agg(result['agg_class'])))
+                        taxonomy['family'].update(map(lambda x: x.lower(), clean_agg(result['agg_family'])))
 
                 # Prevent recursion: remove any higher taxonomy
                 # that is part of our current query.
