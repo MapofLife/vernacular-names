@@ -409,24 +409,14 @@ class ListViewHandler(BaseHandler):
             for i in xrange(0, len(items), size):
                 yield items[i:i+size]
 
-        # end_at = 100000
         row = 0
         for chunk_names in chunks(sorted(all_names), 1000):
             row += len(chunk_names)
 
-            logging.info("Downloaded %d rows of %d names." % (row, len(all_names)))
+            # logging.info("Downloaded %d rows of %d names." % (row, len(all_names)))
 
-            #if row > end_at:
-            #    break
-
-            mol_source = "no longer in use" # TODO
-
-            tax_family = ""
-            tax_order = ""
-            tax_class = ""
-    
             # Get higher taxonomy, language, common name.
-            # TODO: fallback to binomial names (where we have Panthera tigris tigris but not Panthera tigris.
+            # TODO: fallback to trinomial names (where we have Panthera tigris tigris but not Panthera tigris.
             scientificname_list = ", ".join(map(lambda name: vnapi.encode_b64_for_psql(name.lower()), chunk_names))
             sql = "SELECT scname, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family, lang, cmname, array_agg(source) AS sources, array_agg(url) AS urls, MAX(updated_at) AS max_updated_at, MAX(source_priority) AS max_source_priority FROM %s WHERE (LOWER(scname)) IN (%s) GROUP BY scname, lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
             sql_query = sql % (
