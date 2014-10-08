@@ -25,6 +25,9 @@ import version
 # Our libraries
 import vnapi
 
+# Flags
+FLAG_LOOKUP_GENERA = False
+
 # Set up URLfetch settings
 urlfetch.set_default_fetch_deadline(60)
 
@@ -479,32 +482,49 @@ class ListViewHandler(BaseHandler):
                 taxonomy['order'] = set(filter(lambda x: not x in all_names, taxonomy['order']))
                 taxonomy['family'] = set(filter(lambda x: not x in all_names, taxonomy['family']))
 
-                for lang in sorted_results:
-                    lang_results = sorted_results[lang]
-
-                    def simplify_to_list(results):
+                for lang in language_names_list:
+                    def simplify_to_list(simplify_names):
                         vnames = set()
+                        results = ListViewHandler.getVernacularNames(simplify_names)
 
-                        for scname in results:
-                            if not lang in results[scname]:
+                        for simplify_name in simplify_names:
+                            if not lang in results[simplify_name]:
                                 continue
 
-                            if 'vernacularname' in results[scname][lang]:
-                                vnames.add(results[scname][lang]['vernacularname'])
-                            else:
-                                raise RuntimeError("What is this I don't even: " + str(results[scname][lang]) + ".")
+                            vnames.add(results[simplify_name][lang]['vernacularname'].capitalize())
 
                         return vnames
 
                     result = {
-                        'tax_order': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['order'])),
-                        'tax_class': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['class'])),
-                        'tax_family': simplify_to_list(ListViewHandler.getVernacularNames(taxonomy['family']))
+                        'tax_class': simplify_to_list(taxonomy['class']),
+                        'tax_order': simplify_to_list(taxonomy['order']),
+                        'tax_family': simplify_to_list(taxonomy['family'])
                     }
 
-                    if len(lang_results) > 0:
+                    if (lang in sorted_results) and (len(sorted_results[lang]) > 0):
+                        lang_results = sorted_results[lang]
                         result['vernacularname'] = lang_results[0]['cmname']
                         result['sources'] = lang_results[0]['sources']
+                    else:
+                        if FLAG_LOOKUP_GENERA:
+                            # No match? Try genus?
+                            match = re.search('^(\w+)\s+(\w+)$', name)
+                            if match:
+                                genus = match.group(1).lower()
+                                genus_matches = ListViewHandler.getVernacularNames(set([genus]))
+
+                                if genus in genus_matches and lang in genus_matches[genus]:
+                                    result['vernacularname'] = genus_matches[genus][lang]['vernacularname']
+                                    result['sources'] = genus_matches[genus][lang]['sources']
+                                else:
+                                    result['vernacularname'] = ""
+                                    result['sources'] = set()
+                            else:
+                                result['vernacularname'] = ""
+                                result['sources'] = set()
+                        else:
+                            result['vernacularname'] = ""
+                            result['sources'] = set()
 
                     best_names[lang] = result
 
