@@ -16,6 +16,7 @@ import random
 import cStringIO
 import gzip
 import csv
+import time
 
 # Configuration
 import access
@@ -263,7 +264,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
 
         # Create file into gcs_bucket_name
         fgz = cStringIO.StringIO()
-        csv_filename = "output.csv"
+        csv_filename = "taxonomy_translations_" + time.strftime("%Y_%B_%d_%H%MZ", time.gmtime())  + ".csv"
         gzfile = gzip.GzipFile(filename=csv_filename, mode='wb', fileobj=fgz)
         
         # Prepare csv writer.
@@ -302,9 +303,9 @@ class GenerateTaxonomyTranslations(BaseHandler):
         gzfile.close()
 
         # E-mail the response to someone.
-        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS, 
-            subject = 'generate-taxonomy-translations response',
-            body = 'Look! A file!',
+        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS,
+            subject = 'Taxonomy translations download',
+            body = 'This taxonomy_translations file was prepared at ' + time.strftime("%x %X %Z", time.gmtime()) + '.',
             attachments = (csv_filename + ".gzip", fgz.getvalue()))
         email.send()
 
