@@ -1,0 +1,3 @@
+[submodule "app/lib/python-titlecase"]
+	path = app/lib/python-titlecase
+	url = git@github.com:ppannuto/python-titlecase.git
