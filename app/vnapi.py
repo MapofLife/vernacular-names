@@ -1,8 +1,7 @@
 # vim: set fileencoding=utf-8 : 
 
 # vnapi.py
-# An API for communicating with the Vernacular Name system
-# on CartoDB.
+# An API for communicating with the Vernacular Name system on CartoDB.
 
 from google.appengine.api import urlfetch
 from operator import itemgetter
@@ -12,12 +11,13 @@ import json
 import urllib
 import re
 
-# Authentication
+# Authentication.
 import access
 
-# Configuration
-DEADLINE_FETCH = 60 # seconds to wait during URL fetch
+# Configuration.
+DEADLINE_FETCH = 60 # seconds to wait during URL fetch (max: 60)
 
+# Helper functions.
 def url_get(url):
     return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
 
@@ -31,9 +31,14 @@ def decode_b64_on_psql(text):
 
     return "convert_from(decode('" + text + "', 'base64'), 'utf-8')"        
 
-def sortNames(rows):
+# Sort names so that the best name sorts to the top.
+#   Input: A list of rows containing:
+#       - lang: Language code
+#       - sources: 
+#   Output: A dict of 
+def groupByLanguage(rows):
     result_table = dict()
-        
+
     for row in rows:                                             
         lang = row['lang']
 
@@ -95,7 +100,7 @@ def getVernacularNames(name):
         raise RuntimeError("Could not read server response: " + response.content)
 
     results = json.loads(response.content)                                  
-    return sortNames(results['rows'])
+    return groupByLanguage(results['rows'])
 
 def getDatasets():
     # TODO: sanitize input

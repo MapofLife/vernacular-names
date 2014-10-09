@@ -21,26 +21,17 @@ import time
 # Configuration
 import access
 import version
+import languages
 
 # Our libraries
 import vnapi
+import vnnames
 
 # Flags
 FLAG_LOOKUP_GENERA = False
 
 # Set up URLfetch settings
 urlfetch.set_default_fetch_deadline(60)
-
-# Constants.
-language_names_list = ['en', 'es', 'pt', 'de', 'fr', 'zh']
-language_names = {
-    'en': u'English',
-    'es': u'Spanish (Español)',
-    'pt': u'Portuguese (Português)',
-    'de': u'German (Deutsch)',
-    'fr': u'French (le Français)',
-    'zh': u'Chinese (中文)'
-}
 
 # Check whether we're in production (PROD = True) or not.
 if 'SERVER_SOFTWARE' in os.environ:
@@ -152,8 +143,8 @@ class MainPage(BaseHandler):
 
         lookup_results_lang_names = dict()
         for lang in lookup_results:
-            if lang in language_names:
-                lookup_results_lang_names[lang] = language_names[lang]
+            if lang in languages.language_names:
+                lookup_results_lang_names[lang] = languages.language_names[lang]
             else:
                 lookup_results_lang_names[lang] = lang
 
@@ -164,7 +155,7 @@ class MainPage(BaseHandler):
             dname = dataset['dataset']
 
             datasets_coverage[dname] = dict()
-            for lang in language_names:
+            for lang in languages.language_names:
                 datasets_coverage[dname][lang] = vnapi.getDatasetCoverage(dname, lang)
 
         self.render_template('main.html', {
@@ -183,8 +174,8 @@ class MainPage(BaseHandler):
             'lookup_results': lookup_results,
             'lookup_results_languages': sorted(lookup_results.keys()),
             'lookup_results_language_names': lookup_results_lang_names,
-            'language_names': language_names,
-            'language_names_list': language_names_list,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
             'vneditor_version': version.VNEDITOR_VERSION
         })
 
@@ -265,7 +256,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Fail without login.
         current_user = self.check_user()
 
-        # Create file into gcs_bucket_name
+        # Create file in memory and make it gzipped.
         fgz = cStringIO.StringIO()
         csv_filename = "taxonomy_translations_" + time.strftime("%Y_%B_%d_%H%MZ", time.gmtime())  + ".csv"
         gzfile = gzip.GzipFile(filename=csv_filename, mode='wb', fileobj=fgz)
@@ -273,36 +264,42 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Prepare csv writer.
         csvfile = csv.writer(gzfile)
 
+        # Get a list of every name in the master list.
+        datasets = vnapi.getDatasets()
+        all_names = set()
+        for dataset in datasets:
+            all_names.update(vnapi.getNamesInDataset(dataset['dataset']))
+        
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
-        for lang in language_names_list:
+        for lang in languages.language_names_list:
             header.extend([lang + '_name', lang + '_source', lang + '_family', lang + '_order', lang + '_class'])
         header.extend(['empty'])
         csvfile.writerow(header)
 
-        def add_name(name, higher_taxonomy, sorted_names):
+        def add_name(name, higher_taxonomy, vnames_by_lang):
             row = [name, 
                 "|".join(sorted(higher_taxonomy['family'])),
                 "|".join(sorted(higher_taxonomy['order'])),
                 "|".join(sorted(higher_taxonomy['class']))]
 
-            for lang in language_names_list:
-                if lang in sorted_names:
-                    vname = sorted_names[lang]['vernacularname']
-                    sources = sorted_names[lang]['sources']
+            for lang in languages.language_names_list:
+                if lang in vnames_by_lang:
+                    vname = vnames_by_lang[lang].vernacularname
+                    sources = vnames_by_lang[lang].sources
 
                     row.extend([
                         vname.encode('utf-8'), 
                         "|".join(sorted(sources)).encode('utf-8'),
-                        "|".join(sorted(sorted_names[lang]['tax_family'])).encode('utf-8'),
-                        "|".join(sorted(sorted_names[lang]['tax_order'])).encode('utf-8'),
-                        "|".join(sorted(sorted_names[lang]['tax_class'])).encode('utf-8')
+                        "|".join(sorted(vnames_by_lang[lang].tax_family)).encode('utf-8'),
+                        "|".join(sorted(vnames_by_lang[lang].tax_order)).encode('utf-8'),
+                        "|".join(sorted(vnames_by_lang[lang].tax_class)).encode('utf-8')
                     ])
                 else:
                     row.extend([None, None, None, None, None])
 
             csvfile.writerow(row)
-        ListViewHandler.iterateOver(add_name)
+        vnnames.searchVernacularNames(add_name, all_names)
         gzfile.close()
 
         # E-mail the response to someone.
@@ -334,60 +331,20 @@ class ListViewHandler(BaseHandler):
         iucn_reptile_names = set(vnapi.getNamesInDataset('iucn_reptiles'))
         iucn_amphibian_names = set(vnapi.getNamesInDataset('iucn_amphibian'))
 
-        name_list = ListViewHandler.getNames(0, -1, lambda name: (name in iucn_reptile_names or name in iucn_amphibian_names) and random.randint(1, 8600) <= 250)
+        # name_list = ListViewHandler.getNames(0, -1, lambda name: (name in iucn_reptile_names or name in iucn_amphibian_names) and random.randint(1, 8600) <= 250)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
             'user_url': user_url,
             'search_criteria': search_criteria,
             'name_list': name_list,
-            'language_names_list': language_names_list,
-            'language_names': language_names
+            'language_names_list': languages.language_names_list,
+            'language_names': languages.language_names
         }) 
-
-    # Generate a list of accepted vernacular names for a list of scientific names.
-    @staticmethod
-    def getNames(name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
-        results = dict()
-
-        def addToDict(name, higher_taxonomy, sorted_names):
-            if name in results:
-                raise RuntimeError("Duplicate name in getNames")
-
-            results[name] = sorted_names
-
-        ListViewHandler.iterateOver(addToDict, name_from, name_size, fn_name_filter)
-
-        return results
-
-    @staticmethod
-    def getVernacularNames(names):
-        namekey = "|".join(sorted(names))
-        if namekey in vnameCache:
-            return vnameCache[namekey]
-
-        results = dict()
-
-        def addToDict(name, higher_taxonomy, sorted_names):
-            if name in results:
-                raise RuntimeError("Duplicate name in getNames")
-
-            results[name] = sorted_names
-
-        ListViewHandler.iterateOverNames(addToDict, names)
-
-        vnameCache[namekey] = results
-        return results
 
     # Iterate over names for a particular list.
     @staticmethod
     def iterateOver(fn_name_iterate, name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
-        # Step 1. Obtain a list of every species name we need to generate.
-        datasets = vnapi.getDatasets()
-        all_names = set()
-        for dataset in datasets:
-            all_names.update(vnapi.getNamesInDataset(dataset['dataset']))
-
         # Filter names as instructed
         all_names = filter(fn_name_filter, sorted(all_names))
 
@@ -397,128 +354,7 @@ class ListViewHandler(BaseHandler):
         else:
             all_names = all_names[name_from:]
 
-        return ListViewHandler.iterateOverNames(fn_name_iterate, all_names)
-
-    @staticmethod
-    def iterateOverNames(fn_name_iterate, all_names):
-        # Reassert set-ness.
-        all_names = set(all_names)
-
-        # From http://stackoverflow.com/a/312464/27310
-        def chunks(items, size):
-            for i in xrange(0, len(items), size):
-                yield items[i:i+size]
-
-        row = 0
-        for chunk_names in chunks(sorted(all_names), 1000):
-            row += len(chunk_names)
-
-            # logging.info("Downloaded %d rows of %d names." % (row, len(all_names)))
-
-            # Get higher taxonomy, language, common name.
-            # TODO: fallback to trinomial names (where we have Panthera tigris tigris but not Panthera tigris.
-            scientificname_list = ", ".join(map(lambda name: vnapi.encode_b64_for_psql(name.lower()), chunk_names))
-            sql = "SELECT scname, array_agg(DISTINCT LOWER(tax_order)) AS agg_order, array_agg(DISTINCT LOWER(tax_class)) AS agg_class, array_agg(DISTINCT LOWER(tax_family)) AS agg_family, lang, cmname, array_agg(source) AS sources, array_agg(url) AS urls, MAX(updated_at) AS max_updated_at, MAX(source_priority) AS max_source_priority FROM %s WHERE (LOWER(scname)) IN (%s) GROUP BY scname, lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
-            sql_query = sql % (
-                access.ALL_NAMES_TABLE,
-                scientificname_list
-            )
-
-            urlresponse = urlfetch.fetch(access.CDB_URL,
-                payload=urllib.urlencode(dict(
-                    q = sql_query
-                )),
-                method=urlfetch.POST,
-                headers={'Content-Type': 'application/x-www-form-urlencoded'}
-            )
- 
-            if urlresponse.status_code != 200:
-                self.response.set_status(500)
-                self.response.out.write("<h2>Error during lookup of '" + ', '.join(chunk_names) + "': server returned error " + str(response.status_code) + ": " + str(response.content) + "</h2></html>")
-                return
-                
-            results = json.loads(urlresponse.content)
-            rows_by_name = vnapi.groupBy(results['rows'], 'scname')
-
-            def clean_agg(list):
-                # This was already lowercased by the SQL
-                no_blanks = filter(lambda x: x is not None and x != '', list)
-                return set(no_blanks)
-
-            for name in chunk_names:
-                results = []
-                if name in rows_by_name:
-                    results = rows_by_name[name]
-                sorted_results = vnapi.sortNames(results)
-                best_names = dict()
-                taxonomy = {
-                    'order': set(),
-                    'class': set(),
-                    'family': set()
-                }
-                
-                for lang in sorted_results:
-                    lang_results = sorted_results[lang]
-
-                    for result in lang_results:
-                        taxonomy['order'].update(map(lambda x: x.lower(), clean_agg(result['agg_order'])))
-                        taxonomy['class'].update(map(lambda x: x.lower(), clean_agg(result['agg_class'])))
-                        taxonomy['family'].update(map(lambda x: x.lower(), clean_agg(result['agg_family'])))
-
-                # Prevent recursion: remove any higher taxonomy
-                # that is part of our current query.
-                # TODO: make this case-insensitive.
-                taxonomy['class'] = set(filter(lambda x: not x in all_names, taxonomy['class']))
-                taxonomy['order'] = set(filter(lambda x: not x in all_names, taxonomy['order']))
-                taxonomy['family'] = set(filter(lambda x: not x in all_names, taxonomy['family']))
-
-                for lang in language_names_list:
-                    def simplify_to_list(simplify_names):
-                        vnames = set()
-                        results = ListViewHandler.getVernacularNames(simplify_names)
-
-                        for simplify_name in simplify_names:
-                            if not lang in results[simplify_name]:
-                                continue
-
-                            vnames.add(results[simplify_name][lang]['vernacularname'].capitalize())
-
-                        return vnames
-
-                    result = {
-                        'tax_class': simplify_to_list(taxonomy['class']),
-                        'tax_order': simplify_to_list(taxonomy['order']),
-                        'tax_family': simplify_to_list(taxonomy['family'])
-                    }
-
-                    if (lang in sorted_results) and (len(sorted_results[lang]) > 0):
-                        lang_results = sorted_results[lang]
-                        result['vernacularname'] = lang_results[0]['cmname']
-                        result['sources'] = lang_results[0]['sources']
-                    else:
-                        if FLAG_LOOKUP_GENERA:
-                            # No match? Try genus?
-                            match = re.search('^(\w+)\s+(\w+)$', name)
-                            if match:
-                                genus = match.group(1).lower()
-                                genus_matches = ListViewHandler.getVernacularNames(set([genus]))
-
-                                if genus in genus_matches and lang in genus_matches[genus]:
-                                    result['vernacularname'] = genus_matches[genus][lang]['vernacularname']
-                                    result['sources'] = genus_matches[genus][lang]['sources']
-                                else:
-                                    result['vernacularname'] = ""
-                                    result['sources'] = set()
-                            else:
-                                result['vernacularname'] = ""
-                                result['sources'] = set()
-                        else:
-                            result['vernacularname'] = ""
-                            result['sources'] = set()
-
-                    best_names[lang] = result
-
-                fn_name_iterate(name, taxonomy, best_names)
+        return vnnames.searchVernacularNames(fn_name_iterate, all_names)
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
