@@ -10,13 +10,14 @@ import logging
 import vnapi
 import urllib
 import json
+import re
 
 import languages
 import access
 
 # Constants
 SEARCH_CHUNK_SIZE = 2000        # Number of names to query at once.
-FLAG_LOOKUP_GENERA = True       # Look up genera when scientific names could not be matched.
+FLAG_LOOKUP_GENERA = False      # Look up genera when scientific names could not be matched.
 
 # Datatypes
 class VernacularName:
@@ -253,10 +254,10 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
                 else:
                     if FLAG_LOOKUP_GENERA:
                         # No match? Try genus?
-                        match = re.search('^(\w+)\s+(\w+)$', name)
+                        match = re.search('^(\w+)\s+(\w+)$', scname)
                         if match:
                             genus = match.group(1).lower()
-                            genus_matches = ListViewHandler.getVernacularNames([genus])
+                            genus_matches = getVernacularNames([genus])
 
                             if genus in genus_matches and lang in genus_matches[genus]:
                                 vn_vernacularname = genus_matches[genus][lang].vernacularname
