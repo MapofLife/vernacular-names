@@ -280,7 +280,8 @@ class GenerateTaxonomyTranslations(BaseHandler):
         csvfile.writerow(header)
 
         def format_name(name):
-            return titlecase(name)
+            # This slows us by about 50%.
+            return name #titlecase(name)
 
         def concat_names(names):
             return "|".join(map(sorted(names))).encode('utf-8')
