@@ -4,6 +4,8 @@ from google.appengine.api import users, urlfetch, taskqueue, app_identity
 from google.appengine.api.mail import EmailMessage
 from google.appengine.ext import blobstore
 
+from titlecase import titlecase
+
 import base64
 import os
 import webapp2
@@ -276,6 +278,12 @@ class GenerateTaxonomyTranslations(BaseHandler):
             header.extend([lang + '_name', lang + '_source', lang + '_family', lang + '_order', lang + '_class'])
         header.extend(['empty'])
         csvfile.writerow(header)
+
+        def format_name(name):
+            return titlecase(name)
+
+        def concat_names(names):
+            return "|".join(map(sorted(names))).encode('utf-8')
 
         def add_name(name, higher_taxonomy, vnames_by_lang):
             row = [name, 
