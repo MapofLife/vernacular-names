@@ -16,7 +16,7 @@ import access
 
 # Constants
 SEARCH_CHUNK_SIZE = 2000        # Number of names to query at once.
-FLAG_LOOKUP_GENERA = False      # Look up genera when scientific names could not be matched.
+FLAG_LOOKUP_GENERA = True       # Look up genera when scientific names could not be matched.
 
 # Datatypes
 class VernacularName:
