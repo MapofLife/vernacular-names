@@ -134,6 +134,7 @@ class MainPage(BaseHandler):
         if lookup_search == '' and current_search != '':
             lookup_search = current_search
 
+        lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
             lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True)
@@ -258,7 +259,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         datasets = vnapi.getDatasets()
         all_names = set()
         for dataset in datasets:
-            all_names.update(vnapi.getNamesInDataset(dataset['dataset']))
+            all_names.update(vnapi.getDatasetNames(dataset['dataset']))
         
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
