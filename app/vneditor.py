@@ -6,11 +6,8 @@ from google.appengine.ext import blobstore
 
 from titlecase import titlecase
 
-import base64
-import os
 import webapp2
 import jinja2
-import json
 import urllib
 import re
 import logging
@@ -19,6 +16,7 @@ import cStringIO
 import gzip
 import csv
 import time
+import os
 
 # Configuration
 import access
@@ -28,9 +26,6 @@ import languages
 # Our libraries
 import vnapi
 import vnnames
-
-# Flags
-FLAG_LOOKUP_GENERA = False
 
 # Set up URLfetch settings
 urlfetch.set_default_fetch_deadline(60)
