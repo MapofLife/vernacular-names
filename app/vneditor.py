@@ -36,10 +36,9 @@ FLAG_LOOKUP_GENERA = False
 urlfetch.set_default_fetch_deadline(60)
 
 # Check whether we're in production (PROD = True) or not.
+PROD = True
 if 'SERVER_SOFTWARE' in os.environ:
     PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
-else:
-    PROD = True
 
 # Set up the Jinja templating environment
 JINJA_ENV = jinja2.Environment(
@@ -287,7 +286,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
             return "|".join(map(sorted(names))).encode('utf-8')
 
         def add_name(name, higher_taxonomy, vnames_by_lang):
-            row = [name, 
+            row = [name.capitalize(), 
                 "|".join(sorted(higher_taxonomy['family'])),
                 "|".join(sorted(higher_taxonomy['order'])),
                 "|".join(sorted(higher_taxonomy['class']))]
@@ -312,9 +311,13 @@ class GenerateTaxonomyTranslations(BaseHandler):
         gzfile.close()
 
         # E-mail the response to someone.
+        settings = ""
+        if vnnames.FLAG_LOOKUP_GENERA:
+            settings = " with genera lookups turned on"
+
         email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS,
             subject = 'Taxonomy translations download',
-            body = 'This taxonomy_translations file was prepared at ' + time.strftime("%x %X %Z", time.gmtime()) + '.',
+            body = 'This taxonomy_translations file was prepared at ' + time.strftime("%x %X %Z", time.gmtime()) + settings + '.',
             attachments = (csv_filename + ".gzip", fgz.getvalue()))
         email.send()
 

@@ -11,6 +11,7 @@ import vnapi
 import urllib
 import json
 import re
+import os
 
 import languages
 import access
@@ -18,6 +19,16 @@ import access
 # Constants
 SEARCH_CHUNK_SIZE = 2000        # Number of names to query at once.
 FLAG_LOOKUP_GENERA = False      # Look up genera when scientific names could not be matched.
+
+# Check whether we're in production (PROD = True) or not.
+PROD = True
+if 'SERVER_SOFTWARE' in os.environ:
+    PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
+
+# If we're not in PROD, change some stuff.
+if not PROD:
+    logging.info("Developer environment detected, activating genus lookups.")
+    FLAG_LOOKUP_GENERA = True
 
 # Datatypes
 class VernacularName:
@@ -29,6 +40,13 @@ class VernacularName:
         self.tax_class = tax_class
         self.tax_order = tax_order
         self.tax_family = tax_family
+
+    def __repr__(self):
+        return "<'%s'@%s [%d sources]>" % (
+            self.cmname,
+            self.lang,
+            len(self.sources)
+        )
 
     @property
     def scientificname(self):
@@ -149,7 +167,8 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
 
         sql = """
             SELECT 
-                scname, 
+                scname,
+                LOWER(scname) AS scname_lc,
                 array_agg(DISTINCT LOWER(tax_order)) AS agg_order, 
                 array_agg(DISTINCT LOWER(tax_class)) AS agg_class, 
                 array_agg(DISTINCT LOWER(tax_family)) AS agg_family, 
@@ -162,7 +181,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
                 MAX(source_priority) AS max_source_priority 
             FROM %s 
             WHERE 
-                (LOWER(scname)) IN (%s) 
+                LOWER(scname) IN (%s) 
             GROUP BY 
                 scname, lang, cmname 
             ORDER BY
@@ -188,13 +207,15 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
             raise IOError("Could not read from CartoDB: " + str(response.status_code) + ": " + str(response.content))
             
         results = json.loads(urlresponse.content)
-        rows_by_scname = vnapi.groupBy(results['rows'], 'scname')
+        rows_by_scname = vnapi.groupBy(results['rows'], 'scname_lc')
 
         def clean_agg(list):
             return set(filter(lambda x: x is not None and x != '', list))
 
         # Process each input name in this chunk, not just every resulting name.
-        for scname in chunk_names:
+        for query_scname in chunk_names:
+            scname = query_scname.lower()
+            
             results = []
 
             if scname in rows_by_scname:
@@ -220,9 +241,9 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
 
             # Prevent recursion: remove any higher taxonomy
             # that is part of our current query.
-            taxonomy['class'] = set(filter(lambda x: x.lower() != scname.lower(), taxonomy['class']))
-            taxonomy['order'] = set(filter(lambda x: x.lower() != scname.lower(), taxonomy['order']))
-            taxonomy['family'] = set(filter(lambda x: x.lower() != scname.lower(), taxonomy['family']))
+            taxonomy['class'] = set(filter(lambda x: x.lower() != scname, taxonomy['class']))
+            taxonomy['order'] = set(filter(lambda x: x.lower() != scname, taxonomy['order']))
+            taxonomy['family'] = set(filter(lambda x: x.lower() != scname, taxonomy['family']))
 
             # For every language we are interested in.
             for lang in languages.language_names_list:
@@ -239,7 +260,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
 
                         vnames.add(vnresults[simplify_name][lang].vernacularname.capitalize())
 
-                    return vnames
+                    return clean_agg(vnames)
 
                 vn_tax_class = simplify_to_list(taxonomy['class'])
                 vn_tax_order = simplify_to_list(taxonomy['order'])
@@ -256,12 +277,15 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
                         # No match? Try genus?
                         match = re.search('^(\w+)\s+(\w+)$', scname)
                         if match:
-                            genus = match.group(1).lower()
+                            genus = match.group(1)
                             genus_matches = getVernacularNames([genus])
 
                             if genus in genus_matches and lang in genus_matches[genus]:
                                 vn_vernacularname = genus_matches[genus][lang].vernacularname
                                 vn_sources = genus_matches[genus][lang].sources
+
+                                #if vn_vernacularname != '':
+                                #    logging.info("genus '" + genus + "' looked up in '" + lang + "' and found: '" + vn_vernacularname + "'")
 
                             if len(taxonomy['class']) == 0:
                                 taxonomy['class'] = genus_matches[genus]['tax_class']
@@ -285,5 +309,5 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
                     vn_tax_family
                 )
 
-            fn_callback(scname, taxonomy, best_names)
+            fn_callback(query_scname, taxonomy, best_names)
 
