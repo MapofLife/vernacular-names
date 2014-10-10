@@ -139,30 +139,24 @@ class MainPage(BaseHandler):
         if lookup_search == '' and current_search != '':
             lookup_search = current_search
 
-        if lookup_search != '':
-            lookup_results = vnapi.getVernacularNames(lookup_search)
-
         lookup_results_lang_names = dict()
-        for lang in lookup_results:
-            if lang in languages.language_names:
-                lookup_results_lang_names[lang] = languages.language_names[lang]
-            else:
-                lookup_results_lang_names[lang] = lang
+        if lookup_search != '':
+            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True)
 
-        # Calculate dataset coverage stats
+            lookup_results_languages = lookup_results[lookup_search]
+
+            for lang in lookup_results_languages:
+                if lang in languages.language_names:
+                    lookup_results_lang_names[lang] = languages.language_names[lang]
+                else:
+                    lookup_results_lang_names[lang] = lang
+
+        # Get list of datasets
         datasets = vnapi.getDatasets()
-        datasets_coverage = {}
-        for dataset in datasets:
-            dname = dataset['dataset']
-
-            datasets_coverage[dname] = dict()
-            for lang in languages.language_names:
-                datasets_coverage[dname][lang] = vnapi.getDatasetCoverage(dname, lang)
 
         self.render_template('main.html', {
             'message': self.request.get('msg'),
             'datasets': datasets,
-            'datasets_coverage': datasets_coverage,
             'dataset_filter': dataset_filter,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
@@ -173,7 +167,7 @@ class MainPage(BaseHandler):
             'search_results_scnames': search_results_scnames,
             'lookup_search': lookup_search,
             'lookup_results': lookup_results,
-            'lookup_results_languages': sorted(lookup_results.keys()),
+            'lookup_results_languages': lookup_results_languages,
             'lookup_results_language_names': lookup_results_lang_names,
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,

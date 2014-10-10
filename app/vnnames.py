@@ -83,6 +83,7 @@ class VernacularName:
 #   - names: list of names
 #   - flag_no_higher: do not look up higher taxonomy
 #   - flag_no_memoize: do not save query and return the cached result
+#   - flag_all_results: return all vernacular name results
 #
 # Output: a dict in the format --
 #   results[name1][lang] = VernacularName object 1
@@ -93,8 +94,8 @@ class VernacularName:
 #
 
 getVernacularNames_cache = dict()
-def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False):
-    namekey = "|".join(sorted(map(lambda x: x.lower(), names)))
+def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False):
+    namekey = "|".join(sorted(names))
     if not flag_no_memoize and namekey in getVernacularNames_cache:
         return getVernacularNames_cache[namekey]
 
@@ -109,13 +110,13 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False):
         results[name]['tax_class'] = higher_taxonomy['class']
         results[name]['tax_family'] = higher_taxonomy['family']
 
-    searchVernacularNames(addToDict, names, flag_no_higher)
+    searchVernacularNames(addToDict, names, flag_no_higher, flag_all_results)
     
     if not flag_no_memoize:
         getVernacularNames_cache[namekey] = results
     return results
 
-# searchVernacularNames(fn_callback, query_names, flag_no_higher)
+# searchVernacularNames(fn_callback, query_names, flag_no_higher, flag_all_results)
 #
 # Input:
 #   - fn_callback -> (name, higher_taxonomy, vnames_by_lang)
@@ -135,8 +136,9 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False):
 #   - query_names: list of names to search through. Since we send this to 
 #       CartoDB in chunks, this should be as long as possible.
 #   - flag_no_higher: don't recurse into higher taxonomy.
+#   - flag_all_results: return all results, not just the best one
 #
-def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
+def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_all_results=False):
     # Reassert uniqueness and sort names. We need to sort them because
     # sets are not actually iterable.
     query_names_sorted = sorted(set(query_names))
@@ -221,7 +223,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
             if scname in rows_by_scname:
                 results = rows_by_scname[scname]
 
-            results_by_lang = vnapi.groupByLanguage(results)
+            results_by_lang = vnapi.groupBy(results, 'lang')
 
             best_names = dict()
             taxonomy = {
@@ -268,10 +270,24 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
                 vn_vernacularname = ""
                 vn_sources = set()
 
+                vn_all_entries = []
+
                 if (lang in results_by_lang) and (len(results_by_lang[lang]) > 0):
                     lang_results = results_by_lang[lang]
-                    vn_vernacularname = lang_results[0]['cmname']
-                    vn_sources = lang_results[0]['sources']
+
+                    if flag_all_results:
+                        for result in lang_results:
+                            vn_all_entries.append(VernacularName(
+                                scname, lang,
+                                result['cmname'],
+                                result['sources'],
+                                vn_tax_class,
+                                vn_tax_order,
+                                vn_tax_family
+                            ))
+                    else:
+                        vn_vernacularname = lang_results[0]['cmname']
+                        vn_sources = lang_results[0]['sources']
                 else:
                     if FLAG_LOOKUP_GENERA:
                         # No match? Try genus?
@@ -280,34 +296,48 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False):
                             genus = match.group(1)
                             genus_matches = getVernacularNames([genus])
 
-                            if genus in genus_matches and lang in genus_matches[genus]:
-                                vn_vernacularname = genus_matches[genus][lang].vernacularname
-                                vn_sources = genus_matches[genus][lang].sources
+                            if genus in genus_matches:
+                                if lang in genus_matches[genus]:
+                                    vn_vernacularname = genus_matches[genus][lang].vernacularname
+                                    vn_sources = genus_matches[genus][lang].sources
 
-                                #if vn_vernacularname != '':
-                                #    logging.info("genus '" + genus + "' looked up in '" + lang + "' and found: '" + vn_vernacularname + "'")
+                                    #if vn_vernacularname != '':
+                                    #    logging.info("genus '" + genus + "' looked up in '" + lang + "' and found: '" + vn_vernacularname + "'")
 
-                            if len(taxonomy['class']) == 0:
-                                taxonomy['class'] = genus_matches[genus]['tax_class']
-                                vn_tax_class = simplify_to_list(taxonomy['class'])
+                                if len(taxonomy['class']) == 0:
+                                    taxonomy['class'] = genus_matches[genus]['tax_class']
+                                    vn_tax_class = simplify_to_list(taxonomy['class'])
 
-                            if len(taxonomy['order']) == 0:
-                                taxonomy['order'] = genus_matches[genus]['tax_order']
-                                vn_tax_order = simplify_to_list(taxonomy['order'])
- 
-                            if len(taxonomy['family']) == 0:
-                                taxonomy['family'] = genus_matches[genus]['tax_family']
-                                vn_tax_family = simplify_to_list(taxonomy['family'])
+                                if len(taxonomy['order']) == 0:
+                                    taxonomy['order'] = genus_matches[genus]['tax_order']
+                                    vn_tax_order = simplify_to_list(taxonomy['order'])
+     
+                                if len(taxonomy['family']) == 0:
+                                    taxonomy['family'] = genus_matches[genus]['tax_family']
+                                    vn_tax_family = simplify_to_list(taxonomy['family'])
 
-                best_names[lang] = VernacularName(
-                    scname,
-                    lang,
-                    vn_vernacularname,
-                    vn_sources,
-                    vn_tax_class,
-                    vn_tax_order,
-                    vn_tax_family
-                )
+                if flag_all_results:
+                    best_names[lang] = []
+                    for vname in vn_all_entries:
+                        best_names[lang].append(VernacularName(
+                            vname.scientificname,
+                            vname.lang,
+                            vname.vernacularname,
+                            vname.sources,
+                            vn_tax_class,
+                            vn_tax_order,
+                            vn_tax_family
+                        ))
+                else:
+                    best_names[lang] = VernacularName(
+                        scname,
+                        lang,
+                        vn_vernacularname,
+                        vn_sources,
+                        vn_tax_class,
+                        vn_tax_order,
+                        vn_tax_family
+                    )
 
             fn_callback(query_scname, taxonomy, best_names)
 
