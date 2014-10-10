@@ -1,8 +1,7 @@
 # vim: set fileencoding=utf-8 :
 
-from google.appengine.api import users, urlfetch, taskqueue, app_identity
+from google.appengine.api import users, urlfetch, taskqueue
 from google.appengine.api.mail import EmailMessage
-from google.appengine.ext import blobstore
 
 from titlecase import titlecase
 
@@ -333,9 +332,9 @@ class CoverageViewHandler(BaseHandler):
             coverage = vnapi.getDatasetCoverage(dname, languages.language_names_list)
             for lang in languages.language_names_list:
                 datasets_coverage[dname][lang] = """
-                    %d matched to species (%.2f%%)<br>
-                    %d matched to genus (%.2f%%)<br>
-                    %d unmatched (%.2f%%)
+                    %d have species common names (%.2f%%)<br>
+                    %d have genus common names (%.2f%%)<br>
+                    %d have no common names (%.2f%%)
                     <!-- Total: %d -->
                 """ % (
                     coverage[lang]['matched_with_species_name'],
