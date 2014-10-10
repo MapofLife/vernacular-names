@@ -137,7 +137,7 @@ class MainPage(BaseHandler):
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
-            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True)
+            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True, flag_no_memoize=True)
 
             lookup_results_languages = lookup_results[lookup_search]
 
@@ -222,7 +222,7 @@ class AddNameHandler(BaseHandler):
         ))
 
         if response.status_code != 200:
-            message = "Error: server returned error " + response.status_code + ": " + response.content
+            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
         else:
             message = "Name added to language '" + lang + "'."
 

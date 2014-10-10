@@ -135,7 +135,7 @@ table.search_results tr:nth-child(even) {
                                     <div class="edit_name" id="edit_name_{{language}}_{{loop.index}}" style="display: none">
                                         <form method="post" action="/add/name">
                                             <input name="name_to_add" value="{{result.cmname}}" size=40>
-                                            <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.source}}">
+                                            <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.sources|join("|")}}">
      
                                             <input type="hidden" name="dataset" value="{{dataset_filter}}">
                                             <input type="hidden" name="search" value="{{current_search}}">
