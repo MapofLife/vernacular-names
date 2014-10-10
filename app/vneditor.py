@@ -324,8 +324,51 @@ class GenerateTaxonomyTranslations(BaseHandler):
         self.response.set_status(200)
         self.response.out.write("OK")
 
-# TODO fix hack
-vnameCache = dict()
+# Display a section of the Big List as a table.
+class CoverageViewHandler(BaseHandler):
+    # Display
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        datasets = vnapi.getDatasets()
+        datasets_coverage = {}
+        for dataset in datasets:
+            dname = dataset['dataset']
+
+            datasets_coverage[dname] = dict()
+            coverage = vnapi.getDatasetCoverage(dname, languages.language_names_list)
+            for lang in languages.language_names_list:
+                datasets_coverage[dname][lang] = """
+                    %d matched to species (%.2f%%)<br>
+                    %d matched to genus (%.2f%%)<br>
+                    %d unmatched (%.2f%%)
+                    <!-- Total: %d -->
+                """ % (
+                    coverage[lang]['matched_with_species_name'],
+                    int(coverage[lang]['matched_with_species_name']) / float(coverage[lang]['total']) * 100,
+                    coverage[lang]['matched_with_genus_name'],
+                    int(coverage[lang]['matched_with_genus_name']) / float(coverage[lang]['total']) * 100,
+                    coverage[lang]['unmatched'],
+                    int(coverage[lang]['unmatched']) / float(coverage[lang]['total']) * 100,
+                    coverage[lang]['total'] 
+                )
+
+        self.render_template('coverage.html', {
+            'vneditor_version': version.VNEDITOR_VERSION,
+            'user_url': user_url,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'language_names_list': languages.language_names_list,
+            'language_names': languages.language_names,
+            'datasets': datasets,
+            'datasets_coverage': datasets_coverage
+        }) 
 
 # Display a section of the Big List as a table.
 class ListViewHandler(BaseHandler):
@@ -374,5 +417,6 @@ application = webapp2.WSGIApplication([
     ('/add/name', AddNameHandler),
     ('/page/private', StaticPages),
     ('/list', ListViewHandler),
+    ('/coverage', CoverageViewHandler),
     ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)
