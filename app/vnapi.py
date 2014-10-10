@@ -181,6 +181,7 @@ def datasetContainsName(dataset, scname):
 # Initialize cache
 datasetContainsName.cache = dict()
 
+# Note: only searches names in the master list.
 def searchForName(name):
     # TODO: sanitize input                                                  
 
@@ -188,10 +189,10 @@ def searchForName(name):
     # From http://www.postgresql.org/docs/9.1/static/functions-matching.html
     search_pattern = name.replace("_", "__").replace("%", "%%")             
 
-    sql = "SELECT DISTINCT scname, cmname FROM %s WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
+    sql = "SELECT DISTINCT scname, cmname FROM %s INNER JOIN %s ON (LOWER(scname)=LOWER(scientificname)) WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
     response = url_get(access.CDB_URL % urllib.urlencode(
         dict(q = sql % (
-            access.ALL_NAMES_TABLE, 
+            access.MASTER_LIST, access.ALL_NAMES_TABLE, 
             encode_b64_for_psql("%" + name.lower() + "%"), 
             encode_b64_for_psql("%" + name.lower() + "%")
         ))
