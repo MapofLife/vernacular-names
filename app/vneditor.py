@@ -4,6 +4,7 @@ from google.appengine.api import users, urlfetch, taskqueue
 from google.appengine.api.mail import EmailMessage
 
 from titlecase import titlecase
+from collections import OrderedDict
 
 import webapp2
 import jinja2
@@ -16,6 +17,7 @@ import gzip
 import csv
 import time
 import os
+import json
 
 # Configuration
 import access
@@ -369,21 +371,69 @@ class ListViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
-        # List iucn_amphibian and iucn_reptiles
-        search_criteria = "Listing iucn_amphibian and iucn_reptiles"
+        # Okay, so here's how this is going to work:
+        # 1.    We pass the request object to a series of filters, which will
+        #       return: (1) a string representation of what they have filtered,
+        #       (2) an SQL string for use in a WHERE query, and (3) an SQL string
+        #       for use in a HAVING query.
+        # 2.    We synthesize this into an SQL query and send it to the server.
+        #       Most importantly we tack on ORDER, LIMIT and OFFSET so that users
+        #       can navigate within the table.
+        # 3.    This query returns a list of species names. We send those to
+        #       getVernacularNames()
+        # 4.    We provide links for further navigation, filtering, or whatevs.
 
-        iucn_reptile_names = set(vnapi.getNamesInDataset('iucn_reptiles'))
-        iucn_amphibian_names = set(vnapi.getNamesInDataset('iucn_amphibian'))
+        # Get arguments.
+        offset = int(self.request.get('offset', 0))
+        display_count = int(self.request.get('display', 20))
 
-        # name_list = ListViewHandler.getNames(0, -1, lambda name: (name in iucn_reptile_names or name in iucn_amphibian_names) and random.randint(1, 8600) <= 250)
+        # TODO: filtering.
+        search_criteria = "Test listing"
+        order_by = "ORDER BY scientificname ASC"
+        limit_offset = "LIMIT %d OFFSET %d" % (
+            display_count,
+            offset
+        )
+
+        list_sql = """SELECT
+            DISTINCT scientificname
+            FROM %s INNER JOIN %s ON (LOWER(scname) = LOWER(scientificname))
+            %s
+            %s
+        """ % (
+            access.MASTER_LIST, access.ALL_NAMES_TABLE,
+            order_by,
+            limit_offset
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+            dict(
+                q = list_sql
+            )
+        ))
+
+        message = ""
+        if response.status_code != 200:
+            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+            results = []
+        else:
+            results = json.loads(response.content)
+
+        name_list = map(lambda x: x['scientificname'], results['rows'])
+        vnames = vnnames.getVernacularNames(name_list)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
             'user_url': user_url,
+            'language_names_list': languages.language_names_list,
+            'language_names': languages.language_names,
+            'message': message,
             'search_criteria': search_criteria,
             'name_list': name_list,
-            'language_names_list': languages.language_names_list,
-            'language_names': languages.language_names
+            'vnames': vnames,
+            'offset': offset,
+            'display_count': display_count
         }) 
 
     # Iterate over names for a particular list.

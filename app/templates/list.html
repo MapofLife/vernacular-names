@@ -30,6 +30,15 @@ table.search_results tr:nth-child(even) {
         {% else %}
             <p>{{ name_list|length }} results.</p>
             <table border="1">
+                {% block list_nav %}<td colspan="9">
+                    {% if offset - display_count >= 0 %}
+                        <a href="?offset={{offset - display_count}}">&lt;&lt;</a>
+                    {% else %}
+                        &lt;&lt;
+                    {% endif %}
+
+                    <a href="?offset={{offset + display_count}}">&gt;&gt;</a>
+                </td>{% endblock %}
                 <tr>
                     <th>&nbsp;</th>
                     <th>Species</th>
@@ -40,18 +49,19 @@ table.search_results tr:nth-child(even) {
                 </tr>
                 {% for name in name_list %}
                     <tr>
-                        <td>{{ loop.index }}</td>
+                        <td>{{ loop.index + offset }}</td>
                         <td><em><a href="http://names.mol-api.appspot.com/?lookup={{name}}&search={{name}}">{{ name }}</a></em></td>
-                        <td><tt>http://names.mol-api.appspot.com/?lookup={{name|replace(' ', '+')}}&amp;search={{name|replace(' ', '+')}}</tt></td>
+                        <td style="font-size: 8pt"><tt>http://names.mol-api.appspot.com/?lookup={{name|replace(' ', '+')}}&amp;search={{name|replace(' ', '+')}}</tt></td>
                         {% for lang in language_names_list %}
-                            {% if lang in name_list[name] %}
-                                <td>{{ name_list[name][lang]['vernacularname'] }}</td>
+                            {% if lang in vnames[name] %}
+                                <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a></td>
                             {% else %}
                                 <td>&nbsp;</td> 
                             {% endif %}
                         {% endfor %}
                     </tr>
                 {% endfor %}
+                {{ self.list_nav() }}
             </table>
         {% endif %}
 
