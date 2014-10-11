@@ -363,6 +363,19 @@ class CoverageViewHandler(BaseHandler):
 
 # Display a section of the Big List as a table.
 class ListViewHandler(BaseHandler):
+    # Filter by datasets.
+    def filterByDatasets(self, request, results):
+        datasets = request.get_all('dataset')
+
+        if len(datasets) > 0:
+            results['select'].append("array_agg(LOWER(dataset))")
+
+        sql_having = []
+        for dataset in datasets: 
+            sql_having.append(vnapi.encode_b64_for_psql(dataset.lower()) + " = ANY(array_agg(LOWER(dataset)))")
+
+        results['having'].append("(" + " OR ".join(sql_having) + ")")
+
     # Display
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
@@ -387,8 +400,21 @@ class ListViewHandler(BaseHandler):
         offset = int(self.request.get('offset', 0))
         display_count = int(self.request.get('display', 20))
 
-        # TODO: filtering.
-        search_criteria = "Test listing"
+        results = {
+            "search_criteria": [],
+            "select": [],
+            "where": [],
+            "having": []
+        }
+
+        self.filterByDatasets(self.request, results)
+
+        search_criteria = ", ".join(results['search_criteria'])
+        select = ", ".join(
+            ["scientificname", "COUNT(*) OVER() AS total_count"] + results['select']
+        )
+        where = " AND ".join(results['where'])
+        having = " AND ".join(results['having'])
         order_by = "ORDER BY scientificname ASC"
         limit_offset = "LIMIT %d OFFSET %d" % (
             display_count,
@@ -396,12 +422,18 @@ class ListViewHandler(BaseHandler):
         )
 
         list_sql = """SELECT
-            DISTINCT scientificname
+            %s
             FROM %s INNER JOIN %s ON (LOWER(scname) = LOWER(scientificname))
+            %s
+            GROUP BY scientificname
+            %s
             %s
             %s
         """ % (
+            select,
             access.MASTER_LIST, access.ALL_NAMES_TABLE,
+            "WHERE " + where if where != "" else "",
+            "HAVING " + having if having != "" else "",
             order_by,
             limit_offset
         )
@@ -410,17 +442,23 @@ class ListViewHandler(BaseHandler):
         response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
             dict(
                 q = list_sql
-            )
-        ))
+            )),
+            deadline=vnapi.DEADLINE_FETCH
+        )
 
         message = ""
         if response.status_code != 200:
-            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-            results = []
+            message = "Error: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            results = {"rows": []}
         else:
+            message = "DEBUG: '" + list_sql + "'"
             results = json.loads(response.content)
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
+        total_count = 0
+        if len(results['rows']) > 0:
+            total_count = results['rows'][0]['total_count']
+
         vnames = vnnames.getVernacularNames(name_list)
 
         self.render_template('list.html', {
@@ -433,7 +471,8 @@ class ListViewHandler(BaseHandler):
             'name_list': name_list,
             'vnames': vnames,
             'offset': offset,
-            'display_count': display_count
+            'display_count': display_count,
+            'total_count': total_count
         }) 
 
     # Iterate over names for a particular list.

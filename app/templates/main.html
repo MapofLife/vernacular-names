@@ -1,9 +1,12 @@
 {% extends "templates/base.html" %}
-{% block title %}Editor{% endblock %}
+{% block page_title %}Editor{% endblock %}
 {% block javascript %}
+/*
+ -- Turned off: this deactivates the scroll-to-lang functionality.
 $(document).ready(function() {
     $('.selected').get(0).scrollIntoView(false);
 });
+*/
 {% endblock %}
 {% block style %}
 #scrolled_search_results {
