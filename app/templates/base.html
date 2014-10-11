@@ -1,0 +1,48 @@
+<html>
+    <head>
+        <title>Vernacular Name Editor: {% block page_title %}No title provided {% endblock %}</title>
+
+        <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script type="text/javascript">
+{% block javascript %}
+{% endblock %}
+        </script>
+        <style>
+{% block style %}
+{% endblock %}
+        </style>
+{% block head %}
+{% endblock %}
+    </head>
+    <body>
+
+        <div style="float:right">
+            <a href="{{ user_url }}">{{ user_name }}</a> | <a href="{{ logout_url }}">Logout</a>
+        </div>
+
+        <h1>Vernacular Name Editor: {{ self.title() }}</h1>
+
+        {% if message %}
+        <div style="width: 80%; padding: 0.3em; margin: 2em auto;  background: #ccc; text-align: center;">
+            {{ message }}
+        </div>
+        {% endif %}
+
+        <form>
+            Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Search"> <input type="submit" name="clear" value="Clear">
+            <input name="dataset" type="hidden" value="{{dataset_filter}}">
+        </form>
+
+        <div>
+            <a href="/coverage">{{ datasets|length }} datasets</a>
+            <a href="/list">List names</a>
+        </div>
+
+        {% block content %}
+        This page has not been configured. Please report this <a href="https://github.com/gaurav/vernacular-names/issues">as a bug</a>.
+        {% endblock %}
+
+    <p>&copy; Map of Life, 2014. Please report any <a href="https://github.com/gaurav/vernacular-names/issues">any issues</a> and <a href="https://github.com/gaurav/vernacular-names">fork our code</a>. This is version {{ vneditor_version }}.</p>
+
+    </body>
+</html>

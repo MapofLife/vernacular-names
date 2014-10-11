@@ -1,12 +1,8 @@
-<html>
-    <head>
-        <title>Vernacular Name Editor: List</title>
+{% extends "templates/base.html" %}
 
-        <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
-        <script type="text/javascript">
-        </script>
-        <style>
+{% block page_title %}{{ search_criteria }}{% endblock %}
 
+{% block style %}
 #scrolled_search_results {
     border: 1px solid black;
 }
@@ -24,27 +20,9 @@ table.search_results td {
 table.search_results tr:nth-child(even) {
     background: #ddd;
 }
+{% endblock %}
 
-        </style>
-    </head>
-    <body>
-
-        <div style="float:right">
-            <a href="{{ user_url }}">{{ user_name }}</a> | <a href="{{ logout_url }}">Logout</a>
-        </div>
-
-        <h1>Vernacular Name Editor: List</h1>
-
-        {% if message %}
-        <div style="width: 80%; padding: 0.3em; margin: 2em auto;  background: #ccc; text-align: center;">
-            {{ message }}
-        </div>
-        {% endif %}
-
-        <div>
-            <p><a href="/">Back to main</a></p>
-        </div>
-
+{% block content %}
         <p><strong>{{ search_criteria }}</strong></p>
 
         {% if not name_list %}
@@ -77,7 +55,4 @@ table.search_results tr:nth-child(even) {
             </table>
         {% endif %}
 
-    <p>&copy; Map of Life, 2014. Please report any <a href="https://github.com/gaurav/vernacular-names/issues">any issues</a> and <a href="https://github.com/gaurav/vernacular-names">fork our code</a>. This is version {{ vneditor_version }}.</p>
-
-    </body>
-</html>
+{% endblock %}

@@ -1,16 +1,11 @@
-<html>
-    <head>
-        <title>Welcome to the Vernacular Name Editor</title>
-
-        <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
-        <script type="text/javascript">
+{% extends "templates/base.html" %}
+{% block title %}Editor{% endblock %}
+{% block javascript %}
 $(document).ready(function() {
     $('.selected').get(0).scrollIntoView(false);
 });
-        </script>
-        <style>
-
-
+{% endblock %}
+{% block style %}
 #scrolled_search_results {
     border: 1px solid black;
 }
@@ -24,37 +19,12 @@ table.search_results td {
     border: 1px solid black;
 }
 
-
 table.search_results tr:nth-child(even) {
     background: #ddd;
 }
+{% endblock %}
 
-        </style>
-    </head>
-    <body>
-
-        <div style="float:right">
-            <a href="{{ user_url }}">{{ user_name }}</a> | <a href="{{ logout_url }}">Logout</a>
-        </div>
-
-        <h1>Vernacular Name Editor</h1>
-
-        {% if message %}
-        <div style="width: 80%; padding: 0.3em; margin: 2em auto;  background: #ccc; text-align: center;">
-            {{ message }}
-        </div>
-        {% endif %}
-
-        <form>
-            Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Search"> <input type="submit" name="clear" value="Clear">
-            <input name="dataset" type="hidden" value="{{dataset_filter}}">
-        </form>
-
-        <div>
-            <a href="/coverage">{{ datasets|length }} datasets</a>
-            <a href="/list">List names</a>
-        </div>
-
+{% block content %}
         {% if dataset_filter %}<p>Datasets filtered by <em>{{dataset_filter}}</em> (<a href="?dataset=&search={{current_search}}&lookup={{lookup_search}}">reset</a>).</p>{% endif %}
     
         {% if not search_results %}
@@ -184,8 +154,4 @@ table.search_results tr:nth-child(even) {
             </tr>
             </table>
         {% endif %}
-
-    <p>&copy; Map of Life, 2014. Please report any <a href="https://github.com/gaurav/vernacular-names/issues">any issues</a> and <a href="https://github.com/gaurav/vernacular-names">fork our code</a>. This is version {{ vneditor_version }}.</p>
-
-    </body>
-</html>
+{% endblock %}
