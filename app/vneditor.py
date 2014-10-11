@@ -103,6 +103,15 @@ class MainPage(BaseHandler):
             current_search = ''
         current_search = current_search.strip()
 
+        # Look up 'lookup'
+        lookup_search = self.request.get('lookup')
+        lookup_results = {}
+
+        # If the current search is blank, but lookup is not, search
+        # for that instead.
+        if current_search == '' and lookup_search != '':
+            current_search = lookup_search
+
         # Do the search.
         search_results = dict()
         search_results_scnames = []
@@ -126,10 +135,6 @@ class MainPage(BaseHandler):
                 search_results = dict()
                 for scname in search_results_scnames:
                     search_results[scname] = []
-
-        # Do the lookup
-        lookup_search = self.request.get('lookup')
-        lookup_results = {}
 
         # During the initial search, automatically pick identical matches.
         if lookup_search == '' and current_search != '':
