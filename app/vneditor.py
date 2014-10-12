@@ -379,7 +379,8 @@ class ListViewHandler(BaseHandler):
         for dataset in datasets: 
             sql_having.append(vnapi.encode_b64_for_psql(dataset.lower()) + " = ANY(array_agg(LOWER(dataset)))")
 
-        results['having'].append("(" + " OR ".join(sql_having) + ")")
+        if len(sql_having) > 0:
+            results['having'].append("(" + " OR ".join(sql_having) + ")")
 
     # Display
     def get(self):
