@@ -275,11 +275,11 @@ class GenerateTaxonomyTranslations(BaseHandler):
         csvfile.writerow(header)
 
         def format_name(name):
-            # This slows us by about 50%.
-            return name #titlecase(name)
+            # This slows us by about 50% (44 mins for a full genus generation)
+            return titlecase(name)
 
         def concat_names(names):
-            return "|".join(map(sorted(names))).encode('utf-8')
+            return "|".join(map(format_name, sorted(names))).encode('utf-8')
 
         def add_name(name, higher_taxonomy, vnames_by_lang):
             row = [name.capitalize(), 
@@ -293,11 +293,11 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     sources = vnames_by_lang[lang].sources
 
                     row.extend([
-                        vname.encode('utf-8'), 
+                        format_name(vname).encode('utf-8'), 
                         "|".join(sorted(sources)).encode('utf-8'),
-                        "|".join(sorted(vnames_by_lang[lang].tax_family)).encode('utf-8'),
-                        "|".join(sorted(vnames_by_lang[lang].tax_order)).encode('utf-8'),
-                        "|".join(sorted(vnames_by_lang[lang].tax_class)).encode('utf-8')
+                        concat_names(vnames_by_lang[lang].tax_family),
+                        concat_names(vnames_by_lang[lang].tax_order),
+                        concat_names(vnames_by_lang[lang].tax_class)
                     ])
                 else:
                     row.extend([None, None, None, None, None])
