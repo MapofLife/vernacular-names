@@ -383,9 +383,27 @@ class ListViewHandler(BaseHandler):
         sql_having = []
         for dataset in datasets: 
             sql_having.append(vnapi.encode_b64_for_psql(dataset.lower()) + " = ANY(array_agg(LOWER(dataset)))")
+            results['search_criteria'].append("filter by dataset '" + dataset + "'")
 
         if len(sql_having) > 0:
             results['having'].append("(" + " OR ".join(sql_having) + ")")
+
+    # Filter by blank languages.
+    def filterByBlankLangs(self, request, results):
+        blank_langs = request.get_all('blank_lang')
+        if 'none' in blank_langs:
+            blank_langs = []
+
+        if len(blank_langs) > 0:
+            results['select'].append("array_agg(DISTINCT LOWER(lang))")
+
+        sql_having = []
+        for lang in blank_langs:
+            sql_having.append("NOT " + vnapi.encode_b64_for_psql(lang.lower()) + " = ANY(array_agg(LOWER(lang)))")
+            results['search_criteria'].append("filter by language '" + lang + "' being blank")
+
+        if len(sql_having) > 0:
+            results['having'].append("(" + " AND ".join(sql_having) + ")")
 
     # Display
     def get(self):
@@ -428,9 +446,12 @@ class ListViewHandler(BaseHandler):
         }
 
         self.filterByDatasets(self.request, results)
+        self.filterByBlankLangs(self.request, results)
 
         if len(results['search_criteria']) == 0:
             results['search_criteria'] = ["List all"]
+        else:
+            results['search_criteria'][0].capitalize()
 
         results['select'].insert(0, "scientificname")
         if FLAG_LIST_DISPLAY_COUNT:
@@ -479,7 +500,7 @@ class ListViewHandler(BaseHandler):
 
         message = ""
         if response.status_code != 200:
-            message = "Error: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            message = "<strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
             results = {"rows": []}
         else:
             message = "DEBUG: '" + list_sql + "'"
@@ -499,6 +520,7 @@ class ListViewHandler(BaseHandler):
             'language_names': languages.language_names,
             'datasets_data': vnapi.getDatasets(),
             'selected_datasets': set(self.request.get_all('dataset')),
+            'selected_blank_langs': set(self.request.get_all('blank_lang')),
             'message': message,
             'search_criteria': search_criteria,
             'name_list': name_list,

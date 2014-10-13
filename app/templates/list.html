@@ -1,6 +1,6 @@
 {% extends "templates/base.html" %}
 
-{% block page_title %}{{ search_criteria|default("List") }}{% endblock %}
+{% block page_title %}List{% endblock %}
 
 {% block style %}
 #scrolled_search_results {
@@ -72,10 +72,22 @@ table.search_results tr:nth-child(even) {
                             {% endif %}
                         >{{dataset['dataset']}} ({{dataset['count']}} species)</input>
                     {% endfor %}
+                    <br>
+                    Find blanks in (<button type="submit" name="blank_lang" value="none">Clear</button>): 
+
+                    {% for lang in language_names_list %}
+                        <input type="checkbox" name="blank_lang" onclick="this.form.submit()" value="{{lang}}"
+                            {% if 'none' in selected_blank_langs %}
+                            {% elif lang in selected_blank_langs %}
+                                checked=1
+                            {% endif %}
+                        >{{language_names[lang]}}</input>
+                    {% endfor %}
                 </td>
                 <tr>
                     <th>&nbsp;</th>
                     <th>Species</th>
+                    <th>Genus</th>
                     {% for name in language_names_list %}
                         <th>{{ language_names[name] }}</th>
                     {% endfor %}
@@ -83,10 +95,12 @@ table.search_results tr:nth-child(even) {
                 {% for name in name_list %}
                     <tr>
                         <td>{{ loop.index + offset }}</td>
-                        <td><em><a href="http://names.mol-api.appspot.com/?lookup={{name}}&search={{name}}">{{ name }}</a></em></td>
+                        <td><em><a href="/?lookup={{name}}&search={{name}}">{{ name }}</a></em></td>
                         <!--
                         <td style="font-size: 8pt"><tt>http://names.mol-api.appspot.com/?lookup={{name|replace(' ', '+')}}&amp;search={{name|replace(' ', '+')}}</tt></td>
                         -->
+                        {% set genus = name.split()[0] %}
+                        <td><em><a href="/?lookup={{genus}}">{{genus}}</a></em></td>
                         {% for lang in language_names_list %}
                             {% if lang in vnames[name] %}
                                 <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a></td>
