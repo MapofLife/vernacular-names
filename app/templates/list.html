@@ -64,7 +64,7 @@ table.search_results tr:nth-child(even) {
                     <br>
                     Datasets (<button type="submit" name="dataset" value="all">Clear</button>): 
  
-                    {% for dataset in dataset_data %}
+                    {% for dataset in datasets_data %}
                         <input type="checkbox" name="dataset" onclick="this.form.submit()"  value="{{ dataset['dataset'] }}"
                             {% if 'all' in selected_datasets %}
                             {% elif dataset['dataset'] in selected_datasets %}

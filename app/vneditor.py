@@ -161,7 +161,7 @@ class MainPage(BaseHandler):
 
         self.render_template('main.html', {
             'message': self.request.get('msg'),
-            'datasets': datasets,
+            'datasets_data': datasets,
             'dataset_filter': dataset_filter,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
@@ -365,7 +365,7 @@ class CoverageViewHandler(BaseHandler):
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'datasets': datasets,
+            'datasets_data': datasets,
             'datasets_coverage': datasets_coverage
         }) 
 
@@ -497,7 +497,7 @@ class ListViewHandler(BaseHandler):
             'user_url': user_url,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'dataset_data': vnapi.getDatasets(),
+            'datasets_data': vnapi.getDatasets(),
             'selected_datasets': set(self.request.get_all('dataset')),
             'message': message,
             'search_criteria': search_criteria,
