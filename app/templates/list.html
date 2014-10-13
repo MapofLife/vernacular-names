@@ -22,95 +22,103 @@ table.search_results tr:nth-child(even) {
 }
 {% endblock %}
 
+{% block head %}
+    <script src="/static/sorttable.js"></script>
+{% endblock %}
+
 {% block content %}
-        <p><strong>{{ search_criteria }}</strong></p>
+    <p><strong>{{ search_criteria }}</strong></p>
 
-        {% if not name_list %}
-            <p><strong>No names matched.</strong></p>
-        {% else %}
-            <form method="GET">
-                <input type="hidden" name="offset" value="{{offset}}">
-                <input type="hidden" name="display" value="{{display_count}}">
+    {% if not name_list %}
+        <p><strong>No names matched.</strong></p>
+    {% else %}
+        <form method="GET">
+            <input type="hidden" name="offset" value="{{offset}}">
+            <input type="hidden" name="display" value="{{display_count}}">
 
-            <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
-            <table border="1">
-                <td colspan="9" style="text-align: center">
-                    <button type="submit" name="offset" value="0"  
-                        {% if offset == 0 %}disabled=1{% endif %}
-                    >|&lt</button>                    
+        <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
-                    <button type="submit" name="offset" value="{{offset - display_count}}"
-                        {% if offset - display_count < 0 %}disabled=1{% endif %}
-                    >&lt;&lt;</button>
+        <div id="list_content" style="width: 100%; margins: auto; text-align: center">
+        <p>
+            <button type="submit" name="offset" value="0"  
+                {% if offset == 0 %}disabled=1{% endif %}
+            >|&lt</button>                    
 
-                    |
-                    <select name="display" onchange="this.form.submit()">
-                        <option {% if display_count == 20 %}selected=1{% endif %}  value="20">Display 20 rows at once</option>
-                        <option {% if display_count == 40 %}selected=1{% endif %}  value="40">Display 40 rows at once</option>
-                        <option {% if display_count == 60 %}selected=1{% endif %}  value="60">Display 60 rows at once</option>
-                        <option {% if display_count == 80 %}selected=1{% endif %}  value="80">Display 80 rows at once</option>
-                        <option {% if display_count == 100 %}selected=1{% endif %}  value="100">Display 100 rows at once</option>
-                    </select>
-                    |
+            <button type="submit" name="offset" value="{{offset - display_count}}"
+                {% if offset - display_count < 0 %}disabled=1{% endif %}
+            >&lt;&lt;</button>
 
-                    <button type="submit" name="offset" value="{{offset + display_count}}"
-                        {% if total_count != 0 and offset + display_count >= total_count %}disabled=1{% endif %}
-                    >&gt;&gt;</button> 
+            |
+            <select name="display" onchange="this.form.submit()">
+                <option {% if display_count == 20 %}selected=1{% endif %}  value="20">Display 20 rows at once</option>
+                <option {% if display_count == 40 %}selected=1{% endif %}  value="40">Display 40 rows at once</option>
+                <option {% if display_count == 60 %}selected=1{% endif %}  value="60">Display 60 rows at once</option>
+                <option {% if display_count == 80 %}selected=1{% endif %}  value="80">Display 80 rows at once</option>
+                <option {% if display_count == 100 %}selected=1{% endif %}  value="100">Display 100 rows at once</option>
+            </select>
+            |
 
-                    <button type="submit" name="offset" value="{{total_count - display_count}}"
-                        {% if total_count == 0 or offset >= total_count - display_count %}disabled=1{% endif %}
-                    >&gt;|</button>
+            <button type="submit" name="offset" value="{{offset + display_count}}"
+                {% if total_count != 0 and offset + display_count >= total_count %}disabled=1{% endif %}
+            >&gt;&gt;</button> 
 
-                    <br>
-                    Datasets (<button type="submit" name="dataset" value="all">Clear</button>): 
- 
-                    {% for dataset in datasets_data %}
-                        <input type="checkbox" name="dataset" onclick="this.form.submit()"  value="{{ dataset['dataset'] }}"
-                            {% if 'all' in selected_datasets %}
-                            {% elif dataset['dataset'] in selected_datasets %}
-                                checked=1
-                            {% endif %}
-                        >{{dataset['dataset']}} ({{dataset['count']}} species)</input>
-                    {% endfor %}
-                    <br>
-                    Find blanks in (<button type="submit" name="blank_lang" value="none">Clear</button>): 
+            <button type="submit" name="offset" value="{{total_count - display_count}}"
+                {% if total_count == 0 or offset >= total_count - display_count %}disabled=1{% endif %}
+            >&gt;|</button>
 
-                    {% for lang in language_names_list %}
-                        <input type="checkbox" name="blank_lang" onclick="this.form.submit()" value="{{lang}}"
-                            {% if 'none' in selected_blank_langs %}
-                            {% elif lang in selected_blank_langs %}
-                                checked=1
-                            {% endif %}
-                        >{{language_names[lang]}}</input>
-                    {% endfor %}
-                </td>
+            <br>
+            Datasets (<button type="submit" name="dataset" value="all">Clear</button>): 
+
+            {% for dataset in datasets_data %}
+                <input type="checkbox" name="dataset" onclick="this.form.submit()"  value="{{ dataset['dataset'] }}"
+                    {% if 'all' in selected_datasets %}
+                    {% elif dataset['dataset'] in selected_datasets %}
+                        checked=1
+                    {% endif %}
+                >{{dataset['dataset']}} ({{dataset['count']}} species)</input>
+            {% endfor %}
+            <br>
+            Find blanks in (<button type="submit" name="blank_lang" value="none">Clear</button>): 
+
+            {% for lang in language_names_list %}
+                <input type="checkbox" name="blank_lang" onclick="this.form.submit()" value="{{lang}}"
+                    {% if 'none' in selected_blank_langs %}
+                    {% elif lang in selected_blank_langs %}
+                        checked=1
+                    {% endif %}
+                >{{language_names[lang]}}</input>
+            {% endfor %}
+        </p>
+        <table class="sortable" border="1" width="100%">
+            <thead><tr>
+                <th>&nbsp;</th>
+                <th>Species</th>
+                <th>Genus</th>
+                {% for name in language_names_list %}
+                    <th>{{ language_names[name] }}</th>
+                {% endfor %}
+            </tr></thead><tbody>
+            {% for name in name_list %}
                 <tr>
-                    <th>&nbsp;</th>
-                    <th>Species</th>
-                    <th>Genus</th>
-                    {% for name in language_names_list %}
-                        <th>{{ language_names[name] }}</th>
+                    <td>{{ loop.index + offset }}</td>
+                    <td><em><a href="/?lookup={{name}}&search={{name}}">{{ name }}</a></em></td>
+                    <!--
+                    <td style="font-size: 8pt"><tt>http://names.mol-api.appspot.com/?lookup={{name|replace(' ', '+')}}&amp;search={{name|replace(' ', '+')}}</tt></td>
+                    -->
+                    {% set genus = name.split()[0] %}
+                    <td><em><a href="/?lookup={{genus}}">{{genus}}</a></em></td>
+                    {% for lang in language_names_list %}
+                        {% if lang in vnames[name] %}
+                            <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a></td>
+                        {% else %}
+                            <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><em>None</em></a></td>
+                        {% endif %}
                     {% endfor %}
                 </tr>
-                {% for name in name_list %}
-                    <tr>
-                        <td>{{ loop.index + offset }}</td>
-                        <td><em><a href="/?lookup={{name}}&search={{name}}">{{ name }}</a></em></td>
-                        <!--
-                        <td style="font-size: 8pt"><tt>http://names.mol-api.appspot.com/?lookup={{name|replace(' ', '+')}}&amp;search={{name|replace(' ', '+')}}</tt></td>
-                        -->
-                        {% set genus = name.split()[0] %}
-                        <td><em><a href="/?lookup={{genus}}">{{genus}}</a></em></td>
-                        {% for lang in language_names_list %}
-                            {% if lang in vnames[name] %}
-                                <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a></td>
-                            {% else %}
-                                <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><em>None</em></a></td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </table>
-        {% endif %}
+            {% endfor %}
+        </tbody>
+        </table>
+        </div>
+    {% endif %}
 
 {% endblock %}
