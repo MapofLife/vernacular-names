@@ -28,6 +28,9 @@ import languages
 import vnapi
 import vnnames
 
+# More configuration
+FLAG_LIST_DISPLAY_COUNT = True
+
 # Set up URLfetch settings
 urlfetch.set_default_fetch_deadline(60)
 
@@ -371,9 +374,11 @@ class ListViewHandler(BaseHandler):
     # Filter by datasets.
     def filterByDatasets(self, request, results):
         datasets = request.get_all('dataset')
+        if 'all' in datasets:
+            datasets = []
 
         if len(datasets) > 0:
-            results['select'].append("array_agg(LOWER(dataset))")
+            results['select'].append("array_agg(DISTINCT LOWER(dataset))")
 
         sql_having = []
         for dataset in datasets: 
@@ -403,8 +408,17 @@ class ListViewHandler(BaseHandler):
         # 4.    We provide links for further navigation, filtering, or whatevs.
 
         # Get arguments.
-        offset = int(self.request.get('offset', 0))
-        display_count = int(self.request.get('display', 20))
+        # Because of the way we handle these, they may show up multiple times.
+        # In this case, we want the last one.
+        def use_last_or_default(argname, default):
+            all_vals = self.request.get_all(argname)
+            if len(all_vals) == 0:
+                return default
+            else:
+                return all_vals[-1]
+
+        offset = int(use_last_or_default("offset", 0))
+        display_count = int(use_last_or_default("display", 20))
 
         results = {
             "search_criteria": [],
@@ -415,17 +429,25 @@ class ListViewHandler(BaseHandler):
 
         self.filterByDatasets(self.request, results)
 
-        search_criteria = ", ".join(results['search_criteria'])
-        select = ", ".join(
-            ["scientificname", "COUNT(*) OVER() AS total_count"] + results['select']
-        )
+        if len(results['search_criteria']) == 0:
+            results['search_criteria'] = ["List all"]
+
+        results['select'].insert(0, "scientificname")
+        if FLAG_LIST_DISPLAY_COUNT:
+            results['select'].insert(1,  "COUNT(*) OVER() AS total_count")
+
+        select = ", ".join(results['select'])
         where = " AND ".join(results['where'])
         having = " AND ".join(results['having'])
         order_by = "ORDER BY scientificname ASC"
+        results['search_criteria'].append("sorted by ascending  scientific name")
+
         limit_offset = "LIMIT %d OFFSET %d" % (
             display_count,
             offset
         )
+
+        search_criteria = ", ".join(results['search_criteria'])
 
         list_sql = """SELECT
             %s
@@ -445,10 +467,13 @@ class ListViewHandler(BaseHandler):
         )
 
         # Make it so.
-        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
-            dict(
-                q = list_sql
-            )),
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = list_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
             deadline=vnapi.DEADLINE_FETCH
         )
 
@@ -462,7 +487,7 @@ class ListViewHandler(BaseHandler):
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
         total_count = 0
-        if len(results['rows']) > 0:
+        if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
 
         vnames = vnnames.getVernacularNames(name_list)
@@ -472,6 +497,8 @@ class ListViewHandler(BaseHandler):
             'user_url': user_url,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
+            'dataset_data': vnapi.getDatasets(),
+            'selected_datasets': set(self.request.get_all('dataset')),
             'message': message,
             'search_criteria': search_criteria,
             'name_list': name_list,
