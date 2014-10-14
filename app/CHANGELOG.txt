@@ -1,3 +1,6 @@
+0.3: October 14, 2014
+ - List names: displays species by criteria.
+ - Recent changes: displays recent changes, allow some to be deleted.
 0.2-alpha-1: August 30, 2014
  - Added support for filtering by dataset.
  - Improved display of sources and sorting of common names.
