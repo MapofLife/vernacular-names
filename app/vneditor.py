@@ -30,6 +30,7 @@ import vnnames
 
 # More configuration
 FLAG_LIST_DISPLAY_COUNT = True
+SOURCE_URL = "https://github.com/gaurav/vernacular-names"
 
 # Set up URLfetch settings
 urlfetch.set_default_fetch_deadline(60)
@@ -179,6 +180,38 @@ class MainPage(BaseHandler):
             'vneditor_version': version.VNEDITOR_VERSION
         })
 
+class DeleteByCDBIDHandler(BaseHandler):
+    def post(self):
+        # Fail without login.
+        current_user = self.check_user()
+
+        # Retrieve state
+        cartodb_id = int(self.request.get('cartodb_id'))
+
+        # Synthesize SQL
+        sql = "DELETE FROM %s WHERE cartodb_id=%d"
+        sql_query = sql % (
+            access.ALL_NAMES_TABLE,
+            cartodb_id
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+            dict(
+                q = sql_query,
+                api_key = access.CARTODB_API_KEY
+            )
+        ))
+
+        if response.status_code != 200:
+            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+        else:
+            message = "Change %d deleted successfully." % cartodb_id
+
+        # Redirect to the recent changes page.
+        self.redirect("/recent?" + urllib.urlencode(dict(
+            msg = message,
+        )))
 
 class AddNameHandler(BaseHandler):
     def post(self):
@@ -211,7 +244,7 @@ class AddNameHandler(BaseHandler):
         source_b64 = vnapi.encode_b64_for_psql(source)
 
         # Synthesize SQL
-        sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority) VALUES (%s, %s, %s, %s, NULL, %s, 'https://github.com/gaurav/vernacular-names', %d);"
+        sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority) VALUES (%s, %s, %s, %s, NULL, %s, '" + SOURCE_URL + "', %d);"
         sql_query = sql % (
             access.ALL_NAMES_TABLE,
             added_by_b64,
@@ -368,6 +401,78 @@ class CoverageViewHandler(BaseHandler):
             'datasets_data': datasets,
             'datasets_coverage': datasets_coverage
         }) 
+
+# Return a list of recent changes, and allow some to be deleted.
+class RecentChangesHandler(BaseHandler):
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+        
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = 100
+
+        # Synthesize SQL:
+        recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, added_by, created_at, updated_at,
+            COUNT(*) OVER() AS total_count
+            FROM %s
+            WHERE source_url='""" + SOURCE_URL + """'
+            ORDER BY updated_at DESC
+            LIMIT %d OFFSET %d
+        """) % (
+            access.ALL_NAMES_TABLE,
+            display_count,
+            offset
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = recent_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        recent_changes = []
+        total_count = 0
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            results = {"rows": []}
+        else:
+            results = json.loads(response.content)
+            recent_changes = results['rows']
+            if len(recent_changes) > 0:
+                total_count = recent_changes[0]['total_count']
+
+        # List updates in reverse chronological order.
+        self.render_template('recent.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'offset': offset,
+            'display_count': display_count,
+            'total_count': total_count,
+            'recent_changes': recent_changes,
+            'vneditor_version': version.VNEDITOR_VERSION
+        })
+
+
 
 # Display a section of the Big List as a table.
 class ListViewHandler(BaseHandler):
@@ -550,6 +655,8 @@ application = webapp2.WSGIApplication([
     ('/add/name', AddNameHandler),
     ('/page/private', StaticPages),
     ('/list', ListViewHandler),
+    ('/delete/cartodb_id', DeleteByCDBIDHandler),
+    ('/recent', RecentChangesHandler),
     ('/coverage', CoverageViewHandler),
     ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)

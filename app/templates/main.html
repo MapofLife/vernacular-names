@@ -29,6 +29,9 @@ table.search_results tr:nth-child(even) {
 
 {% block content %}
         {% if dataset_filter %}<p>Datasets filtered by <em>{{dataset_filter}}</em> (<a href="?dataset=&search={{current_search}}&lookup={{lookup_search}}">reset</a>).</p>{% endif %}
+
+        <table width="100%" style="margin: 2em 0em">
+        <tr><td width="20%" valign="top">
     
         {% if not search_results %}
             {% if current_search or dataset_filter %}
@@ -37,8 +40,6 @@ table.search_results tr:nth-child(even) {
 
         {% else %}
 
-            <table width="100%" style="margin: 2em 0em">
-            <tr><td width="20%" valign="top">
             <div id="scrolled_search_results" style="overflow: scroll; height: 600px;">
             <table class="search_results">
             <form onsubmit="window.location.hash = ''">
@@ -63,8 +64,10 @@ table.search_results tr:nth-child(even) {
             </table>
             </div>
             </td>
+        {% endif %}
 
-            {% if lookup_results %}
+        {% if not lookup_results %}
+        {% else %}
             <td valign="top" width="80%">
                 <div id="external_links" style="float: right; width=30%; border: 1px solid black; background: #ddd; padding: 0.5em">
                     <strong>External links</strong>
@@ -165,10 +168,9 @@ table.search_results tr:nth-child(even) {
                         </div>
                     </tr>
                 </table>
-            </td>
-            {% endif %}
-            
-            </tr>
-            </table>
+            </td>    
         {% endif %}
+
+        </tr>
+        </table>
 {% endblock %}
