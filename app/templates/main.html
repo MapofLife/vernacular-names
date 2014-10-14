@@ -66,6 +66,17 @@ table.search_results tr:nth-child(even) {
 
             {% if lookup_results %}
             <td valign="top" width="80%">
+                <div id="external_links" style="float: right; width=30%; border: 1px solid black; background: #ddd; padding: 0.5em">
+                    <strong>External links</strong>
+                    <br>
+                    <br>
+                    <a href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{lookup_search}}">English Wikipedia</a>
+                    <br>
+                    <a href="http://eol.org/{{lookup_search}}">EOL</a>
+                    <br>
+                    <a href="http://www.gbif.org/species/search?q={{lookup_search}}">GBIF</a>
+                </div>
+
                 <h2><em>{{ lookup_search }}</em>
                 </h2>
 
@@ -104,7 +115,7 @@ table.search_results tr:nth-child(even) {
                                         #}
                                         <ul>
                                             {% for source in result.sources %}
-                                                <li><span style="font: 80% small-caps">{{ source }}</span></li>
+                                                <li><span style="font: 80% small-caps">{{ source|urlize }}</span></li>
                                             {% endfor %}
                                         </ul>
                                     </div>
