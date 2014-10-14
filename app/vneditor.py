@@ -147,7 +147,7 @@ class MainPage(BaseHandler):
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
-            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True, flag_no_memoize=True)
+            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
 
             lookup_results_languages = lookup_results[lookup_search]
 
@@ -616,7 +616,7 @@ class ListViewHandler(BaseHandler):
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
 
-        vnames = vnnames.getVernacularNames(name_list)
+        vnames = vnnames.getVernacularNames(name_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,

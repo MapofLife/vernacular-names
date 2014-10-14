@@ -94,7 +94,7 @@ class VernacularName:
 #
 
 getVernacularNames_cache = dict()
-def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False):
+def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False, flag_lookup_genera=FLAG_LOOKUP_GENERA):
     namekey = "|".join(sorted(names))
     if not flag_no_memoize and namekey in getVernacularNames_cache:
         return getVernacularNames_cache[namekey]
@@ -110,7 +110,7 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_
         results[name]['tax_class'] = higher_taxonomy['class']
         results[name]['tax_family'] = higher_taxonomy['family']
 
-    searchVernacularNames(addToDict, names, flag_no_higher, flag_all_results)
+    searchVernacularNames(addToDict, names, flag_no_higher, flag_all_results, flag_lookup_genera)
     
     if not flag_no_memoize:
         getVernacularNames_cache[namekey] = results
@@ -138,7 +138,7 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_
 #   - flag_no_higher: don't recurse into higher taxonomy.
 #   - flag_all_results: return all results, not just the best one
 #
-def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_all_results=False):
+def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_all_results=False, flag_lookup_genera=FLAG_LOOKUP_GENERA):
     # Reassert uniqueness and sort names. We need to sort them because
     # sets are not actually iterable.
     query_names_sorted = sorted(set(query_names))
@@ -289,7 +289,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                         vn_vernacularname = lang_results[0]['cmname']
                         vn_sources = lang_results[0]['sources']
                 else:
-                    if FLAG_LOOKUP_GENERA:
+                    if flag_lookup_genera:
                         # No match? Try genus?
                         match = re.search('^(\w+)\s+(\w+)$', scname)
                         if match:
