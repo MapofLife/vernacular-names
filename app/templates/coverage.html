@@ -1,0 +1,52 @@
+{% extends "templates/base.html" %}
+{% block page_title %}Coverage{% endblock %}
+{% block head %}
+        <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+{% endblock %}
+
+{% block style %}
+#scrolled_search_results {
+    border: 1px solid black;
+}
+
+table.search_results tr.selected td {
+    background: yellow;
+}
+
+table.search_results td {
+    padding: 0.5em;
+    border: 1px solid black;
+}
+
+
+table.search_results tr:nth-child(even) {
+    background: #ddd;
+}
+{% endblock %}
+
+{% block content %}
+            <div id="dataset-list">
+                <table border="1">
+                    <tr>
+                        <th>Dataset</th>
+                        {% for lang in language_names_list %}
+                            <th>{{language_names[lang]}}</th>
+                        {% endfor %}
+                    </tr>
+                    {% for dataset in datasets_data %}
+                        <tr>
+                            <td align="left">
+                                <!-- TODO: Add URL encoding here -->
+                                <a href="/?dataset={{dataset['dataset']|trim}}">{{ dataset['dataset']|trim }}</a>
+                                <br>
+                                {{ dataset['count'] }} names
+                            </td>
+                            {% for lang in language_names_list %}
+                                <td>{{ datasets_coverage[dataset['dataset']][lang]|safe }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+ 
+{% endblock %}

@@ -1,3 +1,6 @@
+The following license applies to all files in this Git repositories except
+where otherwise noted. 
+
 Copyright (c) 2014 Map of Life
 All rights reserved.
 

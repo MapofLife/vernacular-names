@@ -1,68 +1,56 @@
 # vim: set fileencoding=utf-8 : 
 
 # vnapi.py
-# An API for communicating with the Vernacular Name system
-# on CartoDB.
+# An API for communicating with the Vernacular Name system on CartoDB.
 
 from google.appengine.api import urlfetch
+from operator import itemgetter
 
 import base64
 import json
 import urllib
 import re
 
-# Authentication
+# Authentication.
 import access
+import vnnames
 
-# Configuration
-DEADLINE_FETCH = 60 # seconds to wait during URL fetch
+# Configuration.
+DEADLINE_FETCH = 60 # seconds to wait during URL fetch (max: 60)
 
+# Helper functions.
 def url_get(url):
     return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
 
+# Encode a string as base64
 def encode_b64_for_psql(text):
-    return decode_b64_on_psql(base64.b64encode(text))
+    return decode_b64_on_psql(base64.b64encode(text.encode('UTF-8')))
 
+# Prepare a bit of code for PostgreSQL to decode a string on the server side.
 def decode_b64_on_psql(text):                                         
-    base64_only = re.compile(r"^[a-zA-Z0-9=]*$")                            
+    base64_only = re.compile(r"^[a-zA-Z0-9=]*$")
     if not base64_only.match(text):                                         
         raise RuntimeError("Error: '" + text + "' sent to decode_b64_on_psql is not base64!")
 
-    return "convert_from(decode('" + text + "', 'base64'), 'utf-8')"        
+    return "convert_from(decode('" + text + "', 'base64'), 'utf-8')"
 
-def sortNames(rows):
-    result_table = dict()                                                   
-        
-    for row in rows:                                             
-        lang = row['lang']                                                  
+# Given a list of rows, divide them until into groups of rows by the values
+# in the column provided in 'colName'.
+def groupBy(rows, colName):
+    result_table = dict()
 
-        if not lang in result_table:                                        
-            result_table[lang] = []
+    for row in rows:
+        val = row[colName]
 
-        result_table[lang].append(dict(
-            cmname = row['cmname'],
-            sources = row['sources'],
-            max_updated_at = row['max_updated_at'],
-            max_source_priority = int(row['max_source_priority'])
-        ))
+        if not val in result_table:
+            result_table[val] = []
 
-    return result_table 
+        result_table[val].append(row)
 
-def getVernacularNames(name):
-    # TODO: sanitize input                                                  
-    sql = "SELECT lang, cmname, array_agg(source) AS sources, max(source_priority) AS max_source_priority, max(updated_at) AS max_updated_at FROM %s WHERE LOWER(scname) = %s GROUP BY lang, cmname ORDER BY max_source_priority DESC, max_updated_at DESC"
-    response = url_get(access.CDB_URL % urllib.urlencode(
-        dict(q = sql % (access.ALL_NAMES_TABLE, encode_b64_for_psql(name.lower())))
-    ))
+    return result_table
 
-    if response.status_code != 200: 
-        raise RuntimeError("Could not read server response: " + response.content)
-
-    results = json.loads(response.content)                                  
-    return sortNames(results['rows'])
-
+# Return a list of every dataset in the master list.
 def getDatasets():
-    # TODO: sanitize input
     sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
     response = url_get(access.CDB_URL % urllib.urlencode(
         dict(q = sql % (access.MASTER_LIST))
@@ -75,18 +63,103 @@ def getDatasets():
 
     return results['rows']
 
-def getDatasetCoverage(dname, lang):
-    return 101
+def getDatasetCoverage(dataset, langs):
+    return getNamesCoverage(getDatasetNames(dataset), langs)
 
-def getNamesInDataset(dataset):
-    # TODO: sanitize input
-    sql = "SELECT scientificname FROM %s WHERE dataset=%s ORDER BY lower(scientificname) ASC"
+# Return the coverage we have on this set of names in the specified language.
+# This code is based on vnnames.searchVernacularNames()
+def getNamesCoverage(query_names, langs):
+    query_names_sorted = sorted(set(query_names))
+
+    # From http://stackoverflow.com/a/312464/27310
+    def chunks(items, size):
+        for i in xrange(0, len(items), size):
+            yield items[i:i+size]
+
+    # Counts
+    counts = dict()
+
+    # Query through all names in chunks.
+    row = 0
+    for chunk_names in chunks(query_names_sorted, vnnames.SEARCH_CHUNK_SIZE):
+        row += len(chunk_names)
+
+        genera = set()
+        for name in chunk_names:
+            match = re.search('^(\w+)\s+(\w+)$', name)
+            if match:
+                genus = match.group(1)
+                genera.add(genus)
+
+        chunk_names_with_genera = list(chunk_names)
+        chunk_names_with_genera.extend(genera)
+
+        scname_list = ", ".join(map(lambda name: encode_b64_for_psql(name.lower()), chunk_names_with_genera))
+        langs_list = ", ".join(map(lambda lang: encode_b64_for_psql(lang), langs))
+        sql = """
+            SELECT LOWER(scname) AS scname_lc, scname, lang, COUNT(*) AS count FROM %s 
+            WHERE LOWER(scname) IN (%s) AND lang IN (%s)
+            GROUP BY scname_lc, scname, lang
+        """
+        sql_query = sql % (access.ALL_NAMES_TABLE, scname_list, langs_list)
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(dict(
+                q = sql_query 
+            )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=DEADLINE_FETCH
+        )
+
+        if response.status_code != 200:
+            raise RuntimeError("Could not read server response: " + response.content)
+
+        results = json.loads(response.content)
+        rows_by_lang = groupBy(results['rows'], 'lang')
+
+        for lang in langs:
+            if not lang in counts:
+                counts[lang] = {
+                    'total': 0,
+                    'matched_with_species_name': 0,
+                    'matched_with_genus_name': 0,
+                    'unmatched': 0
+                }
+
+            rows_by_scname_lc = groupBy(rows_by_lang[lang], 'scname_lc')
+                
+            for scname in chunk_names:
+                counts[lang]['total'] += 1
+
+                flag_matched = False
+                if lang in rows_by_lang:
+                    if scname.lower() in rows_by_scname_lc:
+                        counts[lang]['matched_with_species_name'] += 1
+                        flag_matched = True
+                    else:
+                        match = re.search('^(\w+)\s+(\w+)$', name)
+                        if match:
+                            genus = match.group(1)
+
+                            if genus.lower() in rows_by_scname_lc:
+                                counts[lang]['matched_with_genus_name'] += 1
+                                flag_matched = True
+
+                if not flag_matched:
+                    counts[lang]['unmatched'] += 1
+
+    return counts
+
+# Return a list of every scientific name in this dataset.
+def getDatasetNames(dataset):
+    sql = "SELECT scientificname FROM %s WHERE dataset=%s"
+    sql_query = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset))
     response = url_get(access.CDB_URL % urllib.urlencode(
-        dict(q = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset)))
+        dict(q = sql_query)
     ))
 
     if response.status_code != 200:
-        raise RuntimeError("Could not read server response: " + response.content)
+        raise RuntimeError("Could not read server response (to '" + sql_query + "'): " + response.content)
 
     results = json.loads(response.content)
     scnames = map(lambda x: x['scientificname'], results['rows'])
@@ -108,6 +181,7 @@ def datasetContainsName(dataset, scname):
 # Initialize cache
 datasetContainsName.cache = dict()
 
+# Note: only searches names in the master list.
 def searchForName(name):
     # TODO: sanitize input                                                  
 
@@ -115,10 +189,10 @@ def searchForName(name):
     # From http://www.postgresql.org/docs/9.1/static/functions-matching.html
     search_pattern = name.replace("_", "__").replace("%", "%%")             
 
-    sql = "SELECT DISTINCT scname, cmname FROM %s WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
+    sql = "SELECT DISTINCT scname, cmname FROM %s INNER JOIN %s ON (LOWER(scname)=LOWER(scientificname)) WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
     response = url_get(access.CDB_URL % urllib.urlencode(
         dict(q = sql % (
-            access.ALL_NAMES_TABLE, 
+            access.MASTER_LIST, access.ALL_NAMES_TABLE, 
             encode_b64_for_psql("%" + name.lower() + "%"), 
             encode_b64_for_psql("%" + name.lower() + "%")
         ))

@@ -1,16 +1,14 @@
-<html>
-    <head>
-        <title>Welcome to the Vernacular Name Editor</title>
-
-        <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
-        <script type="text/javascript">
+{% extends "templates/base.html" %}
+{% block page_title %}Editor{% endblock %}
+{% block javascript %}
+/*
+ -- Turned off: this deactivates the scroll-to-lang functionality.
 $(document).ready(function() {
     $('.selected').get(0).scrollIntoView(false);
 });
-        </script>
-        <style>
-
-
+*/
+{% endblock %}
+{% block style %}
 #scrolled_search_results {
     border: 1px solid black;
 }
@@ -24,59 +22,17 @@ table.search_results td {
     border: 1px solid black;
 }
 
-
 table.search_results tr:nth-child(even) {
     background: #ddd;
 }
+{% endblock %}
 
-        </style>
-    </head>
-    <body>
+{% block content %}
+        {% if dataset_filter %}<p>Datasets filtered by <em>{{dataset_filter}}</em> (<a href="?dataset=&search={{current_search}}&lookup={{lookup_search}}">reset</a>).</p>{% endif %}
 
-        <div style="float:right">
-            <a href="{{ user_url }}">{{ user_name }}</a> | <a href="{{ logout_url }}">Logout</a>
-        </div>
-
-        <h1>Vernacular Name Editor</h1>
-
-        {% if message %}
-        <div style="width: 80%; padding: 0.3em; margin: 2em auto;  background: #ccc; text-align: center;">
-            {{ message }}
-        </div>
-        {% endif %}
-
-        <form>
-            Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Search"> <input type="submit" name="clear" value="Clear">
-            <input name="dataset" type="hidden" value="{{dataset_filter}}">
-        </form>
-
-        <div>
-            <p><a href="#" onclick="$('#dataset-list').toggle(); return false;">{{ datasets|length }} datasets</a>{% if dataset_filter %}, filtering by <em>{{dataset_filter}}</em> (<a href="?dataset=&search={{current_search}}&lookup={{lookup_search}}">reset</a>).{% endif %}</p>
-            <div id="dataset-list" style="display: none">
-                <table border="1">
-                    <tr>
-                        <th>Dataset</th>
-                        <th>Names</th>
-                        {% for lang in language_names %}
-                            <th>{{language_names[lang]}}</th>
-                        {% endfor %}
-                    </tr>
-                    {% for dataset in datasets %}
-                        <tr>
-                            <td align="left">
-                                <!-- TODO: Add URL encoding here -->
-                                <a href="?dataset={{dataset['dataset']|trim}}&search={{current_search}}&lookup={{lookup_search}}">{{ dataset['dataset']|trim }}</a>
-                            </td>
-                            <td>{{ dataset['count'] }} names</td>
-                            {% for lang in language_names_list %}
-                                <td>{{ datasets_coverage[dataset['dataset']][lang] }}</td>
-                            {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </div>
-        
+        <table width="100%" style="margin: 2em 0em">
+        <tr><td width="20%" valign="top">
+    
         {% if not search_results %}
             {% if current_search or dataset_filter %}
                 <p><strong>No results found.</strong></p>
@@ -84,14 +40,12 @@ table.search_results tr:nth-child(even) {
 
         {% else %}
 
-            <table width="100%" style="margin: 2em 0em">
-            <tr><td width="20%" valign="top">
             <div id="scrolled_search_results" style="overflow: scroll; height: 600px;">
             <table class="search_results">
             <form onsubmit="window.location.hash = ''">
             <input type="hidden" name="search" value="{{current_search}}">
             {% for scname in search_results_scnames %}
-                <tr class="{% if scname == lookup_search %}selected{% endif %}">
+                <tr class="{% if scname|lower == lookup_search|lower %}selected{% endif %}">
                     <!-- TODO: these should be URL encoded before being used in a link -->
                     <td><em>{{scname}}</em> <a style="float: right" href="?dataset={{dataset_filter}}&search={{current_search}}&lookup={{scname}}">View</a>
                     <div style="font-size: 90%; width: auto;">
@@ -110,20 +64,27 @@ table.search_results tr:nth-child(even) {
             </table>
             </div>
             </td>
+        {% endif %}
 
-            {% if lookup_results %}
+        {% if not lookup_results %}
+        {% else %}
             <td valign="top" width="80%">
-                <h2><em>{{ lookup_search }}</em>
-                <select id="select_lang_list" onchange="var val = $(this).val(); if(val == 'all') { $('.results-lang').show(); } else if(val == 'mol') { $('.results-lang').hide(); $('.results-lang-mol').show() } else { $('.results-lang').hide(); $('#results-lang-' + val).show() }">
-                    <option selected="1" value="mol">MOL languages</option>
-                    <option value="all">All</option>
-                    {% for language in lookup_results_languages %}
-                    <option value="{{language}}">{{lookup_results_language_names[language]}}</option>
-                    {% endfor %}
-                    <option id="option_completely_new" value="completely-new">Add new name</option>
+                <div id="external_links" style="float: right; width=30%; border: 1px solid black; background: #ddd; padding: 0.5em">
+                    <strong>External links</strong>
+                    <br>
+                    <br>
+                    <a href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{lookup_search}}">English Wikipedia</a>
+                    <br>
+                    <a href="http://eol.org/{{lookup_search}}">EOL</a>
+                    <br>
+                    <a href="http://www.gbif.org/species/search?q={{lookup_search}}">GBIF</a>
+                </div>
 
-                </select> <a style="font-size: 70%" class="nohistory" href="#" onclick="$('#select_lang_list').val('completely-new').change(); false">Add new name</a>
+                <h2><em>{{ lookup_search }}</em>
                 </h2>
+
+                {% set genus = lookup_search.split()[0] %}
+                <p>Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em></p>
 
 <!--
                     <div style="float: right; padding: 0.5em; border: 1px; background: #ddd">
@@ -136,29 +97,35 @@ table.search_results tr:nth-child(even) {
                     </div>
 -->
 
-                    {% for language in lookup_results_languages %}
+                    {% for language in language_names_list %}
                         <div class="results-lang{% if language in language_names_list %} results-lang-mol{% endif %}" id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}>
-                        <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: {{ lookup_results[language][0].cmname }}</h3>
+                        {% if language in lookup_results[lookup_search] and (lookup_results[lookup_search][language])|length > 0 %}
+                            <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: {{ lookup_results[lookup_search][language][0].vernacularname }}</h3>
+                        {% else %}
+                            <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: <em>None</em></h3>
+                        {% endif %}
                         <ul>
-                            {% for result in lookup_results[language] %}
+                            {% for result in lookup_results[lookup_search][language] %}
                                 <li>
                                     <div class="display_name" id="display_name_{{language}}_{{loop.index}}">
                                         {% if loop.first %}<strong>{% endif %}
                                         <a class="nohistory" href="#" onclick="$('.display_name').show(); $('.edit_name').hide(); $('#display_name_{{language}}_{{loop.index}}').hide(); $('#edit_name_{{language}}_{{loop.index}}').show(); $('#edit_name_{{language}}_{{loop.index}} input:first').focus(); return false">{{ result.cmname }}</a>
                                         {% if loop.first %}</strong>{% endif %}
+                                        {# TODO: reactivate once we have this in the result
                                         {% if result.max_source_priority > 80 %}
                                             <strong>(This name cannot be overridden! Please contact an administrator to edit it)</strong>
                                         {% endif %}
+                                        #}
                                         <ul>
                                             {% for source in result.sources %}
-                                                <li><span style="font: 80% small-caps">{{ source }}</span></li>
+                                                <li><span style="font: 80% small-caps">{{ source|urlize }}</span></li>
                                             {% endfor %}
                                         </ul>
                                     </div>
                                     <div class="edit_name" id="edit_name_{{language}}_{{loop.index}}" style="display: none">
                                         <form method="post" action="/add/name">
                                             <input name="name_to_add" value="{{result.cmname}}" size=40>
-                                            <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.source}}">
+                                            <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.sources|join("|")}}">
      
                                             <input type="hidden" name="dataset" value="{{dataset_filter}}">
                                             <input type="hidden" name="search" value="{{current_search}}">
@@ -201,14 +168,9 @@ table.search_results tr:nth-child(even) {
                         </div>
                     </tr>
                 </table>
-            </td>
-            {% endif %}
-            
-            </tr>
-            </table>
+            </td>    
         {% endif %}
 
-    <p>&copy; Map of Life, 2014. Please report any <a href="https://github.com/gaurav/vernacular-names/issues">any issues</a> and <a href="https://github.com/gaurav/vernacular-names">fork our code</a>. This is version {{ vneditor_version }}.</p>
-
-    </body>
-</html>
+        </tr>
+        </table>
+{% endblock %}

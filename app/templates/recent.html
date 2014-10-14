@@ -1,0 +1,60 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Recent changes{% endblock %}
+
+{% block style %}
+#scrolled_search_results {
+    border: 1px solid black;
+}
+
+table.search_results tr.selected td {
+    background: yellow;
+}
+
+table.search_results td {
+    padding: 0.5em;
+    border: 1px solid black;
+}
+
+
+table.search_results tr:nth-child(even) {
+    background: #ddd;
+}
+{% endblock %}
+
+{% block head %}
+    <script src="/static/sorttable.js"></script>
+{% endblock %}
+
+{% block content %}
+    {% if not recent_changes %}
+        <p>No recent changes to display. Try <a href="/recent">returning to start</a>.</p>
+    {% else %}
+        <p>Displaying {{ recent_changes|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
+
+        <table border="1" class="sortable">
+            <thead><tr>
+                <th>&nbsp;</th>
+                <th>Scientific name</th>
+                <th>Language</th>
+                <th>Common name</th>
+                <th>Source</th>
+                <th>Added</th>
+                <th>Actions</th>
+            </tr></thead>
+            <tbody>
+            {% for recent_change in recent_changes %}
+                <tr>
+                    <td>{{ loop.index + offset }}</td>
+                    <td><a href="/?lookup={{recent_change.scname}}">{{ recent_change.scname }}</a></td>
+                    <td>{% set lang = recent_change.lang %}{% if lang in language_names %}{{ language_names[lang] }}{% else %}{{ lang }}{% endif %}</td>
+                    <td><a href="/?lookup={{recent_change.scname}}#lang-{{recent_change.lang}}">{{recent_change.cmname}}</a></td>
+                    <td>{{ recent_change.source|urlize }}{% if recent_change.source_priority|int != 80 %}(priority: {{recent_change.source_priority}}){% endif %}{% if recent_change.url %}<br>{{ recent_change.url|urlize }}{% endif %}</td>
+                    <td>{{ recent_change.added_by }} at {{ recent_change.updated_at }}</td>
+                    <td><form method="POST" action="/delete/cartodb_id"><button type="submit" name="cartodb_id" value="{{ recent_change.cartodb_id }}">Delete</button></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}
