@@ -64,6 +64,22 @@ def getDatasets():
 def getDatasetCoverage(dataset, langs):
     return getNamesCoverage(getDatasetNames(dataset), langs)
 
+# Return a list of every scientific name in this dataset.
+def getDatasetNames(dataset):
+    sql = "SELECT scientificname FROM %s WHERE dataset=%s"
+    sql_query = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset))
+    response = url_get(access.CDB_URL % urllib.urlencode(
+        dict(q = sql_query)
+    ))
+
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response (to '" + sql_query + "'): " + response.content)
+
+    results = json.loads(response.content)
+    scnames = map(lambda x: x['scientificname'], results['rows'])
+
+    return scnames
+
 # Return the coverage we have on this set of names in the specified language.
 # This code is based on vnnames.searchVernacularNames()
 def getNamesCoverage(query_names, langs):
@@ -159,22 +175,6 @@ def getNamesCoverage(query_names, langs):
                     counts[lang]['unmatched'] += 1
 
     return counts
-
-# Return a list of every scientific name in this dataset.
-def getDatasetNames(dataset):
-    sql = "SELECT scientificname FROM %s WHERE dataset=%s"
-    sql_query = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset))
-    response = url_get(access.CDB_URL % urllib.urlencode(
-        dict(q = sql_query)
-    ))
-
-    if response.status_code != 200:
-        raise RuntimeError("Could not read server response (to '" + sql_query + "'): " + response.content)
-
-    results = json.loads(response.content)
-    scnames = map(lambda x: x['scientificname'], results['rows'])
-
-    return scnames
 
 # Check if a dataset contains name. It caches the entire list
 # of names in that dataset to make its job easier.
