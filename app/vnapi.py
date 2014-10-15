@@ -4,14 +4,12 @@
 # An API for communicating with the Vernacular Name system on CartoDB.
 
 from google.appengine.api import urlfetch
-from operator import itemgetter
 
 import base64
 import json
 import urllib
 import re
 
-# Authentication.
 import access
 import vnnames
 
@@ -22,20 +20,20 @@ DEADLINE_FETCH = 60 # seconds to wait during URL fetch (max: 60)
 def url_get(url):
     return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
 
-# Encode a string as base64
+# Encode a Unicode string as base64, then set it up to be decoded on the server.
 def encode_b64_for_psql(text):
     return decode_b64_on_psql(base64.b64encode(text.encode('UTF-8')))
 
 # Prepare a bit of code for PostgreSQL to decode a string on the server side.
-def decode_b64_on_psql(text):                                         
+def decode_b64_on_psql(text):
     base64_only = re.compile(r"^[a-zA-Z0-9=]*$")
-    if not base64_only.match(text):                                         
+    if not base64_only.match(text):
         raise RuntimeError("Error: '" + text + "' sent to decode_b64_on_psql is not base64!")
 
     return "convert_from(decode('" + text + "', 'base64'), 'utf-8')"
 
 # Given a list of rows, divide them until into groups of rows by the values
-# in the column provided in 'colName'.
+# in the column provided in 'colName'. Return this as a dict.
 def groupBy(rows, colName):
     result_table = dict()
 
@@ -60,9 +58,9 @@ def getDatasets():
         raise RuntimeError("Could not read server response: " + response.content)
 
     results = json.loads(response.content)
-
     return results['rows']
 
+# Get the dataset coverage for a particular dataset.
 def getDatasetCoverage(dataset, langs):
     return getNamesCoverage(getDatasetNames(dataset), langs)
 
@@ -94,17 +92,18 @@ def getNamesCoverage(query_names, langs):
         chunk_names_with_genera = list(chunk_names)
         chunk_names_with_genera.extend(genera)
 
+        # Search for scientific names AND genus name in the same query.
         scname_list = ", ".join(map(lambda name: encode_b64_for_psql(name.lower()), chunk_names_with_genera))
         langs_list = ", ".join(map(lambda lang: encode_b64_for_psql(lang), langs))
         sql = """
-            SELECT LOWER(scname) AS scname_lc, scname, lang, COUNT(*) AS count FROM %s 
+            SELECT LOWER(scname) AS scname_lc, scname, lang, COUNT(*) AS count FROM %s
             WHERE LOWER(scname) IN (%s) AND lang IN (%s)
             GROUP BY scname_lc, scname, lang
         """
         sql_query = sql % (access.ALL_NAMES_TABLE, scname_list, langs_list)
         response = urlfetch.fetch(access.CDB_URL,
             payload=urllib.urlencode(dict(
-                q = sql_query 
+                q = sql_query
             )),
             method=urlfetch.POST,
             headers={'Content-type': 'application/x-www-form-urlencoded'},
@@ -114,10 +113,12 @@ def getNamesCoverage(query_names, langs):
         if response.status_code != 200:
             raise RuntimeError("Could not read server response: " + response.content)
 
+        # Group by language so we can do lookups quickly.
         results = json.loads(response.content)
         rows_by_lang = groupBy(results['rows'], 'lang')
 
         for lang in langs:
+            # counts[lang] persists across the chunk runs.
             if not lang in counts:
                 counts[lang] = {
                     'total': 0,
@@ -127,11 +128,14 @@ def getNamesCoverage(query_names, langs):
                 }
 
             rows_by_scname_lc = groupBy(rows_by_lang[lang], 'scname_lc')
-                
+
             for scname in chunk_names:
                 counts[lang]['total'] += 1
 
                 flag_matched = False
+
+                # If this language never showed up in the results,
+                # it's pointless searching for it.
                 if lang in rows_by_lang:
                     if scname.lower() in rows_by_scname_lc:
                         counts[lang]['matched_with_species_name'] += 1
