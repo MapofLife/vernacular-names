@@ -129,7 +129,9 @@ def getNamesCoverage(query_names, langs):
 
             rows_by_scname_lc = groupBy(rows_by_lang[lang], 'scname_lc')
 
+            # Note that we're looking through chunk_names: 
             for scname in chunk_names:
+                scname_lc = scname.lower()
                 counts[lang]['total'] += 1
 
                 flag_matched = False
@@ -137,15 +139,19 @@ def getNamesCoverage(query_names, langs):
                 # If this language never showed up in the results,
                 # it's pointless searching for it.
                 if lang in rows_by_lang:
-                    if scname.lower() in rows_by_scname_lc:
+
+                    # Try matching species common name.
+                    if scname_lc in rows_by_scname_lc:
                         counts[lang]['matched_with_species_name'] += 1
                         flag_matched = True
+
+                    # If that fails, try matching genus common name.
                     else:
-                        match = re.search('^(\w+)\s+(\w+)$', name)
+                        match = re.search('^(\w+)\s+(\w+)$', scname_lc)
                         if match:
                             genus = match.group(1)
 
-                            if genus.lower() in rows_by_scname_lc:
+                            if genus in rows_by_scname_lc:
                                 counts[lang]['matched_with_genus_name'] += 1
                                 flag_matched = True
 

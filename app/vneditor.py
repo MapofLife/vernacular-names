@@ -377,7 +377,7 @@ class CoverageViewHandler(BaseHandler):
                 datasets_coverage[dname][lang] = """
                     %d have species common names (%.2f%%)<br>
                     %d have genus common names (%.2f%%)<br>
-                    %d have no common names (%.2f%%)
+                    %d have <a href="/list?dataset=%s&blank_lang=%s">no common names</a> (%.2f%%)
                     <!-- Total: %d -->
                 """ % (
                     coverage[lang]['matched_with_species_name'],
@@ -385,6 +385,7 @@ class CoverageViewHandler(BaseHandler):
                     coverage[lang]['matched_with_genus_name'],
                     int(coverage[lang]['matched_with_genus_name']) / float(coverage[lang]['total']) * 100,
                     coverage[lang]['unmatched'],
+                    dname, lang,
                     int(coverage[lang]['unmatched']) / float(coverage[lang]['total']) * 100,
                     coverage[lang]['total'] 
                 )
