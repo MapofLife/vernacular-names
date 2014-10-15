@@ -4,14 +4,12 @@ from google.appengine.api import users, urlfetch, taskqueue
 from google.appengine.api.mail import EmailMessage
 
 from titlecase import titlecase
-from collections import OrderedDict
 
 import webapp2
 import jinja2
 import urllib
 import re
 import logging
-import random
 import cStringIO
 import gzip
 import csv
@@ -19,23 +17,24 @@ import time
 import os
 import json
 
-# Configuration
 import access
 import version
 import languages
-
-# Our libraries
 import vnapi
 import vnnames
 
-# More configuration
+# Configuration
+
+# Display the total count in /list: expensive, but useful.
 FLAG_LIST_DISPLAY_COUNT = True
+
+# What the 'source' should be when adding new rows.
 SOURCE_URL = "https://github.com/gaurav/vernacular-names"
 
-# Set up URLfetch settings
+# How long to wait for urlfetch to return (60 seconds is the maximum).
 urlfetch.set_default_fetch_deadline(60)
 
-# Check whether we're in production (PROD = True) or not.
+# Check whether we're in production mode (PROD = True) or not.
 PROD = True
 if 'SERVER_SOFTWARE' in os.environ:
     PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
@@ -47,8 +46,7 @@ JINJA_ENV = jinja2.Environment(
     autoescape = True
 )
 
-# The BaseHandler sets up some basic routines that all pages can
-# use.
+# The BaseHandler sets up some basic routines that all pages use.
 class BaseHandler(webapp2.RequestHandler):
     # render_template renders a Jinja2 template from the 'templates' dir,
     # using the template arguments provided.
@@ -75,8 +73,6 @@ class BaseHandler(webapp2.RequestHandler):
 class StaticPages(BaseHandler):
     def __init__(self, request, response):
         self.template_mappings = {
-            '/': 'welcome.html',
-            '/index.html': 'welcome.html',
             '/page/private': 'private.html'
         }
         self.initialize(request, response)
@@ -98,16 +94,19 @@ class MainPage(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
         
+        # Set up user details.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        # Load the current search term.
         current_search = self.request.get('search')
         if self.request.get('clear') != '':
             current_search = ''
         current_search = current_search.strip()
 
-        # Look up 'lookup'
+        # Load the scientific name being looked up. If no search is
+        # currently in progress, look up the common name instead.
         lookup_search = self.request.get('lookup')
         lookup_results = {}
 
