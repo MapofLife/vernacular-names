@@ -2,26 +2,6 @@
 
 {% block page_title %}List{% endblock %}
 
-{% block style %}
-#scrolled_search_results {
-    border: 1px solid black;
-}
-
-table.search_results tr.selected td {
-    background: yellow;
-}
-
-table.search_results td {
-    padding: 0.5em;
-    border: 1px solid black;
-}
-
-
-table.search_results tr:nth-child(even) {
-    background: #ddd;
-}
-{% endblock %}
-
 {% block head %}
     <script src="/static/sorttable.js"></script>
 {% endblock %}
