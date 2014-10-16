@@ -104,7 +104,7 @@ table.search_results tr:nth-child(even) {
                         {% else %}
                             <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: <em>None</em></h3>
                         {% endif %}
-                        <ul>
+                        <ol>
                             {% for result in lookup_results[lookup_search][language] %}
                                 <li>
                                     <div class="display_name" id="display_name_{{language}}_{{loop.index}}">
@@ -151,7 +151,7 @@ table.search_results tr:nth-child(even) {
                                     </form>
                                 </div>
                             </li>
-                        </ul>
+                        </ol>
                         </div>
                     {% endfor %}
                     <!--
