@@ -272,7 +272,10 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                         if not lang in vnresults[simplify_name]:
                             continue
 
-                        vnames.add(vnresults[simplify_name][lang].vernacularname.capitalize())
+                        if flag_format_cmnames:
+                            vnames.add(format_name(vnresults[simplify_name][lang].vernacularname))
+                        else:
+                            vnames.add(vnresults[simplify_name][lang].vernacularname)
 
                     return clean_agg(vnames)
 
