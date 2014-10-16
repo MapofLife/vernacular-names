@@ -3,8 +3,6 @@
 from google.appengine.api import users, urlfetch, taskqueue
 from google.appengine.api.mail import EmailMessage
 
-from titlecase import titlecase
-
 import webapp2
 import jinja2
 import urllib
@@ -143,6 +141,7 @@ class MainPage(BaseHandler):
         if lookup_search == '' and current_search != '':
             lookup_search = current_search
 
+        # Find all names for all species in the languages of interest.
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
@@ -159,6 +158,7 @@ class MainPage(BaseHandler):
         # Get list of datasets
         datasets = vnapi.getDatasets()
 
+        # Render the main template.
         self.render_template('main.html', {
             'message': self.request.get('msg'),
             'datasets_data': datasets,
@@ -179,12 +179,13 @@ class MainPage(BaseHandler):
             'vneditor_version': version.VNEDITOR_VERSION
         })
 
+# This handler will delete a row using its CartoDB identifier.
 class DeleteByCDBIDHandler(BaseHandler):
     def post(self):
         # Fail without login.
         current_user = self.check_user()
 
-        # Retrieve state
+        # Retrieve cartodb_id to delete.
         cartodb_id = int(self.request.get('cartodb_id'))
 
         # Synthesize SQL
@@ -212,12 +213,13 @@ class DeleteByCDBIDHandler(BaseHandler):
             msg = message,
         )))
 
+# This handler will add a new name to the main table in CartoDB.
 class AddNameHandler(BaseHandler):
     def post(self):
         # Fail without login.
         current_user = self.check_user()
 
-        # Retrieve state
+        # Retrieve state. We only use this for the final redirect.
         search = self.request.get('search')
         lookup = self.request.get('lookup')
 
@@ -274,6 +276,9 @@ class AddNameHandler(BaseHandler):
             lookup = lookup
         )) + "#lang-" + lang)
 
+# This handler generates the taxonomy_translations table. Eventually, we'd
+# like to use something similar to export names from /list (https://github.com/gaurav/vernacular-names/issues/45),
+# but I don't know how closely that's going to align with this.
 class GenerateTaxonomyTranslations(BaseHandler):
     # Activates the taxonomy_translations taskqueue task.
     def get(self):
@@ -285,6 +290,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
     # Task! Should be run on the 'generate-taxonomy-translations'
     def post(self): 
         # We have no parameters. We just generate.
+
         # Fail without login.
         current_user = self.check_user()
 
@@ -309,12 +315,8 @@ class GenerateTaxonomyTranslations(BaseHandler):
         header.extend(['empty'])
         csvfile.writerow(header)
 
-        def format_name(name):
-            # This slows us by about 50% (44 mins for a full genus generation)
-            return titlecase(name)
-
         def concat_names(names):
-            return "|".join(map(format_name, sorted(names))).encode('utf-8')
+            return "|".join(sorted(names)).encode('utf-8')
 
         def add_name(name, higher_taxonomy, vnames_by_lang):
             row = [name.capitalize(), 
@@ -328,7 +330,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     sources = vnames_by_lang[lang].sources
 
                     row.extend([
-                        format_name(vname).encode('utf-8'), 
+                        vname.encode('utf-8'), 
                         "|".join(sorted(sources)).encode('utf-8'),
                         concat_names(vnames_by_lang[lang].tax_family),
                         concat_names(vnames_by_lang[lang].tax_order),
@@ -338,10 +340,16 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     row.extend([None, None, None, None, None])
 
             csvfile.writerow(row)
-        vnnames.searchVernacularNames(add_name, all_names)
+        
+        # searchVernacularNames doesn't use the cache, but it calls 
+        # getVernacularNames for higher taxonomy, which does.
+        vnnames.clearVernacularNamesCache()
+        vnnames.searchVernacularNames(add_name, all_names, flag_format_cmnames=True)
+
+        # File completed!
         gzfile.close()
 
-        # E-mail the response to someone.
+        # E-mail the response to me.
         settings = ""
         if vnnames.FLAG_LOOKUP_GENERA:
             settings = " with genera lookups turned on"
@@ -355,7 +363,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         self.response.set_status(200)
         self.response.out.write("OK")
 
-# Display a section of the Big List as a table.
+# Display a summary of the coverage by dataset and language.
 class CoverageViewHandler(BaseHandler):
     # Display
     def get(self):
@@ -365,14 +373,18 @@ class CoverageViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        # Stats are per-dataset, per-language.
         datasets = vnapi.getDatasets()
         datasets_coverage = {}
         for dataset in datasets:
             dname = dataset['dataset']
 
+            # Get coverage information on all languages at once.
             datasets_coverage[dname] = dict()
             coverage = vnapi.getDatasetCoverage(dname, languages.language_names_list)
+
             for lang in languages.language_names_list:
+                # TODO: move this into the template.
                 datasets_coverage[dname][lang] = """
                     %d have species common names (%.2f%%)<br>
                     %d have genus common names (%.2f%%)<br>
@@ -389,6 +401,7 @@ class CoverageViewHandler(BaseHandler):
                     coverage[lang]['total'] 
                 )
 
+        # Render coverage template.
         self.render_template('coverage.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
             'user_url': user_url,
@@ -407,6 +420,7 @@ class RecentChangesHandler(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
         
+        # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
@@ -420,7 +434,7 @@ class RecentChangesHandler(BaseHandler):
         offset = self.request.get_range('offset', 0, default=0)
         display_count = 100
 
-        # Synthesize SQL:
+        # Synthesize SQL
         recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, added_by, created_at, updated_at,
             COUNT(*) OVER() AS total_count
             FROM %s
@@ -444,6 +458,7 @@ class RecentChangesHandler(BaseHandler):
             deadline=vnapi.DEADLINE_FETCH
         )
 
+        # Retrieve results. Store the total count if there is one.
         recent_changes = []
         total_count = 0
         if response.status_code != 200:
@@ -455,7 +470,7 @@ class RecentChangesHandler(BaseHandler):
             if len(recent_changes) > 0:
                 total_count = recent_changes[0]['total_count']
 
-        # List updates in reverse chronological order.
+        # Render recent changes.
         self.render_template('recent.html', {
             'message': message,
             'login_url': users.create_login_url('/'),
@@ -471,8 +486,6 @@ class RecentChangesHandler(BaseHandler):
             'recent_changes': recent_changes,
             'vneditor_version': version.VNEDITOR_VERSION
         })
-
-
 
 # Display a section of the Big List as a table.
 class ListViewHandler(BaseHandler):
@@ -514,6 +527,7 @@ class ListViewHandler(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
 
+        # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
@@ -540,9 +554,12 @@ class ListViewHandler(BaseHandler):
             else:
                 return all_vals[-1]
 
+        # Get offset and display_count.
         offset = int(use_last_or_default("offset", 0))
         display_count = int(use_last_or_default("display", 20))
 
+        # We hand this results object to each filter function, and allow it
+        # to modify it as it sees fit based on the request.
         results = {
             "search_criteria": [],
             "select": [],
@@ -553,15 +570,18 @@ class ListViewHandler(BaseHandler):
         self.filterByDatasets(self.request, results)
         self.filterByBlankLangs(self.request, results)
 
+        # There's an implicit first filter if there is no filter.
         if len(results['search_criteria']) == 0:
             results['search_criteria'] = ["List all"]
         else:
             results['search_criteria'][0].capitalize()
 
+        # Every query should include scientificname and the total count.
         results['select'].insert(0, "scientificname")
         if FLAG_LIST_DISPLAY_COUNT:
             results['select'].insert(1,  "COUNT(*) OVER() AS total_count")
 
+        # Build SELECT statement.
         select = ", ".join(results['select'])
         where = " AND ".join(results['where'])
         having = " AND ".join(results['having'])
@@ -575,6 +595,7 @@ class ListViewHandler(BaseHandler):
 
         search_criteria = ", ".join(results['search_criteria'])
 
+        # Put all the pieces of the SELECT statement together.
         list_sql = """SELECT
             %s
             FROM %s INNER JOIN %s ON (LOWER(scname) = LOWER(scientificname))
@@ -603,6 +624,7 @@ class ListViewHandler(BaseHandler):
             deadline=vnapi.DEADLINE_FETCH
         )
 
+        # Process error message or results.
         message = ""
         if response.status_code != 200:
             message = "<strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
@@ -616,7 +638,7 @@ class ListViewHandler(BaseHandler):
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
 
-        vnames = vnnames.getVernacularNames(name_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True)
+        vnames = vnnames.getVernacularNames(name_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=True)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
@@ -634,20 +656,6 @@ class ListViewHandler(BaseHandler):
             'display_count': display_count,
             'total_count': total_count
         }) 
-
-    # Iterate over names for a particular list.
-    @staticmethod
-    def iterateOver(fn_name_iterate, name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
-        # Filter names as instructed
-        all_names = filter(fn_name_filter, sorted(all_names))
-
-        # Limit names as instructed
-        if name_size != -1:
-            all_names = all_names[name_from:name_from + name_size + 1]
-        else:
-            all_names = all_names[name_from:]
-
-        return vnnames.searchVernacularNames(fn_name_iterate, all_names)
 
 application = webapp2.WSGIApplication([
     ('/', MainPage),
