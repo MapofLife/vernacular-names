@@ -201,7 +201,8 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
             ORDER BY
                 max_source_priority DESC, 
                 count_sources DESC,
-                max_updated_at DESC
+                max_updated_at DESC,
+                cmname ASC
         """
         sql_query = sql % (
             access.ALL_NAMES_TABLE,
