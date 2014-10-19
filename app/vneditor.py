@@ -26,6 +26,10 @@ import vnnames
 # Display the total count in /list: expensive, but useful.
 FLAG_LIST_DISPLAY_COUNT = True
 
+# Sources with fewer vname entries than this are considered to be individual imports;
+# greater than this are bulk imports.
+INDIVIDUAL_IMPORT_LIMIT = 100
+
 # What the 'source' should be when adding new rows.
 SOURCE_URL = "https://github.com/gaurav/vernacular-names"
 
@@ -415,6 +419,147 @@ class CoverageViewHandler(BaseHandler):
             'datasets_coverage': datasets_coverage
         }) 
 
+# Lists the sources and their priorities, and (eventually) allows you to change them.
+class SourcesHandler(BaseHandler):
+    def post(self):
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Set up error msg.
+        msg = ""
+
+        # Retrieve source to modify
+        source = self.request.get('source')
+        try:
+            source_priority = int(self.request.get('source_priority'))
+        except ValueError:
+            source_priority = -1
+
+        if source_priority > 0 and source_priority < 1000:
+            # Synthesize SQL
+            sql = "UPDATE %s SET source_priority = %d WHERE source=%s"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                source_priority,
+                vnapi.encode_b64_for_psql(source)
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+                dict(
+                    q = sql_query,
+                    api_key = access.CARTODB_API_KEY
+                )
+            ))
+
+            if response.status_code != 200:
+                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+            else:
+                message = "Source priority modified to %d." % (source_priority)
+        else:
+            message = "Could not parse source priority, please try again."
+
+        # Redirect to the main page.
+        self.redirect("/sources?" + urllib.urlencode(dict(
+            msg = message,
+        )))
+
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+        
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = 100
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Synthesize SQL
+        source_sql = ("""SELECT 
+            source, 
+            COUNT(*) OVER() AS total_count,
+            COUNT(*) AS vname_count,
+            COUNT(DISTINCT LOWER(scname)) AS scname_count, 
+            array_agg(DISTINCT source_priority) AS agg_source_priority,
+            MAX(source_priority) AS max_source_priority,
+            array_agg(DISTINCT LOWER(lang)) AS agg_lang,
+            array_agg(DISTINCT LOWER(tax_family)) AS agg_family,
+            array_agg(DISTINCT LOWER(tax_order)) AS agg_order,
+            array_agg(DISTINCT LOWER(tax_class)) AS agg_class
+            FROM %s 
+            GROUP BY source 
+            ORDER BY 
+                max_source_priority DESC,
+                vname_count DESC,
+                source ASC
+            LIMIT %d OFFSET %d
+        """) % (
+            access.ALL_NAMES_TABLE,
+            display_count,
+            offset
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = source_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        total_count = 0
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + source_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            sources = []
+        else:
+            results = json.loads(response.content)
+            sources = results['rows']
+            if len(sources) > 0:
+                total_count = sources[0]['total_count']
+
+        # There are two kinds of sources:
+        #   1. Anything <=1 is an individual import from the source.
+        #       These should be grouped by prefix.
+        #   2. Anything >1 is a bulk import, and should be displayed separately.
+        individual_imports = filter(lambda x: int(x['vname_count']) <= INDIVIDUAL_IMPORT_LIMIT, sources)
+        bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
+
+        # Render sources.
+        self.render_template('sources.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+
+            'offset': offset,
+            'display_count': display_count,
+
+            'total_count': total_count,
+            'individual_imports': individual_imports,
+            'bulk_imports': bulk_imports,
+
+            'vneditor_version': version.VNEDITOR_VERSION
+        })
+
+
+
 # Return a list of recent changes, and allow some to be deleted.
 class RecentChangesHandler(BaseHandler):
     def get(self):
@@ -462,7 +607,7 @@ class RecentChangesHandler(BaseHandler):
         recent_changes = []
         total_count = 0
         if response.status_code != 200:
-            message += "<br><strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            message += "<br><strong>Error</strong>: query ('" + recent_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
             results = {"rows": []}
         else:
             results = json.loads(response.content)
@@ -665,6 +810,7 @@ application = webapp2.WSGIApplication([
     ('/list', ListViewHandler),
     ('/delete/cartodb_id', DeleteByCDBIDHandler),
     ('/recent', RecentChangesHandler),
+    ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)
