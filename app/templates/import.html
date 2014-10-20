@@ -1,0 +1,55 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Bulk Import{% endblock %}
+
+{% block head %}
+    <script src="/static/sorttable.js"></script>
+{% endblock %}
+
+{% block content %}
+    <form method="POST">
+    {% if scnames|length == 0 %}
+        <p>Please enter the scientific names to add to the Map of Life app.</p>
+
+            <p>
+                Input dataset: <input size="100" name="input_dataset" />
+            </p>
+            <textarea name="scnames" rows="25" cols="80">Please enter scientific names here.</textarea>
+            <input type="submit" value="Upload names">
+    {% else %}
+        <input type="hidden" name="scnames" value="{{ scnames|join('\n') }}" />
+        <table class="sortable" border="1">
+            <h2>Dataset: <em>{{ input_dataset }}</em></h2>
+
+            <p>Change input dataset name: <input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
+
+            <tr>
+                <th>&nbsp;</th>
+                <th>Scientific Name</th>
+                {% for lang in language_names_list %}
+                    <th>{{ language_names[lang]|default(lang) }}</th>
+                {% endfor %}
+            </tr>
+            {% for scname in scnames %}
+            <tr>
+                {% set scname_index = loop.index %}
+                <td>{{ scname_index }}</td>
+                <td>{{ scname }}
+                    <input type="hidden" name="scname_{{scname_index}}" value="{{scname}}" />
+                </td>
+                {% for lang in language_names_list %}
+                    <td>
+                        <input name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" />
+                        <br>
+                        <!-- TODO: fill this in automatically from input_dataset
+                        <input name="vname_{{scname_index}}_{{lang}}_source" value="" />
+                        -->
+                    </td>
+                {% endfor %} 
+            </tr>
+            {% endfor %}
+        </table>
+        <input type="submit" value="Upload names">
+    {% endif %}
+    </form>
+{% endblock %}
