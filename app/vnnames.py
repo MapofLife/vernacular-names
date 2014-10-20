@@ -155,6 +155,11 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
     # sets are not actually iterable.
     query_names_sorted = sorted(set(query_names))
 
+    # Prepare a list of languages we're interested in.
+    languages_list = ", ".join(
+        map(lambda name: vnapi.encode_b64_for_psql(name), languages.language_names_list)
+    )
+
     # Log.
     if len(query_names_sorted) >= 10:
         logging.info("searchVernacularNames called with %d names." % (len(query_names_sorted)))
@@ -195,7 +200,8 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                 MAX(source_priority) AS max_source_priority 
             FROM %s 
             WHERE 
-                LOWER(scname) IN (%s) 
+                LOWER(scname) IN (%s) AND
+                lang in (%s)
             GROUP BY 
                 scname, lang, cmname 
             ORDER BY
@@ -206,7 +212,8 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
         """
         sql_query = sql % (
             access.ALL_NAMES_TABLE,
-            scientificname_list
+            scientificname_list,
+            languages_list
         )
 
         urlresponse = urlfetch.fetch(access.CDB_URL,
