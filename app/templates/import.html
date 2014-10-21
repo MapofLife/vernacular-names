@@ -34,6 +34,131 @@
             sources.val('{{ sources[0] }}')
         }
 
+        var ajax_in_progress_count = 0
+        function ajaxStarted() {
+            ajax_in_progress_count++
+            $('#ajax_in_progress').show()
+        }
+
+        function ajaxEnded() {
+            ajax_in_progress_count--
+            if(ajax_in_progress_count <= 0) {
+                $('#ajax_in_progress').hide()
+                ajax_in_progress_count = 0
+            }
+        }
+
+        COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)'
+        COLOR_VNNAME_NOT_FOUND = 'rgba(192, 0, 0, 0.23)'
+        COLOR_AUTOMATIC_ENTRY = 'rgba(192, 192, 0, 0.23)'
+        COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)'
+        
+        function fillFromEOL(query_lang) {
+            var vnames = $('.vname')
+            var sources = $('.source_list')
+
+            if(query_lang) {
+                vnames = $('.vname.lang_' + query_lang)
+                sources = $('.source_list.lang_' + query_lang)
+            }
+
+            vnames.each(function() {
+                thiq = $(this);
+                match = /^vname_(\d+)_(\w+)$/.exec(this.id)
+                if(match) {
+                    index = match[1]
+                    lang = match[2]
+                    scname = $('#scname_' + index).val()
+
+                    // Look up scname on EOL.
+                    ajaxStarted()
+                    jqxhr = $.ajax({
+                        url: "http://eol.org/api/search/1.0.json",
+                        data: {
+                            q: scname,
+                            exact: "true"
+                        },
+                        dataType: 'jsonp',
+                        context: {
+                            "thiq": thiq,
+                            "scname": scname,
+                            "lang": lang,
+                            "index": index
+                        }
+                    }).done(function(json) {
+                        results = json['results']
+                        if(results.length == 0) {
+                            // Let the user know that we tried but couldn't find this name.
+                            this.thiq.css('background-color', COLOR_SCNAME_NOT_FOUND) 
+                        } else {
+                            // Look up vernacular names.
+                            best_eol_id = results[0]['id']
+
+                            ajaxStarted()
+                            jqxhr = $.ajax({
+                                url: "http://eol.org/api/pages/1.0/" + best_eol_id + ".json",
+                                data: {
+                                    common_names: "true"
+                                },
+                                dataType: 'jsonp',
+                                context: {
+                                    "thiq": this.thiq,
+                                    "scname": this.scname,
+                                    "lang": this.lang,
+                                    "index": this.index
+                                }
+                            }).done(function(json) {
+                                vnames = json['vernacularNames'].filter(function(vname) {
+                                    if(this.lang) {
+                                        return vname['language'] == this.lang
+                                    } else {
+                                        return 1;
+                                    }
+                                })
+
+                                vnames_preferred = vnames.filter(function(vname) { return 'eol_preferred' in vname; })
+
+                                if(vnames.length == 0) {
+                                    // Let the user know that we found the scientific name, but 
+                                    this.thiq.css('background-color', COLOR_VNNAME_NOT_FOUND)
+                                } else {
+                                    // Is there a preferred name in this language?
+                                    best_eol_vname = ""
+
+                                    if(vnames_preferred.length > 0) {
+                                        best_eol_vname = vnames_preferred[0]['vernacularName']
+                                    } else {
+                                        best_eol_vname = vnames[0]['vernacularName']
+                                    }
+
+                                    if(this.thiq.val() == '') {
+                                        this.thiq.val(best_eol_vname)
+                                        this.thiq.css('background-color', COLOR_AUTOMATIC_ENTRY)
+                                    }
+                                }
+
+                            }).fail(function(jqXHR, textStatus, errorThrown) {
+                                $('#json_error_text').text("textStatus = " + textStatus + ", errorThrown = " + errorThrown + " (while looking up vernacular names for '" + scname + "' on EOL)")
+                                $('#json_error').show()
+
+                            }).always(function() {
+                                ajaxEnded()
+                            })
+         
+                        }
+
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        $('#json_error_text').text("textStatus = " + textStatus + ", errorThrown = " + errorThrown + " (while looking up scientific name '" + this.scname + "' on EOL)")
+                        $('#json_error').show()
+                    }).always(function() {
+                        ajaxEnded()
+                    })
+                } else {
+                    alert("Could not parse id '" + this.id + "'")
+                }
+            });
+        }
+
     --></script>
 {% endblock %}
 
@@ -65,6 +190,14 @@
                 </p>
             {% endif %}
 
+            <div id="json_error" style="display:none">
+                <p><strong>Error</strong> during JSONP request: <span id="json_error_text">unknown error</span></p>
+            </div>
+
+            <div id="ajax_in_progress" style="display:none">
+                <center><p><em><strong>Please wait, loading data ...</strong></em></p></center>
+            </div>
+
             <center><p>
                 <button onclick="clearAll(); return false;">Clear all</button>
                 <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
@@ -92,12 +225,12 @@
                     {% else %}
                         <span style="color: red"><em>{{ scname }}</em></span><br><strong>Warning: not in master list!</strong>
                     {% endif %}
-                    <input type="hidden" name="scname_{{scname_index}}" value="{{scname}}" />
+                    <input type="hidden" id="scname_{{scname_index}}" name="scname_{{scname_index}}" value="{{scname}}" />
                 </td>
                 {% for lang in language_names_list %}
                     <td>
-                        <input class="vname lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" />
-                        <select class="source_list lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}_source">
+                        <input id="vname_{{scname_index}}_{{lang}}" class="vname lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" onchange="$(this).css('background-color', COLOR_MANUAL_ENTRY)" />
+                        <select id="vname_{{scname_index}}_{{lang}}_source"  class="source_list lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}_source">
                             {% for source in sources %}
                                 <option {% if vnames_source|length >= scname_index and lang in vnames_source[scname_index] and vnames_source[scname_index][lang]==source %}selected="1"{% endif %}>{{source}}</option>
                             {% endfor %}
