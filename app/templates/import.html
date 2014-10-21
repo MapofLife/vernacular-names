@@ -22,6 +22,11 @@
             <h2>Dataset: <em>{{ input_dataset }}</em></h2>
 
             <p>Change input dataset name: <input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
+            <p>Sources: <textarea id="sources" name="sources" cols="80" rows="5" readonly="1"
+                >{% for source in sources %}{{source}}
+{% endfor %}</textarea>
+                <button onclick="var source = prompt('What is the name of the new source?', 'New source'); if(source) { $('.source_list').append('<option>' + source + '</option>'); $('#sources').val($('#sources').val() + '\n' + source);} return false;">Add new source</button></p>
+            </p>
 
             <tr>
                 <th>&nbsp;</th>
@@ -39,11 +44,12 @@
                 </td>
                 {% for lang in language_names_list %}
                     <td>
-                        <input name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" />
-                        <br>
-                        <!-- TODO: fill this in automatically from input_dataset
-                        <input name="vname_{{scname_index}}_{{lang}}_source" value="" />
-                        -->
+                        <input style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" />
+                        <select style="width: 100%" name="vname_{{scname_index}}_{{lang}}_source" class="source_list">
+                            {% for source in sources %}
+                                <option {% if vnames_source|length >= scname_index and lang in vnames_source[scname_index] and vnames_source[scname_index][lang]==source %}selected="1"{% endif %}>{{source}}</option>
+                            {% endfor %}
+                        </select>
                     </td>
                 {% endfor %} 
             </tr>

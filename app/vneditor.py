@@ -586,9 +586,17 @@ class BulkImportHandler(BaseHandler):
         if not input_dataset:
             input_dataset = 'New dataset uploaded on ' + time.strftime("%x %X %Z", time.gmtime())
 
+        # Retrieve list of sources.
+        all_sources = self.request.get('sources')
+        if all_sources == '':
+            all_sources = 'Manual changes on ' + time.strftime("%B %d, %Y", time.gmtime())
+        sources = filter(lambda x: x != '', re.split('\s*[\r\n]+\s*', all_sources))
+
+
         # Read in any vernacular names.
         vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
-        vnames = [0] * (len(scnames)+1)
+        vnames = [dict() for i in range(len(scnames)+1)]
+        vnames_source = [dict() for i in range(len(scnames)+1)]
         for vname_arg in vnames_args:
             match = re.match('^vname_(\d+)_(\w+)$', vname_arg)
             if match:
@@ -603,6 +611,7 @@ class BulkImportHandler(BaseHandler):
                 if vname != '':
                     # print("vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'")
                     vnames[loop_index][lang] = vname
+                    vnames_source[loop_index][lang] = source
 
         # print("vnames: " + str(vnames))
 
@@ -620,7 +629,9 @@ class BulkImportHandler(BaseHandler):
 
             'scnames': scnames,
             'input_dataset' : input_dataset,
-            'vnames': vnames
+            'sources': sources,
+            'vnames': vnames,
+            'vnames_source': vnames_source
         })
 
 # Return a list of recent changes, and allow some to be deleted.
