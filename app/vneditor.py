@@ -307,10 +307,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         csvfile = csv.writer(gzfile)
 
         # Get a list of every name in the master list.
-        datasets = vnapi.getDatasets()
-        all_names = set()
-        for dataset in datasets:
-            all_names.update(vnapi.getDatasetNames(dataset['dataset']))
+        all_names = vnapi.getMasterList()
         
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
@@ -575,23 +572,31 @@ class BulkImportHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        # Any input dataset name?
+        input_dataset = self.request.get('input_dataset')
+        if not input_dataset:
+            input_dataset = 'New dataset uploaded on ' + time.strftime("%x %X %Z", time.gmtime())
+
         # Any names?
         all_names = self.request.get('scnames')
         scnames = []
         if all_names != '':
             scnames = filter(lambda x: x != '', re.split('\s*[\r\n]+\s*', all_names))
 
-        # Any input dataset name?
-        input_dataset = self.request.get('input_dataset')
-        if not input_dataset:
-            input_dataset = 'New dataset uploaded on ' + time.strftime("%x %X %Z", time.gmtime())
+        # Check for presence in master list.
+        master_list = vnapi.getMasterList()
+        master_list_lc = set(map(lambda x: x.lower(), master_list))
+        
+        scnames_not_in_master_list = filter(lambda x: (x.lower() not in master_list_lc), scnames)
+        sql_add_to_master_list = "INSERT INTO %s (dataset, scientificname) VALUES\n\t%s" % (
+            access.MASTER_LIST, ",\n\t".join(map(lambda scname: "('" + input_dataset.replace("'", "''") + "', '" + scname.replace("'", "''") + "')", scnames_not_in_master_list))
+        )
 
         # Retrieve list of sources.
         all_sources = self.request.get('sources')
         if all_sources == '':
             all_sources = 'Manual changes on ' + time.strftime("%B %d, %Y", time.gmtime())
         sources = filter(lambda x: x != '', re.split('\s*[\r\n]+\s*', all_sources))
-
 
         # Read in any vernacular names.
         vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
@@ -627,7 +632,11 @@ class BulkImportHandler(BaseHandler):
             'vneditor_version': version.VNEDITOR_VERSION,
             'datasets_data': vnapi.getDatasets(),
 
+            'url_master_list': "https://mol.cartodb.com/tables/" + access.MASTER_LIST,
+            'sql_add_to_master_list': sql_add_to_master_list,
+
             'scnames': scnames,
+            'scnames_not_in_master_list': scnames_not_in_master_list,
             'input_dataset' : input_dataset,
             'sources': sources,
             'vnames': vnames,

@@ -45,6 +45,12 @@
 {% endfor %}</textarea>
                 <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
             </p>
+            {% if scnames_not_in_master_list|length > 0 %}
+                <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in <a href="{{url_master_list}}">the master list</a>. To add them, <a onclick="$('#sql_add_to_master_list').show()" href="#">click here to display the appropriate SQL</a>.
+                <br>
+                <textarea cols="80" rows="5" readonly="1" id="sql_add_to_master_list" style="display:none">{{sql_add_to_master_list}}</textarea>
+                </p>
+            {% endif %}
 
             <tr>
                 <th>&nbsp;</th>
@@ -57,7 +63,11 @@
             <tr>
                 {% set scname_index = loop.index %}
                 <td>{{ scname_index }}</td>
-                <td>{{ scname }}
+                <td>{% if scname not in scnames_not_in_master_list %}
+                        <em>{{ scname }}</em>
+                    {% else %}
+                        <span style="color: red"><em>{{ scname }}</em></span><br><strong>Warning: not in master list!</strong>
+                    {% endif %}
                     <input type="hidden" name="scname_{{scname_index}}" value="{{scname}}" />
                 </td>
                 {% for lang in language_names_list %}
@@ -73,7 +83,11 @@
             </tr>
             {% endfor %}
         </table>
-        <input type="submit" value="Upload names">
+        
+        <p>
+            <input type="submit" value="Refresh display">
+            <input type="submit" name="save" value="Upload names">
+        </p>
     {% endif %}
     </form>
 {% endblock %}

@@ -64,6 +64,14 @@ def getDatasets():
 def getDatasetCoverage(dataset, langs):
     return getNamesCoverage(getDatasetNames(dataset), langs)
 
+# Return a list of every scientific name in every dataset.
+def getMasterList():
+    datasets = getDatasets()
+    all_names = set()
+    for dataset in datasets:
+        all_names.update(getDatasetNames(dataset['dataset']))
+    return all_names
+
 # Return a list of every scientific name in this dataset.
 def getDatasetNames(dataset):
     sql = "SELECT scientificname FROM %s WHERE dataset=%s"
