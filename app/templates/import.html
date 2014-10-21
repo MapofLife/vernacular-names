@@ -21,6 +21,19 @@
             );
         }
 
+        function clearAll(lang) {
+            var vnames = $('.vname')
+            var sources = $('.source_list')
+
+            if(lang) {
+                vnames = $(".vname.lang_" + lang)
+                sources = $(".source_list.lang_" + lang)
+            }
+
+            vnames.val("")
+            sources.val('{{ sources[0] }}')
+        }
+
     --></script>
 {% endblock %}
 
@@ -52,11 +65,22 @@
                 </p>
             {% endif %}
 
+            <center><p>
+                <button onclick="clearAll(); return false;">Clear all</button>
+                <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
+                <input type="submit" value="Refresh display">
+            </p></center>
+
             <tr>
                 <th>&nbsp;</th>
                 <th>Scientific Name</th>
                 {% for lang in language_names_list %}
-                    <th>{{ language_names[lang]|default(lang) }}</th>
+                    <th>{{ language_names[lang]|default(lang) }}<br>
+                    <span style="font-size: 90%; font-weight: 100">
+                        <a href="#" onclick="clearAll('{{lang}}')">Clear all</a>, 
+                        <a href="#" onclick="fillFromEOL(['{{lang}}'])">Fill in from EOL</a>
+                    </span>
+                    </th>
                 {% endfor %}
             </tr>
             {% for scname in scnames %}
@@ -72,8 +96,8 @@
                 </td>
                 {% for lang in language_names_list %}
                     <td>
-                        <input style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" />
-                        <select style="width: 100%" name="vname_{{scname_index}}_{{lang}}_source" class="source_list">
+                        <input class="vname lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" />
+                        <select class="source_list lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}_source">
                             {% for source in sources %}
                                 <option {% if vnames_source|length >= scname_index and lang in vnames_source[scname_index] and vnames_source[scname_index][lang]==source %}selected="1"{% endif %}>{{source}}</option>
                             {% endfor %}
@@ -84,10 +108,10 @@
             {% endfor %}
         </table>
         
-        <p>
+        <center><p>
             <input type="submit" value="Refresh display">
             <input type="submit" name="save" value="Upload names">
-        </p>
+        </p></center>
     {% endif %}
     </form>
 {% endblock %}
