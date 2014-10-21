@@ -21,6 +21,10 @@
             );
         }
 
+        function getSources() {
+            return $('#sources').val().split('\n')
+        }
+
         function clearAll(lang) {
             var vnames = $('.vname')
             var sources = $('.source_list')
@@ -48,12 +52,22 @@
             }
         }
 
+        var monthNames = [  "January", "February", "March", "April", "May", "June", 
+                            "July", "August", "September", "October", "November", "December" ];
+
         COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)'
         COLOR_VNNAME_NOT_FOUND = 'rgba(192, 0, 0, 0.23)'
         COLOR_AUTOMATIC_ENTRY = 'rgba(192, 192, 0, 0.23)'
         COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)'
         
         function fillFromEOL(query_lang) {
+            var now = new Date()
+            var eol_source = "EOL vernacular names as of " + monthNames[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear()
+
+            if(getSources().indexOf(eol_source) == -1) {
+                addToSources(eol_source)
+            }
+
             var vnames = $('.vname')
             var sources = $('.source_list')
 
@@ -108,7 +122,7 @@
                                     "index": this.index
                                 }
                             }).done(function(json) {
-                                vnames = json['vernacularNames'].filter(function(vname) {
+                                var vnames = json['vernacularNames'].filter(function(vname) {
                                     if(this.lang) {
                                         return vname['language'] == this.lang
                                     } else {
@@ -116,14 +130,14 @@
                                     }
                                 })
 
-                                vnames_preferred = vnames.filter(function(vname) { return 'eol_preferred' in vname; })
+                                var vnames_preferred = vnames.filter(function(vname) { return 'eol_preferred' in vname; })
 
                                 if(vnames.length == 0) {
                                     // Let the user know that we found the scientific name, but 
                                     this.thiq.css('background-color', COLOR_VNNAME_NOT_FOUND)
                                 } else {
                                     // Is there a preferred name in this language?
-                                    best_eol_vname = ""
+                                    var best_eol_vname = ""
 
                                     if(vnames_preferred.length > 0) {
                                         best_eol_vname = vnames_preferred[0]['vernacularName']
@@ -134,6 +148,7 @@
                                     if(this.thiq.val() == '') {
                                         this.thiq.val(best_eol_vname)
                                         this.thiq.css('background-color', COLOR_AUTOMATIC_ENTRY)
+                                        this.thiq.next().val(eol_source)
                                     }
                                 }
 

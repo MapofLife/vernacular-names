@@ -594,9 +594,11 @@ class BulkImportHandler(BaseHandler):
 
         # Retrieve list of sources.
         all_sources = self.request.get('sources')
-        if all_sources == '':
-            all_sources = 'Manual changes on ' + time.strftime("%B %d, %Y", time.gmtime())
-        sources = filter(lambda x: x != '', re.split('\s*[\r\n]+\s*', all_sources))
+        manual_change = 'Manual changes on ' + time.strftime("%B %d, %Y", time.gmtime())
+        sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split('\s*[\r\n]+\s*', all_sources))))
+
+        # This needs to go on top as it should be the default.
+        sources.insert(0, manual_change) 
 
         # Read in any vernacular names.
         vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
