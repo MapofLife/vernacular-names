@@ -4,6 +4,24 @@
 
 {% block head %}
     <script src="/static/sorttable.js"></script>
+    <script><!--
+        function addToSources(source) { 
+            if(source) { 
+                $('.source_list').append('<option>' + source + '</option>'); 
+                $('#sources').val(
+                    $('#sources').val().trim()
+                    + '\n' + source
+                );
+            } 
+        }
+
+        function promptAndAddSource() {
+            addToSources(
+                prompt('What is the name of the new source?', 'New source')
+            );
+        }
+
+    --></script>
 {% endblock %}
 
 {% block content %}
@@ -25,7 +43,7 @@
             <p>Sources: <textarea id="sources" name="sources" cols="80" rows="5" readonly="1"
                 >{% for source in sources %}{{source}}
 {% endfor %}</textarea>
-                <button onclick="var source = prompt('What is the name of the new source?', 'New source'); if(source) { $('.source_list').append('<option>' + source + '</option>'); $('#sources').val($('#sources').val() + '\n' + source);} return false;">Add new source</button></p>
+                <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
             </p>
 
             <tr>
