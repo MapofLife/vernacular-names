@@ -2,6 +2,11 @@
 
 {% block page_title %}Bulk Import{% endblock %}
 
+{% set COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)' %}
+{% set COLOR_VNNAME_NOT_FOUND = 'rgba(192, 0, 0, 0.23)' %}
+{% set COLOR_AUTOMATIC_ENTRY = 'rgba(192, 192, 0, 0.23)' %}
+{% set COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)' %}
+
 {% block head %}
     <script src="/static/sorttable.js"></script>
     <script><!--
@@ -55,11 +60,6 @@
         var monthNames = [  "January", "February", "March", "April", "May", "June", 
                             "July", "August", "September", "October", "November", "December" ];
 
-        COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)'
-        COLOR_VNNAME_NOT_FOUND = 'rgba(192, 0, 0, 0.23)'
-        COLOR_AUTOMATIC_ENTRY = 'rgba(192, 192, 0, 0.23)'
-        COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)'
-        
         function fillFromEOL(query_lang) {
             var now = new Date()
             var eol_source = "EOL vernacular names as of " + monthNames[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear()
@@ -103,7 +103,7 @@
                         results = json['results']
                         if(results.length == 0) {
                             // Let the user know that we tried but couldn't find this name.
-                            this.thiq.css('background-color', COLOR_SCNAME_NOT_FOUND) 
+                            this.thiq.css('background-color', '{{COLOR_SCNAME_NOT_FOUND}}')
                         } else {
                             // Look up vernacular names.
                             best_eol_id = results[0]['id']
@@ -134,7 +134,7 @@
 
                                 if(vnames.length == 0) {
                                     // Let the user know that we found the scientific name, but 
-                                    this.thiq.css('background-color', COLOR_VNNAME_NOT_FOUND)
+                                    this.thiq.css('background-color', '{{COLOR_VNNAME_NOT_FOUND}}')
                                 } else {
                                     // Is there a preferred name in this language?
                                     var best_eol_vname = ""
@@ -147,7 +147,7 @@
 
                                     if(this.thiq.val() == '') {
                                         this.thiq.val(best_eol_vname)
-                                        this.thiq.css('background-color', COLOR_AUTOMATIC_ENTRY)
+                                        this.thiq.css('background-color', '{{COLOR_AUTOMATIC_ENTRY}}')
                                         this.thiq.next().val(eol_source)
                                     }
                                 }
@@ -189,36 +189,56 @@
             <input type="submit" value="Upload names">
     {% else %}
         <input type="hidden" name="scnames" value="{{ scnames|join('\n') }}" />
-        <table class="sortable" border="1">
-            <h2>Dataset: <em>{{ input_dataset }}</em></h2>
 
-            <p>Change input dataset name: <input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
-            <p>Sources: <textarea id="sources" name="sources" cols="80" rows="5" readonly="1"
-                >{% for source in sources %}{{source}}
+        <h2>Dataset: <em>{{ input_dataset }}</em></h2>
+
+        <p>Change input dataset name: <input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
+        <p>Sources: <textarea id="sources" name="sources" cols="80" rows="5" readonly="1"
+            >{% for source in sources %}{{source}}
 {% endfor %}</textarea>
-                <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
+            <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
+        </p>
+        {% if scnames_not_in_master_list|length > 0 %}
+            <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in <a href="{{url_master_list}}">the master list</a>. To add them, <a onclick="$('#sql_add_to_master_list').show()" href="#">click here to display the appropriate SQL</a>.
+            <br>
+            <textarea cols="80" rows="5" readonly="1" id="sql_add_to_master_list" style="display:none">{{sql_add_to_master_list}}</textarea>
             </p>
-            {% if scnames_not_in_master_list|length > 0 %}
-                <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in <a href="{{url_master_list}}">the master list</a>. To add them, <a onclick="$('#sql_add_to_master_list').show()" href="#">click here to display the appropriate SQL</a>.
-                <br>
-                <textarea cols="80" rows="5" readonly="1" id="sql_add_to_master_list" style="display:none">{{sql_add_to_master_list}}</textarea>
-                </p>
-            {% endif %}
+        {% endif %}
 
-            <div id="json_error" style="display:none">
-                <p><strong>Error</strong> during JSONP request: <span id="json_error_text">unknown error</span></p>
-            </div>
+        <div id="json_error" style="display:none">
+            <p><strong>Error</strong> during JSONP request: <span id="json_error_text">unknown error</span></p>
+        </div>
 
-            <div id="ajax_in_progress" style="display:none">
-                <center><p><em><strong>Please wait, loading data ...</strong></em></p></center>
-            </div>
+        <div id="ajax_in_progress" style="display:none">
+            <center><p><em><strong>Please wait, loading data ...</strong></em></p></center>
+        </div>
 
-            <center><p>
-                <button onclick="clearAll(); return false;">Clear all</button>
-                <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
-                <input type="submit" value="Refresh display">
-            </p></center>
+        <center><p>
+            <button onclick="clearAll(); return false;">Clear all</button>
+            <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
+            <input type="submit" value="Refresh display">
+        </p>
+        
+        <table border="1">
+            <tr>
+                <th colspan="8">Legend</th>
+            </tr>
+            <tr>
+                <td style="background-color: {{COLOR_MANUAL_ENTRY}}">&nbsp;&nbsp;</td>
+                <td>Entered manually</td>
+                <td style="background-color: {{COLOR_AUTOMATIC_ENTRY}}">&nbsp;&nbsp;</td>
+                <td>Entered automatically</td>
+                <td style="background-color: {{COLOR_SCNAME_NOT_FOUND}}">&nbsp;&nbsp;</td>
+                <td>Scientific name not found</td>
+                <td style="background-color: {{COLOR_VNNAME_NOT_FOUND}}">&nbsp;&nbsp;</td>
+                <td>Vernacular name not found for scientific name</td>
+            </tr>
+        </table>
+        <br>
 
+        </center>
+
+        <table class="sortable" border="1">
             <tr>
                 <th>&nbsp;</th>
                 <th>Scientific Name</th>
@@ -244,7 +264,7 @@
                 </td>
                 {% for lang in language_names_list %}
                     <td>
-                        <input id="vname_{{scname_index}}_{{lang}}" class="vname lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" onchange="$(this).css('background-color', COLOR_MANUAL_ENTRY)" />
+                        <input id="vname_{{scname_index}}_{{lang}}" class="vname lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" oninput="$(this).css('background-color', '{{COLOR_MANUAL_ENTRY}}')" />
                         <select id="vname_{{scname_index}}_{{lang}}_source"  class="source_list lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}_source">
                             {% for source in sources %}
                                 <option {% if vnames_source|length >= scname_index and lang in vnames_source[scname_index] and vnames_source[scname_index][lang]==source %}selected="1"{% endif %}>{{source}}</option>
