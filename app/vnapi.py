@@ -64,6 +64,14 @@ def getDatasets():
 def getDatasetCoverage(dataset, langs):
     return getNamesCoverage(getDatasetNames(dataset), langs)
 
+# Return a list of every scientific name in every dataset.
+def getMasterList():
+    datasets = getDatasets()
+    all_names = set()
+    for dataset in datasets:
+        all_names.update(getDatasetNames(dataset['dataset']))
+    return all_names
+
 # Return a list of every scientific name in this dataset.
 def getDatasetNames(dataset):
     sql = "SELECT scientificname FROM %s WHERE dataset=%s"
@@ -143,7 +151,10 @@ def getNamesCoverage(query_names, langs):
                     'unmatched': 0
                 }
 
-            rows_by_scname_lc = groupBy(rows_by_lang[lang], 'scname_lc')
+            if lang in rows_by_lang:
+                rows_by_scname_lc = groupBy(rows_by_lang[lang], 'scname_lc')
+            else:
+                rows_by_scname_lc = []
 
             # Note that we're looking through chunk_names: 
             for scname in chunk_names:

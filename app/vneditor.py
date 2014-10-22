@@ -307,10 +307,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         csvfile = csv.writer(gzfile)
 
         # Get a list of every name in the master list.
-        datasets = vnapi.getDatasets()
-        all_names = set()
-        for dataset in datasets:
-            all_names.update(vnapi.getDatasetNames(dataset['dataset']))
+        all_names = vnapi.getMasterList()
         
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
@@ -558,7 +555,169 @@ class SourcesHandler(BaseHandler):
             'vneditor_version': version.VNEDITOR_VERSION
         })
 
+# Handle bulk uploads. The plan is to see if we can do this mostly in browser,
+# using the following flow:
+#   - no arguments: provide a form to upload a list of names.
+#   - POST names: a list of names to have vernacular names added.
+#   - POST names, langs, vernacularnames: preview data before import.
+class BulkImportHandler(BaseHandler):
+    def get(self):
+        self.post()
 
+    def post(self):
+        self.response.headers['Content-type'] = 'text/html'
+ 
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Any input dataset name?
+        input_dataset = self.request.get('input_dataset')
+        if not input_dataset:
+            input_dataset = 'New dataset uploaded on ' + time.strftime("%x %X %Z", time.gmtime())
+
+        # Any names?
+        all_names = self.request.get('scnames')
+        scnames = []
+        if all_names != '':
+            scnames = filter(lambda x: x != '', re.split('\s*[\r\n]+\s*', all_names))
+
+        # Check for presence in master list.
+        master_list = vnapi.getMasterList()
+        master_list_lc = set(map(lambda x: x.lower(), master_list))
+        
+        scnames_not_in_master_list = filter(lambda x: (x.lower() not in master_list_lc), scnames)
+        sql_add_to_master_list = "INSERT INTO %s (dataset, scientificname) VALUES\n\t%s" % (
+            access.MASTER_LIST, ",\n\t".join(map(lambda scname: "('" + input_dataset.replace("'", "''") + "', '" + scname.replace("'", "''") + "')", scnames_not_in_master_list))
+        )
+
+        # Retrieve list of sources.
+        all_sources = self.request.get('sources')
+        manual_change = 'Manual changes on ' + time.strftime("%B %d, %Y", time.gmtime())
+        sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split('\s*[\r\n]+\s*', all_sources))))
+
+        # Source priority
+        source_priority = self.request.get_range('source_priority', 0, 100, 0)
+
+        # This needs to go on top as it should be the default.
+        sources.insert(0, manual_change) 
+
+        # Read in any vernacular names.
+        vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
+        vnames = [dict() for i in range(len(scnames)+1)]
+        vnames_source = [dict() for i in range(len(scnames)+1)]
+        for vname_arg in vnames_args:
+            match = re.match(r"^vname_(\d+)_(\w+?)(_source)?$", vname_arg)
+            if match:
+                loop_index = int(match.group(1))
+                lang = match.group(2)
+                source_str = match.group(3)
+
+                # Ignore 'vname_\d+_\w+
+                if source_str is None:
+                    vname = self.request.get(vname_arg)
+                    source = self.request.get(vname_arg + "_source")
+
+                    if vnames[loop_index] == 0:
+                        vnames[loop_index] = {}
+
+                    if vname != '':
+                        # print("vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'")
+                        vnames[loop_index][lang] = vname.strip()
+                        vnames_source[loop_index][lang] = source.strip()
+
+        # Some variables for all entries.
+        added_by = user.nickname()
+
+        debug_save = ""
+        if self.request.get('save') != "":
+            # We need to save this and then redirect to the list view on this dataset. 
+            # For now, we'll indicate what's going on in msg.
+            entries = []
+
+            debug_save = "<table border='1'>\n"
+            for loop_index in range(len(scnames)):
+                for lang in vnames[loop_index]:
+                    if lang in vnames_source[loop_index]:
+                        source = vnames_source[loop_index][lang]
+                    else:
+                        source = ""
+                    debug_save += "<tr><td>" + scnames[loop_index] + "</td><td>" + lang + "</td><td>" + vnames[loop_index][lang] + "</td><td>" + source + "</td></tr>\n"
+
+                    entries.append("(" + 
+                        vnapi.encode_b64_for_psql(added_by) + ", " + 
+                        vnapi.encode_b64_for_psql(scnames[loop_index]) + ", " +
+                        vnapi.encode_b64_for_psql(lang) + ", " + 
+                        vnapi.encode_b64_for_psql(vnames[loop_index][lang]) + ", " +
+                        vnapi.encode_b64_for_psql(source) + ", " + 
+                        "'" + SOURCE_URL + "', " + str(source_priority) +
+                        ")")
+
+            debug_save += "</table>\n"
+
+            # Write all the entries into CartoDB.
+            # TODO: chunk this so we can add huge datasets.
+
+            # Synthesize SQL
+            sql = "INSERT INTO %s (added_by, scname, lang, cmname, source, source_url, source_priority) VALUES %s"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                ", ".join(entries)
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL,
+                payload=urllib.urlencode(
+                    dict(
+                        q = sql_query,
+                        api_key = access.CARTODB_API_KEY
+                    )),
+                method=urlfetch.POST,
+                headers={'Content-type': 'application/x-www-form-urlencoded'},
+                deadline=vnapi.DEADLINE_FETCH
+            )
+
+            if response.status_code != 200:
+                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                print("Error: server returned error " + str(response.status_code) + " on SQL '" + sql_query + "': " + response.content)
+
+            else:
+                message = str(len(entries)) + " entries added to dataset '" + input_dataset + "'."
+
+                # Redirect to the main page.
+                self.redirect("/list?" + urllib.urlencode(dict(
+                    msg = message,
+                    dataset = input_dataset
+                )))
+
+        # If this is a get request, we can only be in display-first-page mode.
+        # So display first page and quit.
+        self.render_template('import.html', {
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'vneditor_version': version.VNEDITOR_VERSION,
+            'datasets_data': vnapi.getDatasets(),
+
+            'debug_save': debug_save,
+
+            'url_master_list': "https://mol.cartodb.com/tables/" + access.MASTER_LIST,
+            'sql_add_to_master_list': sql_add_to_master_list,
+
+            'message': message,
+
+            'scnames': scnames,
+            'scnames_not_in_master_list': scnames_not_in_master_list,
+            'source_priority': source_priority,
+            'input_dataset' : input_dataset,
+            'sources': sources,
+            'vnames': vnames,
+            'vnames_source': vnames_source
+        })
 
 # Return a list of recent changes, and allow some to be deleted.
 class RecentChangesHandler(BaseHandler):
@@ -677,6 +836,9 @@ class ListViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        # Message?
+        message = self.request.get('msg')
+
         # Okay, so here's how this is going to work:
         # 1.    We pass the request object to a series of filters, which will
         #       return: (1) a string representation of what they have filtered,
@@ -770,12 +932,11 @@ class ListViewHandler(BaseHandler):
         )
 
         # Process error message or results.
-        message = ""
         if response.status_code != 200:
-            message = "<strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            message += "\n<p><strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content + "</p>"
             results = {"rows": []}
         else:
-            message = "DEBUG: '" + list_sql + "'"
+            message += "\n<p>DEBUG: '" + list_sql + "'</p>"
             results = json.loads(response.content)
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
@@ -812,5 +973,6 @@ application = webapp2.WSGIApplication([
     ('/recent', RecentChangesHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
+    ('/import', BulkImportHandler),
     ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)
