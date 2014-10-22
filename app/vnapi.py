@@ -151,7 +151,10 @@ def getNamesCoverage(query_names, langs):
                     'unmatched': 0
                 }
 
-            rows_by_scname_lc = groupBy(rows_by_lang[lang], 'scname_lc')
+            if lang in rows_by_lang:
+                rows_by_scname_lc = groupBy(rows_by_lang[lang], 'scname_lc')
+            else:
+                rows_by_scname_lc = []
 
             # Note that we're looking through chunk_names: 
             for scname in chunk_names:

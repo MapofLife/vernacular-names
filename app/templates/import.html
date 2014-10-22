@@ -208,11 +208,20 @@
 {% endfor %}</textarea>
             <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
         </p>
+
+        <p>Source priority for entire dataset: <input name="source_priority" value="{{source_priority|default(0)}}" /></p>
+
         {% if scnames_not_in_master_list|length > 0 %}
             <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in <a href="{{url_master_list}}">the master list</a>. To add them, <a onclick="$('#sql_add_to_master_list').show()" href="#">click here to display the appropriate SQL</a>.
             <br>
             <textarea cols="80" rows="5" readonly="1" id="sql_add_to_master_list" style="display:none">{{sql_add_to_master_list}}</textarea>
             </p>
+        {% endif %}
+
+        {% if debug_save %}
+            <h2>Debug information on save operation</h2>
+
+            {{ debug_save|safe }}
         {% endif %}
 
         <center><p>
@@ -243,7 +252,7 @@
         </div>
 
         <div id="ajax_in_progress" style="display:none">
-            <center><p><em><strong>Please wait, loading data ...</strong></em></p></center>
+            <center><p><em><strong>Please wait, querying server ...</strong></em></p></center>
         </div>
 
         </center>
@@ -266,7 +275,7 @@
                 {% set scname_index = loop.index %}
                 <td>{{ scname_index }}</td>
                 <td>{% if scname not in scnames_not_in_master_list %}
-                        <em>{{ scname }}</em>
+                        <em><a href="/?lookup={{scname}}">{{ scname }}</a></em>
                     {% else %}
                         <span style="color: red"><em>{{ scname }}</em></span><br><strong>Warning: not in master list!</strong>
                     {% endif %}
