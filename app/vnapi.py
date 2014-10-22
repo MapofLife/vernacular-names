@@ -108,7 +108,7 @@ def getNamesCoverage(query_names, langs):
 
         genera = set()
         for name in chunk_names:
-            match = re.search('^(\w+)\s+(\w+)$', name)
+            match = re.search('^(\w+)\s+([\w\-]+)$', name)
             if match:
                 genus = match.group(1)
                 genera.add(genus)
@@ -174,7 +174,7 @@ def getNamesCoverage(query_names, langs):
 
                     # If that fails, try matching genus common name.
                     else:
-                        match = re.search('^(\w+)\s+(\w+)$', scname_lc)
+                        match = re.search('^(\w+)\s+([\w\-]+)$', scname_lc)
                         if match:
                             genus = match.group(1)
 

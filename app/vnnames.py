@@ -314,7 +314,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                 else:
                     if flag_lookup_genera:
                         # No match? Try genus?
-                        match = re.search('^(\w+)\s+(\w+)$', scname)
+                        match = re.search('^(\w+)\s+([\w\-]+)$', scname)
                         if match:
                             genus = match.group(1)
                             genus_matches = getVernacularNames([genus])

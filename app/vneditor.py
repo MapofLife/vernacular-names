@@ -895,7 +895,9 @@ class ListViewHandler(BaseHandler):
         select = ", ".join(results['select'])
         where = " AND ".join(results['where'])
         having = " AND ".join(results['having'])
-        order_by = "ORDER BY scientificname ASC"
+        order_by = "ORDER BY scientificname COLLATE \"POSIX\" ASC"
+            # We collate POSIX because otherwise spaces get ignored while
+            # sorting in CartoDB.
         results['search_criteria'].append("sorted by ascending  scientific name")
 
         limit_offset = "LIMIT %d OFFSET %d" % (
