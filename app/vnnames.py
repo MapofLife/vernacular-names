@@ -4,6 +4,7 @@
 # Functions for working with vernacular names 
 
 from google.appengine.api import urlfetch
+from titlecase import titlecase
 
 import logging
 
@@ -29,6 +30,11 @@ if 'SERVER_SOFTWARE' in os.environ:
 if not PROD:
     logging.info("Developer environment detected, activating genus lookups.")
     FLAG_LOOKUP_GENERA = True
+
+# Utility function: format a common name.
+def format_name(name):
+    # This slows us by about 50% (44 mins for a full genus generation)
+    return titlecase(name)
 
 # Datatypes
 class VernacularName:
@@ -76,6 +82,13 @@ class VernacularName:
     def tax_family(self):
         return self.tax_family
 
+# A cache for vernacular names. Used by getVernacularNames but NOT by
+# searchVernacularNames.
+getVernacularNames_cache = dict()
+
+def clearVernacularNamesCache():
+    getVernacularNames_cache = dict()
+
 # getVernacularNames: Returns vernacular names for this scientific name in
 # every language for which we have data.
 #
@@ -93,8 +106,7 @@ class VernacularName:
 #   results[nameN][lang]
 #
 
-getVernacularNames_cache = dict()
-def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False):
+def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False, flag_lookup_genera=FLAG_LOOKUP_GENERA, flag_format_cmnames=False):
     namekey = "|".join(sorted(names))
     if not flag_no_memoize and namekey in getVernacularNames_cache:
         return getVernacularNames_cache[namekey]
@@ -110,7 +122,7 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_
         results[name]['tax_class'] = higher_taxonomy['class']
         results[name]['tax_family'] = higher_taxonomy['family']
 
-    searchVernacularNames(addToDict, names, flag_no_higher, flag_all_results)
+    searchVernacularNames(addToDict, names, flag_no_higher, flag_all_results, flag_lookup_genera, flag_format_cmnames)
     
     if not flag_no_memoize:
         getVernacularNames_cache[namekey] = results
@@ -138,10 +150,15 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_
 #   - flag_no_higher: don't recurse into higher taxonomy.
 #   - flag_all_results: return all results, not just the best one
 #
-def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_all_results=False):
+def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_all_results=False, flag_lookup_genera=FLAG_LOOKUP_GENERA, flag_format_cmnames=False):
     # Reassert uniqueness and sort names. We need to sort them because
     # sets are not actually iterable.
     query_names_sorted = sorted(set(query_names))
+
+    # Prepare a list of languages we're interested in.
+    languages_list = ", ".join(
+        map(lambda name: vnapi.encode_b64_for_psql(name), languages.language_names_list)
+    )
 
     # Log.
     if len(query_names_sorted) >= 10:
@@ -183,17 +200,20 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                 MAX(source_priority) AS max_source_priority 
             FROM %s 
             WHERE 
-                LOWER(scname) IN (%s) 
+                LOWER(scname) IN (%s) AND
+                lang in (%s)
             GROUP BY 
                 scname, lang, cmname 
             ORDER BY
                 max_source_priority DESC, 
                 count_sources DESC,
-                max_updated_at DESC
+                max_updated_at DESC,
+                cmname ASC
         """
         sql_query = sql % (
             access.ALL_NAMES_TABLE,
-            scientificname_list
+            scientificname_list,
+            languages_list
         )
 
         urlresponse = urlfetch.fetch(access.CDB_URL,
@@ -260,7 +280,10 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                         if not lang in vnresults[simplify_name]:
                             continue
 
-                        vnames.add(vnresults[simplify_name][lang].vernacularname.capitalize())
+                        if flag_format_cmnames:
+                            vnames.add(format_name(vnresults[simplify_name][lang].vernacularname))
+                        else:
+                            vnames.add(vnresults[simplify_name][lang].vernacularname)
 
                     return clean_agg(vnames)
 
@@ -279,7 +302,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                         for result in lang_results:
                             vn_all_entries.append(VernacularName(
                                 scname, lang,
-                                result['cmname'],
+                                result['cmname'] if not flag_lookup_genera else format_name(result['cmname']),
                                 result['sources'],
                                 vn_tax_class,
                                 vn_tax_order,
@@ -289,7 +312,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                         vn_vernacularname = lang_results[0]['cmname']
                         vn_sources = lang_results[0]['sources']
                 else:
-                    if FLAG_LOOKUP_GENERA:
+                    if flag_lookup_genera:
                         # No match? Try genus?
                         match = re.search('^(\w+)\s+(\w+)$', scname)
                         if match:
@@ -322,7 +345,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                         best_names[lang].append(VernacularName(
                             vname.scientificname,
                             vname.lang,
-                            vname.vernacularname,
+                            vname.vernacularname if not flag_format_cmnames else format_name(vnname.venacularname),
                             vname.sources,
                             vn_tax_class,
                             vn_tax_order,
@@ -332,7 +355,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                     best_names[lang] = VernacularName(
                         scname,
                         lang,
-                        vn_vernacularname,
+                        vn_vernacularname if not flag_format_cmnames else format_name(vn_vernacularname),
                         vn_sources,
                         vn_tax_class,
                         vn_tax_order,

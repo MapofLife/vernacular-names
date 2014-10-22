@@ -1,3 +1,6 @@
+0.4: October 22, 2014
+ - Bulk Import: add multiple names from EOL to the database.
+ - Some cleanup and optimization.
 0.3: October 14, 2014
  - List names: displays species by criteria.
  - Recent changes: displays recent changes, allow some to be deleted.

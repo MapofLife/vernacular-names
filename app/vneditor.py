@@ -3,15 +3,11 @@
 from google.appengine.api import users, urlfetch, taskqueue
 from google.appengine.api.mail import EmailMessage
 
-from titlecase import titlecase
-from collections import OrderedDict
-
 import webapp2
 import jinja2
 import urllib
 import re
 import logging
-import random
 import cStringIO
 import gzip
 import csv
@@ -19,23 +15,28 @@ import time
 import os
 import json
 
-# Configuration
 import access
 import version
 import languages
-
-# Our libraries
 import vnapi
 import vnnames
 
-# More configuration
+# Configuration
+
+# Display the total count in /list: expensive, but useful.
 FLAG_LIST_DISPLAY_COUNT = True
+
+# Sources with fewer vname entries than this are considered to be individual imports;
+# greater than this are bulk imports.
+INDIVIDUAL_IMPORT_LIMIT = 100
+
+# What the 'source' should be when adding new rows.
 SOURCE_URL = "https://github.com/gaurav/vernacular-names"
 
-# Set up URLfetch settings
+# How long to wait for urlfetch to return (60 seconds is the maximum).
 urlfetch.set_default_fetch_deadline(60)
 
-# Check whether we're in production (PROD = True) or not.
+# Check whether we're in production mode (PROD = True) or not.
 PROD = True
 if 'SERVER_SOFTWARE' in os.environ:
     PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
@@ -47,8 +48,7 @@ JINJA_ENV = jinja2.Environment(
     autoescape = True
 )
 
-# The BaseHandler sets up some basic routines that all pages can
-# use.
+# The BaseHandler sets up some basic routines that all pages use.
 class BaseHandler(webapp2.RequestHandler):
     # render_template renders a Jinja2 template from the 'templates' dir,
     # using the template arguments provided.
@@ -75,8 +75,6 @@ class BaseHandler(webapp2.RequestHandler):
 class StaticPages(BaseHandler):
     def __init__(self, request, response):
         self.template_mappings = {
-            '/': 'welcome.html',
-            '/index.html': 'welcome.html',
             '/page/private': 'private.html'
         }
         self.initialize(request, response)
@@ -98,16 +96,19 @@ class MainPage(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
         
+        # Set up user details.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        # Load the current search term.
         current_search = self.request.get('search')
         if self.request.get('clear') != '':
             current_search = ''
         current_search = current_search.strip()
 
-        # Look up 'lookup'
+        # Load the scientific name being looked up. If no search is
+        # currently in progress, look up the common name instead.
         lookup_search = self.request.get('lookup')
         lookup_results = {}
 
@@ -144,10 +145,11 @@ class MainPage(BaseHandler):
         if lookup_search == '' and current_search != '':
             lookup_search = current_search
 
+        # Find all names for all species in the languages of interest.
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
-            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True, flag_no_memoize=True)
+            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
 
             lookup_results_languages = lookup_results[lookup_search]
 
@@ -160,6 +162,7 @@ class MainPage(BaseHandler):
         # Get list of datasets
         datasets = vnapi.getDatasets()
 
+        # Render the main template.
         self.render_template('main.html', {
             'message': self.request.get('msg'),
             'datasets_data': datasets,
@@ -180,12 +183,13 @@ class MainPage(BaseHandler):
             'vneditor_version': version.VNEDITOR_VERSION
         })
 
+# This handler will delete a row using its CartoDB identifier.
 class DeleteByCDBIDHandler(BaseHandler):
     def post(self):
         # Fail without login.
         current_user = self.check_user()
 
-        # Retrieve state
+        # Retrieve cartodb_id to delete.
         cartodb_id = int(self.request.get('cartodb_id'))
 
         # Synthesize SQL
@@ -213,12 +217,13 @@ class DeleteByCDBIDHandler(BaseHandler):
             msg = message,
         )))
 
+# This handler will add a new name to the main table in CartoDB.
 class AddNameHandler(BaseHandler):
     def post(self):
         # Fail without login.
         current_user = self.check_user()
 
-        # Retrieve state
+        # Retrieve state. We only use this for the final redirect.
         search = self.request.get('search')
         lookup = self.request.get('lookup')
 
@@ -275,6 +280,9 @@ class AddNameHandler(BaseHandler):
             lookup = lookup
         )) + "#lang-" + lang)
 
+# This handler generates the taxonomy_translations table. Eventually, we'd
+# like to use something similar to export names from /list (https://github.com/gaurav/vernacular-names/issues/45),
+# but I don't know how closely that's going to align with this.
 class GenerateTaxonomyTranslations(BaseHandler):
     # Activates the taxonomy_translations taskqueue task.
     def get(self):
@@ -286,6 +294,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
     # Task! Should be run on the 'generate-taxonomy-translations'
     def post(self): 
         # We have no parameters. We just generate.
+
         # Fail without login.
         current_user = self.check_user()
 
@@ -298,10 +307,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         csvfile = csv.writer(gzfile)
 
         # Get a list of every name in the master list.
-        datasets = vnapi.getDatasets()
-        all_names = set()
-        for dataset in datasets:
-            all_names.update(vnapi.getDatasetNames(dataset['dataset']))
+        all_names = vnapi.getMasterList()
         
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
@@ -310,12 +316,8 @@ class GenerateTaxonomyTranslations(BaseHandler):
         header.extend(['empty'])
         csvfile.writerow(header)
 
-        def format_name(name):
-            # This slows us by about 50% (44 mins for a full genus generation)
-            return titlecase(name)
-
         def concat_names(names):
-            return "|".join(map(format_name, sorted(names))).encode('utf-8')
+            return "|".join(sorted(names)).encode('utf-8')
 
         def add_name(name, higher_taxonomy, vnames_by_lang):
             row = [name.capitalize(), 
@@ -329,7 +331,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     sources = vnames_by_lang[lang].sources
 
                     row.extend([
-                        format_name(vname).encode('utf-8'), 
+                        vname.encode('utf-8'), 
                         "|".join(sorted(sources)).encode('utf-8'),
                         concat_names(vnames_by_lang[lang].tax_family),
                         concat_names(vnames_by_lang[lang].tax_order),
@@ -339,10 +341,16 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     row.extend([None, None, None, None, None])
 
             csvfile.writerow(row)
-        vnnames.searchVernacularNames(add_name, all_names)
+        
+        # searchVernacularNames doesn't use the cache, but it calls 
+        # getVernacularNames for higher taxonomy, which does.
+        vnnames.clearVernacularNamesCache()
+        vnnames.searchVernacularNames(add_name, all_names, flag_format_cmnames=True)
+
+        # File completed!
         gzfile.close()
 
-        # E-mail the response to someone.
+        # E-mail the response to me.
         settings = ""
         if vnnames.FLAG_LOOKUP_GENERA:
             settings = " with genera lookups turned on"
@@ -356,7 +364,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         self.response.set_status(200)
         self.response.out.write("OK")
 
-# Display a section of the Big List as a table.
+# Display a summary of the coverage by dataset and language.
 class CoverageViewHandler(BaseHandler):
     # Display
     def get(self):
@@ -366,18 +374,22 @@ class CoverageViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        # Stats are per-dataset, per-language.
         datasets = vnapi.getDatasets()
         datasets_coverage = {}
         for dataset in datasets:
             dname = dataset['dataset']
 
+            # Get coverage information on all languages at once.
             datasets_coverage[dname] = dict()
             coverage = vnapi.getDatasetCoverage(dname, languages.language_names_list)
+
             for lang in languages.language_names_list:
+                # TODO: move this into the template.
                 datasets_coverage[dname][lang] = """
                     %d have species common names (%.2f%%)<br>
                     %d have genus common names (%.2f%%)<br>
-                    %d have no common names (%.2f%%)
+                    %d have <a href="/list?dataset=%s&blank_lang=%s">no common names</a> (%.2f%%)
                     <!-- Total: %d -->
                 """ % (
                     coverage[lang]['matched_with_species_name'],
@@ -385,10 +397,12 @@ class CoverageViewHandler(BaseHandler):
                     coverage[lang]['matched_with_genus_name'],
                     int(coverage[lang]['matched_with_genus_name']) / float(coverage[lang]['total']) * 100,
                     coverage[lang]['unmatched'],
+                    dname, lang,
                     int(coverage[lang]['unmatched']) / float(coverage[lang]['total']) * 100,
                     coverage[lang]['total'] 
                 )
 
+        # Render coverage template.
         self.render_template('coverage.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
             'user_url': user_url,
@@ -402,11 +416,318 @@ class CoverageViewHandler(BaseHandler):
             'datasets_coverage': datasets_coverage
         }) 
 
+# Lists the sources and their priorities, and (eventually) allows you to change them.
+class SourcesHandler(BaseHandler):
+    def post(self):
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Set up error msg.
+        msg = ""
+
+        # Retrieve source to modify
+        source = self.request.get('source')
+        try:
+            source_priority = int(self.request.get('source_priority'))
+        except ValueError:
+            source_priority = -1
+
+        if source_priority > 0 and source_priority < 1000:
+            # Synthesize SQL
+            sql = "UPDATE %s SET source_priority = %d WHERE source=%s"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                source_priority,
+                vnapi.encode_b64_for_psql(source)
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+                dict(
+                    q = sql_query,
+                    api_key = access.CARTODB_API_KEY
+                )
+            ))
+
+            if response.status_code != 200:
+                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+            else:
+                message = "Source priority modified to %d." % (source_priority)
+        else:
+            message = "Could not parse source priority, please try again."
+
+        # Redirect to the main page.
+        self.redirect("/sources?" + urllib.urlencode(dict(
+            msg = message,
+        )))
+
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+        
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = 100
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Synthesize SQL
+        source_sql = ("""SELECT 
+            source, 
+            COUNT(*) OVER() AS total_count,
+            COUNT(*) AS vname_count,
+            COUNT(DISTINCT LOWER(scname)) AS scname_count, 
+            array_agg(DISTINCT source_priority) AS agg_source_priority,
+            MAX(source_priority) AS max_source_priority,
+            array_agg(DISTINCT LOWER(lang)) AS agg_lang,
+            array_agg(DISTINCT LOWER(tax_family)) AS agg_family,
+            array_agg(DISTINCT LOWER(tax_order)) AS agg_order,
+            array_agg(DISTINCT LOWER(tax_class)) AS agg_class
+            FROM %s 
+            GROUP BY source 
+            ORDER BY 
+                max_source_priority DESC,
+                vname_count DESC,
+                source ASC
+            LIMIT %d OFFSET %d
+        """) % (
+            access.ALL_NAMES_TABLE,
+            display_count,
+            offset
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = source_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        total_count = 0
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + source_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            sources = []
+        else:
+            results = json.loads(response.content)
+            sources = results['rows']
+            if len(sources) > 0:
+                total_count = sources[0]['total_count']
+
+        # There are two kinds of sources:
+        #   1. Anything <=1 is an individual import from the source.
+        #       These should be grouped by prefix.
+        #   2. Anything >1 is a bulk import, and should be displayed separately.
+        individual_imports = filter(lambda x: int(x['vname_count']) <= INDIVIDUAL_IMPORT_LIMIT, sources)
+        bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
+
+        # Render sources.
+        self.render_template('sources.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+
+            'offset': offset,
+            'display_count': display_count,
+
+            'total_count': total_count,
+            'individual_imports': individual_imports,
+            'bulk_imports': bulk_imports,
+
+            'vneditor_version': version.VNEDITOR_VERSION
+        })
+
+# Handle bulk uploads. The plan is to see if we can do this mostly in browser,
+# using the following flow:
+#   - no arguments: provide a form to upload a list of names.
+#   - POST names: a list of names to have vernacular names added.
+#   - POST names, langs, vernacularnames: preview data before import.
+class BulkImportHandler(BaseHandler):
+    def get(self):
+        self.post()
+
+    def post(self):
+        self.response.headers['Content-type'] = 'text/html'
+ 
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Any input dataset name?
+        input_dataset = self.request.get('input_dataset')
+        if not input_dataset:
+            input_dataset = 'New dataset uploaded on ' + time.strftime("%x %X %Z", time.gmtime())
+
+        # Any names?
+        all_names = self.request.get('scnames')
+        scnames = []
+        if all_names != '':
+            scnames = filter(lambda x: x != '', re.split('\s*[\r\n]+\s*', all_names))
+
+        # Any message?
+        message = self.request.get('message')
+
+        # Check for presence in master list.
+        master_list = vnapi.getMasterList()
+        master_list_lc = set(map(lambda x: x.lower(), master_list))
+        
+        scnames_not_in_master_list = filter(lambda x: (x.lower() not in master_list_lc), scnames)
+        sql_add_to_master_list = "INSERT INTO %s (dataset, scientificname) VALUES\n\t%s" % (
+            access.MASTER_LIST, ",\n\t".join(map(lambda scname: "('" + input_dataset.replace("'", "''") + "', '" + scname.replace("'", "''") + "')", scnames_not_in_master_list))
+        )
+
+        # Retrieve list of sources.
+        all_sources = self.request.get('sources')
+        manual_change = 'Manual changes on ' + time.strftime("%B %d, %Y", time.gmtime())
+        sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split('\s*[\r\n]+\s*', all_sources))))
+
+        # Source priority
+        source_priority = self.request.get_range('source_priority', 0, 100, 0)
+
+        # This needs to go on top as it should be the default.
+        sources.insert(0, manual_change) 
+
+        # Read in any vernacular names.
+        vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
+        vnames = [dict() for i in range(len(scnames)+1)]
+        vnames_source = [dict() for i in range(len(scnames)+1)]
+        for vname_arg in vnames_args:
+            match = re.match(r"^vname_(\d+)_(\w+?)(_source)?$", vname_arg)
+            if match:
+                loop_index = int(match.group(1))
+                lang = match.group(2)
+                source_str = match.group(3)
+
+                # Ignore 'vname_\d+_\w+_source'
+                if source_str is None:
+                    vname = self.request.get(vname_arg)
+                    source = self.request.get(vname_arg + "_source")
+
+                    if vnames[loop_index] == 0:
+                        vnames[loop_index] = {}
+
+                    if vname != '':
+                        # print("vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'")
+                        vnames[loop_index][lang] = vname.strip()
+                        vnames_source[loop_index][lang] = source.strip()
+
+        # Some variables for all entries.
+        added_by = user.nickname()
+
+        debug_save = ""
+        if self.request.get('save') != "":
+            # We need to save this and then redirect to the list view on this dataset. 
+            # For now, we'll indicate what's going on in msg.
+            entries = []
+
+            debug_save = "<table border='1'>\n"
+            for loop_index in range(len(scnames)):
+                for lang in vnames[loop_index]:
+                    if lang in vnames_source[loop_index]:
+                        source = vnames_source[loop_index][lang]
+                    else:
+                        source = ""
+                    debug_save += "<tr><td>" + scnames[loop_index] + "</td><td>" + lang + "</td><td>" + vnames[loop_index][lang] + "</td><td>" + source + "</td></tr>\n"
+
+                    entries.append("(" + 
+                        vnapi.encode_b64_for_psql(added_by) + ", " + 
+                        vnapi.encode_b64_for_psql(scnames[loop_index]) + ", " +
+                        vnapi.encode_b64_for_psql(lang) + ", " + 
+                        vnapi.encode_b64_for_psql(vnames[loop_index][lang]) + ", " +
+                        vnapi.encode_b64_for_psql(source) + ", " + 
+                        "'" + SOURCE_URL + "', " + str(source_priority) +
+                        ")")
+
+            debug_save += "</table>\n"
+
+            # Write all the entries into CartoDB.
+            # TODO: chunk this so we can add huge datasets.
+
+            # Synthesize SQL
+            sql = "INSERT INTO %s (added_by, scname, lang, cmname, source, source_url, source_priority) VALUES %s"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                ", ".join(entries)
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL,
+                payload=urllib.urlencode(
+                    dict(
+                        q = sql_query,
+                        api_key = access.CARTODB_API_KEY
+                    )),
+                method=urlfetch.POST,
+                headers={'Content-type': 'application/x-www-form-urlencoded'},
+                deadline=vnapi.DEADLINE_FETCH
+            )
+
+            if response.status_code != 200:
+                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                print("Error: server returned error " + str(response.status_code) + " on SQL '" + sql_query + "': " + response.content)
+
+            else:
+                message = str(len(entries)) + " entries added to dataset '" + input_dataset + "'."
+
+                # Redirect to the main page.
+                self.redirect("/list?" + urllib.urlencode(dict(
+                    msg = message,
+                    dataset = input_dataset
+                )))
+
+        # If this is a get request, we can only be in display-first-page mode.
+        # So display first page and quit.
+        self.render_template('import.html', {
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'vneditor_version': version.VNEDITOR_VERSION,
+            'datasets_data': vnapi.getDatasets(),
+
+            'debug_save': debug_save,
+
+            'url_master_list': "https://mol.cartodb.com/tables/" + access.MASTER_LIST,
+            'sql_add_to_master_list': sql_add_to_master_list,
+
+            'message': message,
+
+            'scnames': scnames,
+            'scnames_not_in_master_list': scnames_not_in_master_list,
+            'source_priority': source_priority,
+            'input_dataset' : input_dataset,
+            'sources': sources,
+            'vnames': vnames,
+            'vnames_source': vnames_source
+        })
+
 # Return a list of recent changes, and allow some to be deleted.
 class RecentChangesHandler(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
         
+        # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
@@ -420,7 +741,7 @@ class RecentChangesHandler(BaseHandler):
         offset = self.request.get_range('offset', 0, default=0)
         display_count = 100
 
-        # Synthesize SQL:
+        # Synthesize SQL
         recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, added_by, created_at, updated_at,
             COUNT(*) OVER() AS total_count
             FROM %s
@@ -444,10 +765,11 @@ class RecentChangesHandler(BaseHandler):
             deadline=vnapi.DEADLINE_FETCH
         )
 
+        # Retrieve results. Store the total count if there is one.
         recent_changes = []
         total_count = 0
         if response.status_code != 200:
-            message += "<br><strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            message += "<br><strong>Error</strong>: query ('" + recent_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
             results = {"rows": []}
         else:
             results = json.loads(response.content)
@@ -455,7 +777,7 @@ class RecentChangesHandler(BaseHandler):
             if len(recent_changes) > 0:
                 total_count = recent_changes[0]['total_count']
 
-        # List updates in reverse chronological order.
+        # Render recent changes.
         self.render_template('recent.html', {
             'message': message,
             'login_url': users.create_login_url('/'),
@@ -471,8 +793,6 @@ class RecentChangesHandler(BaseHandler):
             'recent_changes': recent_changes,
             'vneditor_version': version.VNEDITOR_VERSION
         })
-
-
 
 # Display a section of the Big List as a table.
 class ListViewHandler(BaseHandler):
@@ -514,9 +834,13 @@ class ListViewHandler(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
 
+        # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        # Message?
+        message = self.request.get('msg')
 
         # Okay, so here's how this is going to work:
         # 1.    We pass the request object to a series of filters, which will
@@ -540,9 +864,12 @@ class ListViewHandler(BaseHandler):
             else:
                 return all_vals[-1]
 
+        # Get offset and display_count.
         offset = int(use_last_or_default("offset", 0))
         display_count = int(use_last_or_default("display", 20))
 
+        # We hand this results object to each filter function, and allow it
+        # to modify it as it sees fit based on the request.
         results = {
             "search_criteria": [],
             "select": [],
@@ -553,15 +880,18 @@ class ListViewHandler(BaseHandler):
         self.filterByDatasets(self.request, results)
         self.filterByBlankLangs(self.request, results)
 
+        # There's an implicit first filter if there is no filter.
         if len(results['search_criteria']) == 0:
             results['search_criteria'] = ["List all"]
         else:
             results['search_criteria'][0].capitalize()
 
+        # Every query should include scientificname and the total count.
         results['select'].insert(0, "scientificname")
         if FLAG_LIST_DISPLAY_COUNT:
             results['select'].insert(1,  "COUNT(*) OVER() AS total_count")
 
+        # Build SELECT statement.
         select = ", ".join(results['select'])
         where = " AND ".join(results['where'])
         having = " AND ".join(results['having'])
@@ -575,6 +905,7 @@ class ListViewHandler(BaseHandler):
 
         search_criteria = ", ".join(results['search_criteria'])
 
+        # Put all the pieces of the SELECT statement together.
         list_sql = """SELECT
             %s
             FROM %s INNER JOIN %s ON (LOWER(scname) = LOWER(scientificname))
@@ -603,12 +934,12 @@ class ListViewHandler(BaseHandler):
             deadline=vnapi.DEADLINE_FETCH
         )
 
-        message = ""
+        # Process error message or results.
         if response.status_code != 200:
-            message = "<strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            message += "\n<p><strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content + "</p>"
             results = {"rows": []}
         else:
-            message = "DEBUG: '" + list_sql + "'"
+            message += "\n<p>DEBUG: '" + list_sql + "'</p>"
             results = json.loads(response.content)
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
@@ -616,7 +947,7 @@ class ListViewHandler(BaseHandler):
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
 
-        vnames = vnnames.getVernacularNames(name_list)
+        vnames = vnnames.getVernacularNames(name_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=True)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
@@ -635,20 +966,6 @@ class ListViewHandler(BaseHandler):
             'total_count': total_count
         }) 
 
-    # Iterate over names for a particular list.
-    @staticmethod
-    def iterateOver(fn_name_iterate, name_from = 0, name_size = -1, fn_name_filter = lambda name: True):
-        # Filter names as instructed
-        all_names = filter(fn_name_filter, sorted(all_names))
-
-        # Limit names as instructed
-        if name_size != -1:
-            all_names = all_names[name_from:name_from + name_size + 1]
-        else:
-            all_names = all_names[name_from:]
-
-        return vnnames.searchVernacularNames(fn_name_iterate, all_names)
-
 application = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/index.html', MainPage),
@@ -657,6 +974,8 @@ application = webapp2.WSGIApplication([
     ('/list', ListViewHandler),
     ('/delete/cartodb_id', DeleteByCDBIDHandler),
     ('/recent', RecentChangesHandler),
+    ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
+    ('/import', BulkImportHandler),
     ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)

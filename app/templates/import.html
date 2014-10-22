@@ -1,0 +1,304 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Bulk Import{% endblock %}
+
+{% set COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.46)' %}
+{% set COLOR_VNNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)' %}
+{% set COLOR_AUTOMATIC_ENTRY = 'rgba(192, 192, 0, 0.23)' %}
+{% set COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)' %}
+
+{% block head %}
+    <script src="/static/sorttable.js"></script>
+    <script><!--
+        function addToSources(source) { 
+            if(source) { 
+                $('.source_list').append('<option>' + source + '</option>'); 
+                $('#sources').val(
+                    $('#sources').val().trim()
+                    + '\n' + source
+                );
+            } 
+        }
+
+        function promptAndAddSource() {
+            addToSources(
+                prompt('What is the name of the new source?', 'New source')
+            );
+        }
+
+        function getSources() {
+            return $('#sources').val().split('\n')
+        }
+
+        function clearAll(lang) {
+            var vnames = $('.vname')
+            var sources = $('.source_list')
+
+            if(lang) {
+                vnames = $(".vname.lang_" + lang)
+                sources = $(".source_list.lang_" + lang)
+            }
+
+            vnames.val("")
+            sources.val('{{ sources[0] }}')
+        }
+
+        var ajax_in_progress_count = 0
+        function ajaxStarted() {
+            ajax_in_progress_count++
+            $('#ajax_in_progress').show()
+        }
+
+        function ajaxEnded() {
+            ajax_in_progress_count--
+            if(ajax_in_progress_count <= 0) {
+                $('#ajax_in_progress').hide()
+                ajax_in_progress_count = 0
+            }
+        }
+
+        var monthNames = [  "January", "February", "March", "April", "May", "June", 
+                            "July", "August", "September", "October", "November", "December" ];
+
+        function fillFromEOL(query_lang) {
+            // Prepare a source name for this source.
+            var now = new Date()
+            var eol_source = "EOL vernacular names as of " + monthNames[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear()
+
+            // Add this source to the list of sources unless its already there.
+            if(getSources().indexOf(eol_source) == -1) {
+                addToSources(eol_source)
+            }
+
+            // Get list of vname input boxes that need querying.
+            var vnames = $('.vname')
+            var sources = $('.source_list')
+
+            if(query_lang) {
+                vnames = $('.vname.lang_' + query_lang)
+                sources = $('.source_list.lang_' + query_lang)
+            }
+
+            vnames.each(function() {
+                match = /^vname_(\d+)_(\w+)$/.exec(this.id)
+                if(!match) {
+                    alert("Error: unable to parse vname input id: '" + this.id + "'")
+                } else {
+                    // Read the index, language and the corresponding scientific name.
+                    index = match[1]
+                    lang = match[2]
+                    scname = $('#scname_' + index).val()
+
+                    // Look up scname on EOL.
+                    ajaxStarted()
+                    jqxhr = $.ajax({
+                        url: "http://eol.org/api/search/1.0.json",
+                        data: {
+                            q: scname,
+                            exact: "true"
+                        },
+                        dataType: 'jsonp',
+                        context: {
+                            "vname_input": this,
+                            "scname": scname,
+                            "lang": lang,
+                            "index": index
+                        }
+                    }).done(function(json) {
+                        results = json['results']
+                        if(results.length == 0) {
+                            // Let the user know that we tried but couldn't find this name.
+                            $(this.vname_input).css('background-color', '{{COLOR_SCNAME_NOT_FOUND}}')
+                        } else {
+                            // Look up vernacular names.
+                            best_eol_id = results[0]['id']
+
+                            ajaxStarted()
+                            jqxhr = $.ajax({
+                                url: "http://eol.org/api/pages/1.0/" + best_eol_id + ".json",
+                                data: {
+                                    common_names: "true"
+                                },
+                                dataType: 'jsonp',
+                                context: {
+                                    "vname_input": this.vname_input,
+                                    "scname": this.scname,
+                                    "lang": this.lang,
+                                    "index": this.index
+                                }
+                            }).done(function(json) {
+                                inner_lang = this.lang
+
+                                var vnames = json['vernacularNames'].filter(function(vname) {
+                                    if(inner_lang) {
+                                        return vname['language'] == inner_lang
+                                    } else {
+                                        return 1;
+                                    }
+                                })
+
+                                var vnames_preferred = vnames.filter(function(vname) { return 'eol_preferred' in vname; })
+
+                                if(vnames.length == 0) {
+                                    // Let the user know that we found the scientific name, but 
+                                    $(this.vname_input).css('background-color', '{{COLOR_VNNAME_NOT_FOUND}}')
+                                } else {
+                                    // Is there a preferred name in this language?
+                                    var best_eol_vname = ""
+
+                                    if(vnames_preferred.length > 0) {
+                                        best_eol_vname = vnames_preferred[0]['vernacularName']
+                                    } else {
+                                        best_eol_vname = vnames[0]['vernacularName']
+                                    }
+
+                                    vninput = $(this.vname_input)
+
+                                    if(vninput.val() == '') {
+                                        // vninput.val(inner_lang + ": " + best_eol_vname)
+                                        vninput.val(best_eol_vname)
+                                        vninput.css('background-color', '{{COLOR_AUTOMATIC_ENTRY}}')
+                                        vninput.next().val(eol_source)
+                                    } else {
+                                        // Should we indicate vnames that we could find autovernacular names for?
+                                    }
+                                }
+
+                            }).fail(function(jqXHR, textStatus, errorThrown) {
+                                $('#json_error_text').text("textStatus = " + textStatus + ", errorThrown = " + errorThrown + " (while looking up vernacular names for '" + scname + "' on EOL)")
+                                $('#json_error').show()
+
+                            }).always(function() {
+                                ajaxEnded()
+                            })
+         
+                        }
+
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        $('#json_error_text').text("textStatus = " + textStatus + ", errorThrown = " + errorThrown + " (while looking up scientific name '" + this.scname + "' on EOL)")
+                        $('#json_error').show()
+                    }).always(function() {
+                        ajaxEnded()
+                    })
+                }
+            });
+        }
+
+    --></script>
+{% endblock %}
+
+{% block content %}
+    <form method="POST">
+    {% if scnames|length == 0 %}
+        <p>Please enter the scientific names to add to the Map of Life app.</p>
+
+            <p>
+                Input dataset: <input size="100" name="input_dataset" />
+            </p>
+            <textarea name="scnames" rows="25" cols="80">Please enter scientific names here.</textarea>
+            <input type="submit" value="Upload names">
+    {% else %}
+        <input type="hidden" name="scnames" value="{{ scnames|join('\n') }}" />
+
+        <h2>Dataset: <em>{{ input_dataset }}</em></h2>
+
+        <p>Change input dataset name: <input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
+        <p>Sources: <textarea id="sources" name="sources" cols="80" rows="5" readonly="1"
+            >{% for source in sources %}{{source}}
+{% endfor %}</textarea>
+            <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
+        </p>
+
+        <p>Source priority for entire dataset: <input name="source_priority" value="{{source_priority|default(0)}}" /></p>
+
+        {% if scnames_not_in_master_list|length > 0 %}
+            <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in <a href="{{url_master_list}}">the master list</a>. To add them, <a onclick="$('#sql_add_to_master_list').show()" href="#">click here to display the appropriate SQL</a>.
+            <br>
+            <textarea cols="80" rows="5" readonly="1" id="sql_add_to_master_list" style="display:none">{{sql_add_to_master_list}}</textarea>
+            </p>
+        {% endif %}
+
+        {% if debug_save %}
+            <h2>Debug information on save operation</h2>
+
+            {{ debug_save|safe }}
+        {% endif %}
+
+        <center><p>
+            <button onclick="clearAll(); return false;">Clear all</button>
+            <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
+            <input type="submit" value="Refresh display">
+        </p>
+        
+        <table border="1">
+            <tr>
+                <th colspan="8">Legend</th>
+            </tr>
+            <tr>
+                <td style="background-color: {{COLOR_MANUAL_ENTRY}}">&nbsp;&nbsp;</td>
+                <td>Entered manually</td>
+                <td style="background-color: {{COLOR_AUTOMATIC_ENTRY}}">&nbsp;&nbsp;</td>
+                <td>Entered automatically</td>
+                <td style="background-color: {{COLOR_SCNAME_NOT_FOUND}}">&nbsp;&nbsp;</td>
+                <td>Scientific name not found</td>
+                <td style="background-color: {{COLOR_VNNAME_NOT_FOUND}}">&nbsp;&nbsp;</td>
+                <td>Vernacular name not found for scientific name</td>
+            </tr>
+        </table>
+        <br>
+
+        <div id="json_error" style="display:none">
+            <p><strong>Error</strong> during JSONP request: <span id="json_error_text">unknown error</span></p>
+        </div>
+
+        <div id="ajax_in_progress" style="display:none">
+            <center><p><em><strong>Please wait, querying server ...</strong></em></p></center>
+        </div>
+
+        </center>
+
+        <table class="sortable" border="1">
+            <tr>
+                <th>&nbsp;</th>
+                <th>Scientific Name</th>
+                {% for lang in language_names_list %}
+                    <th>{{ language_names[lang]|default(lang) }}<br>
+                    <span style="font-size: 90%; font-weight: 100">
+                        <a href="#" onclick="clearAll('{{lang}}')">Clear all</a>, 
+                        <a href="#" onclick="fillFromEOL(['{{lang}}'])">Fill in from EOL</a>
+                    </span>
+                    </th>
+                {% endfor %}
+            </tr>
+            {% for scname in scnames %}
+            <tr>
+                {% set scname_index = loop.index %}
+                <td>{{ scname_index }}</td>
+                <td>{% if scname not in scnames_not_in_master_list %}
+                        <em><a href="/?lookup={{scname}}">{{ scname }}</a></em>
+                    {% else %}
+                        <span style="color: red"><em>{{ scname }}</em></span><br><strong>Warning: not in master list!</strong>
+                    {% endif %}
+                    <input type="hidden" id="scname_{{scname_index}}" name="scname_{{scname_index}}" value="{{scname}}" />
+                </td>
+                {% for lang in language_names_list %}
+                    <td>
+                        <input id="vname_{{scname_index}}_{{lang}}" class="vname lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" oninput="$(this).css('background-color', '{{COLOR_MANUAL_ENTRY}}')" />
+                        <select id="vname_{{scname_index}}_{{lang}}_source"  class="source_list lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}_source">
+                            {% for source in sources %}
+                                <option {% if vnames_source|length >= scname_index and lang in vnames_source[scname_index] and vnames_source[scname_index][lang]==source %}selected="1"{% endif %}>{{source}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                {% endfor %} 
+            </tr>
+            {% endfor %}
+        </table>
+        
+        <center><p>
+            <input type="submit" value="Refresh display">
+            <input type="submit" name="save" value="Upload names">
+        </p></center>
+    {% endif %}
+    </form>
+{% endblock %}
