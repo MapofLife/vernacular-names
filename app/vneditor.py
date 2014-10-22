@@ -583,6 +583,9 @@ class BulkImportHandler(BaseHandler):
         if all_names != '':
             scnames = filter(lambda x: x != '', re.split('\s*[\r\n]+\s*', all_names))
 
+        # Any message?
+        message = self.request.get('message')
+
         # Check for presence in master list.
         master_list = vnapi.getMasterList()
         master_list_lc = set(map(lambda x: x.lower(), master_list))
@@ -614,7 +617,7 @@ class BulkImportHandler(BaseHandler):
                 lang = match.group(2)
                 source_str = match.group(3)
 
-                # Ignore 'vname_\d+_\w+
+                # Ignore 'vname_\d+_\w+_source'
                 if source_str is None:
                     vname = self.request.get(vname_arg)
                     source = self.request.get(vname_arg + "_source")
