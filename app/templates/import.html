@@ -2,8 +2,8 @@
 
 {% block page_title %}Bulk Import{% endblock %}
 
-{% set COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)' %}
-{% set COLOR_VNNAME_NOT_FOUND = 'rgba(192, 0, 0, 0.23)' %}
+{% set COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.46)' %}
+{% set COLOR_VNNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)' %}
 {% set COLOR_AUTOMATIC_ENTRY = 'rgba(192, 192, 0, 0.23)' %}
 {% set COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)' %}
 
@@ -61,13 +61,16 @@
                             "July", "August", "September", "October", "November", "December" ];
 
         function fillFromEOL(query_lang) {
+            // Prepare a source name for this source.
             var now = new Date()
             var eol_source = "EOL vernacular names as of " + monthNames[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear()
 
+            // Add this source to the list of sources unless its already there.
             if(getSources().indexOf(eol_source) == -1) {
                 addToSources(eol_source)
             }
 
+            // Get list of vname input boxes that need querying.
             var vnames = $('.vname')
             var sources = $('.source_list')
 
@@ -77,9 +80,11 @@
             }
 
             vnames.each(function() {
-                thiq = $(this);
                 match = /^vname_(\d+)_(\w+)$/.exec(this.id)
-                if(match) {
+                if(!match) {
+                    alert("Error: unable to parse vname input id: '" + this.id + "'")
+                } else {
+                    // Read the index, language and the corresponding scientific name.
                     index = match[1]
                     lang = match[2]
                     scname = $('#scname_' + index).val()
@@ -94,7 +99,7 @@
                         },
                         dataType: 'jsonp',
                         context: {
-                            "thiq": thiq,
+                            "vname_input": this,
                             "scname": scname,
                             "lang": lang,
                             "index": index
@@ -103,7 +108,7 @@
                         results = json['results']
                         if(results.length == 0) {
                             // Let the user know that we tried but couldn't find this name.
-                            this.thiq.css('background-color', '{{COLOR_SCNAME_NOT_FOUND}}')
+                            $(this.vname_input).css('background-color', '{{COLOR_SCNAME_NOT_FOUND}}')
                         } else {
                             // Look up vernacular names.
                             best_eol_id = results[0]['id']
@@ -116,15 +121,17 @@
                                 },
                                 dataType: 'jsonp',
                                 context: {
-                                    "thiq": this.thiq,
+                                    "vname_input": this.vname_input,
                                     "scname": this.scname,
                                     "lang": this.lang,
                                     "index": this.index
                                 }
                             }).done(function(json) {
+                                inner_lang = this.lang
+
                                 var vnames = json['vernacularNames'].filter(function(vname) {
-                                    if(this.lang) {
-                                        return vname['language'] == this.lang
+                                    if(inner_lang) {
+                                        return vname['language'] == inner_lang
                                     } else {
                                         return 1;
                                     }
@@ -134,7 +141,7 @@
 
                                 if(vnames.length == 0) {
                                     // Let the user know that we found the scientific name, but 
-                                    this.thiq.css('background-color', '{{COLOR_VNNAME_NOT_FOUND}}')
+                                    $(this.vname_input).css('background-color', '{{COLOR_VNNAME_NOT_FOUND}}')
                                 } else {
                                     // Is there a preferred name in this language?
                                     var best_eol_vname = ""
@@ -145,10 +152,15 @@
                                         best_eol_vname = vnames[0]['vernacularName']
                                     }
 
-                                    if(this.thiq.val() == '') {
-                                        this.thiq.val(best_eol_vname)
-                                        this.thiq.css('background-color', '{{COLOR_AUTOMATIC_ENTRY}}')
-                                        this.thiq.next().val(eol_source)
+                                    vninput = $(this.vname_input)
+
+                                    if(vninput.val() == '') {
+                                        // vninput.val(inner_lang + ": " + best_eol_vname)
+                                        vninput.val(best_eol_vname)
+                                        vninput.css('background-color', '{{COLOR_AUTOMATIC_ENTRY}}')
+                                        vninput.next().val(eol_source)
+                                    } else {
+                                        // Should we indicate vnames that we could find autovernacular names for?
                                     }
                                 }
 
@@ -168,8 +180,6 @@
                     }).always(function() {
                         ajaxEnded()
                     })
-                } else {
-                    alert("Could not parse id '" + this.id + "'")
                 }
             });
         }
@@ -205,14 +215,6 @@
             </p>
         {% endif %}
 
-        <div id="json_error" style="display:none">
-            <p><strong>Error</strong> during JSONP request: <span id="json_error_text">unknown error</span></p>
-        </div>
-
-        <div id="ajax_in_progress" style="display:none">
-            <center><p><em><strong>Please wait, loading data ...</strong></em></p></center>
-        </div>
-
         <center><p>
             <button onclick="clearAll(); return false;">Clear all</button>
             <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
@@ -235,6 +237,14 @@
             </tr>
         </table>
         <br>
+
+        <div id="json_error" style="display:none">
+            <p><strong>Error</strong> during JSONP request: <span id="json_error_text">unknown error</span></p>
+        </div>
+
+        <div id="ajax_in_progress" style="display:none">
+            <center><p><em><strong>Please wait, loading data ...</strong></em></p></center>
+        </div>
 
         </center>
 
