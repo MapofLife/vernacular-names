@@ -9,6 +9,7 @@ Bulk import
 2. Add new vernacular names in the text fields provided.
   1. To add a new source, scroll to the top of the page and click on "Add new source". Once you enter a new source name, you can select it from the drop-down list below each vernacular name.
   2. You can set the source priority for the entire dataset at the top of the page.
-  3. Clicking "Refresh display" will reload the page, but you will lose the colour indicating the type of source of each name.
-  4. **There is currently NO provision for saving the content on this page: if you close your browser, everything you have entered here will be lost!**
-  5. Once the dataset is ready, click on "Upload names". This won't change the Master List, but will add the new vernacular names to the database at the source priority indicated. You will be redirected to a list of the specified dataset.
+  3. Click on "Fill in from EOL" to fill in either a single column or the entire table with vernacular names from EOL. This will automatically add a source for EOL.
+  4. Clicking "Refresh display" will reload the page, but you will lose the colour indicating the type of source of each name.
+  5. **There is currently NO provision for saving the content on this page: if you close your browser, everything you have entered here will be lost!**
+  6. Once the dataset is ready, click on "Upload names". This won't change the Master List, but will add the new vernacular names to the database at the source priority indicated. You will be redirected to a list of the specified dataset.
