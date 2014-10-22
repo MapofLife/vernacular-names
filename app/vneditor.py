@@ -910,7 +910,7 @@ class ListViewHandler(BaseHandler):
         # Put all the pieces of the SELECT statement together.
         list_sql = """SELECT
             %s
-            FROM %s INNER JOIN %s ON (LOWER(scname) = LOWER(scientificname))
+            FROM %s LEFT JOIN %s ON (LOWER(scname) = LOWER(scientificname))
             %s
             GROUP BY scientificname
             %s
