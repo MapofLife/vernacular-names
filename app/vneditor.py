@@ -190,7 +190,7 @@ class DeleteByCDBIDHandler(BaseHandler):
         current_user = self.check_user()
 
         # Retrieve cartodb_id to delete.
-        cartodb_id = int(self.request.get('cartodb_id'))
+        cartodb_id = self.request.get_range('cartodb_id')
 
         # Synthesize SQL
         sql = "DELETE FROM %s WHERE cartodb_id=%d"
@@ -230,48 +230,53 @@ class AddNameHandler(BaseHandler):
         # Retrieve name to add
         scname = lookup
         cmname = self.request.get('name_to_add')
-        lang = self.request.get('lang')
+        lang = self.request.get('lang').lower()
         source = self.request.get('source')
-        try:
-            source_priority = int(self.request.get('priority'))
-        except ValueError:
-            # All manual sources come in with a default priority of 80
-            source_priority = 80
+        source_priority = self.request.get_range('priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT_APP)
 
-        # Metadata
-        added_by = current_user.nickname()
-
-        # Base64 anything we don't absolutely trust
-        added_by_b64 = vnapi.encode_b64_for_psql(added_by)
-        scname_b64 = vnapi.encode_b64_for_psql(scname)
-        cmname_b64 = vnapi.encode_b64_for_psql(cmname)
-        lang_b64 = vnapi.encode_b64_for_psql(lang)
-        source_b64 = vnapi.encode_b64_for_psql(source)
-
-        # Synthesize SQL
-        sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority) VALUES (%s, %s, %s, %s, NULL, %s, '" + SOURCE_URL + "', %d);"
-        sql_query = sql % (
-            access.ALL_NAMES_TABLE,
-            added_by_b64,
-            scname_b64,
-            lang_b64,
-            cmname_b64,
-            source_b64,
-            source_priority
-        )
-
-        # Make it so.
-        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
-            dict(
-                q = sql_query,
-                api_key = access.CARTODB_API_KEY
-            )
-        ))
-
-        if response.status_code != 200:
-            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+        if scname == '':
+            message = "Error: scientific name is blank."
+        elif cmname == '':
+            message = "Error: vernacular name is blank."
+        elif lang == '':
+            message = "Error: language is blank."
+        elif source == '':
+            message = "Error: source is blank."
         else:
-            message = "Name added to language '" + lang + "'."
+            # Metadata
+            added_by = current_user.nickname()
+
+            # Base64 anything we don't absolutely trust
+            added_by_b64 = vnapi.encode_b64_for_psql(added_by)
+            scname_b64 = vnapi.encode_b64_for_psql(scname)
+            cmname_b64 = vnapi.encode_b64_for_psql(cmname)
+            lang_b64 = vnapi.encode_b64_for_psql(lang)
+            source_b64 = vnapi.encode_b64_for_psql(source)
+
+            # Synthesize SQL
+            sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority) VALUES (%s, %s, %s, %s, NULL, %s, '" + SOURCE_URL + "', %d);"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                added_by_b64,
+                scname_b64,
+                lang_b64,
+                cmname_b64,
+                source_b64,
+                source_priority
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+                dict(
+                    q = sql_query,
+                    api_key = access.CARTODB_API_KEY
+                )
+            ))
+
+            if response.status_code != 200:
+                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+            else:
+                message = "Name added to language '" + lang + "'."
 
         # Redirect to the main page.
         self.redirect("/?" + urllib.urlencode(dict(
@@ -601,15 +606,15 @@ class BulkImportHandler(BaseHandler):
         sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split('\s*[\r\n]+\s*', all_sources))))
 
         # Source priority
-        source_priority = self.request.get_range('source_priority', 0, 100, 0)
+        source_priority = self.request.get_range('source_priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT)
 
         # This needs to go on top as it should be the default.
         sources.insert(0, manual_change) 
 
         # Read in any vernacular names.
         vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
-        vnames = [dict() for i in range(len(scnames)+1)]
-        vnames_source = [dict() for i in range(len(scnames)+1)]
+        vnames = [dict() for i in range(len(scnames))]
+        vnames_source = [dict() for i in range(len(scnames))]
         for vname_arg in vnames_args:
             match = re.match(r"^vname_(\d+)_(\w+?)(_source)?$", vname_arg)
             if match:
@@ -622,11 +627,17 @@ class BulkImportHandler(BaseHandler):
                     vname = self.request.get(vname_arg)
                     source = self.request.get(vname_arg + "_source")
 
+                    # loop_index is 1-based, but arrays in Python are 0-based.
+                    # So ...
+                    loop_index -= 1
+
+                    # print("vname = " + vname + ", source = " + source + ".")
+
                     if vnames[loop_index] == 0:
                         vnames[loop_index] = {}
 
                     if vname != '':
-                        # print("vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'")
+                        print(("scnames[" + str(loop_index) + "] = " + scnames[loop_index] + " => vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'").encode('utf8'))
                         vnames[loop_index][lang] = vname.strip()
                         vnames_source[loop_index][lang] = source.strip()
 
@@ -639,13 +650,24 @@ class BulkImportHandler(BaseHandler):
             # For now, we'll indicate what's going on in msg.
             entries = []
 
+            save_errors = []
+
             debug_save = "<table border='1'>\n"
             for loop_index in range(len(scnames)):
+                # print("loop_index = " + str(loop_index) + ": " + str(vnames[loop_index]))
+
                 for lang in vnames[loop_index]:
+                    source = ""
+
                     if lang in vnames_source[loop_index]:
                         source = vnames_source[loop_index][lang]
-                    else:
-                        source = ""
+
+                    # print("source = '" + source + "'")
+
+                    if source is None or source == "":
+                        save_errors.append("No source provided for '" + scnames[loop_index] + "', cancelling.")
+                        break
+
                     debug_save += "<tr><td>" + scnames[loop_index] + "</td><td>" + lang + "</td><td>" + vnames[loop_index][lang] + "</td><td>" + source + "</td></tr>\n"
 
                     entries.append("(" + 
@@ -659,40 +681,45 @@ class BulkImportHandler(BaseHandler):
 
             debug_save += "</table>\n"
 
-            # Write all the entries into CartoDB.
-            # TODO: chunk this so we can add huge datasets.
+            print("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
 
-            # Synthesize SQL
-            sql = "INSERT INTO %s (added_by, scname, lang, cmname, source, source_url, source_priority) VALUES %s"
-            sql_query = sql % (
-                access.ALL_NAMES_TABLE,
-                ", ".join(entries)
-            )
-
-            # Make it so.
-            response = urlfetch.fetch(access.CDB_URL,
-                payload=urllib.urlencode(
-                    dict(
-                        q = sql_query,
-                        api_key = access.CARTODB_API_KEY
-                    )),
-                method=urlfetch.POST,
-                headers={'Content-type': 'application/x-www-form-urlencoded'},
-                deadline=vnapi.DEADLINE_FETCH
-            )
-
-            if response.status_code != 200:
-                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-                print("Error: server returned error " + str(response.status_code) + " on SQL '" + sql_query + "': " + response.content)
-
+            if len(save_errors) > 0:
+                message = "<strong>Error:</strong>" + "<br>".join(save_errors)
             else:
-                message = str(len(entries)) + " entries added to dataset '" + input_dataset + "'."
+                # Write all the entries into CartoDB.
+                # TODO: chunk this so we can add huge datasets.
 
-                # Redirect to the main page.
-                self.redirect("/list?" + urllib.urlencode(dict(
-                    msg = message,
-                    dataset = input_dataset
-                )))
+                # Synthesize SQL
+                sql = "INSERT INTO %s (added_by, scname, lang, cmname, source, source_url, source_priority) VALUES %s"
+                sql_query = sql % (
+                    access.ALL_NAMES_TABLE,
+                    ", ".join(entries)
+                )
+
+                # Make it so.
+                response = urlfetch.fetch(access.CDB_URL,
+                    payload=urllib.urlencode(
+                        dict(
+                            q = sql_query,
+                            api_key = access.CARTODB_API_KEY
+                        )),
+                    method=urlfetch.POST,
+                    headers={'Content-type': 'application/x-www-form-urlencoded'},
+                    deadline=vnapi.DEADLINE_FETCH
+                )
+
+                if response.status_code != 200:
+                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                    print("Error: server returned error " + str(response.status_code) + " on SQL '" + sql_query + "': " + response.content)
+
+                else:
+                    message = str(len(entries)) + " entries added to dataset '" + input_dataset + "'."
+
+                    # Redirect to the main page.
+                    self.redirect("/list?" + urllib.urlencode(dict(
+                        msg = message,
+                        dataset = input_dataset
+                    )))
 
         # If this is a get request, we can only be in display-first-page mode.
         # So display first page and quit.

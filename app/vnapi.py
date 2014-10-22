@@ -16,6 +16,12 @@ import vnnames
 # Configuration.
 DEADLINE_FETCH = 60 # seconds to wait during URL fetch (max: 60)
 
+# Min, max and default values for source_priority
+PRIORITY_MIN = 0
+PRIORITY_MAX = 100
+PRIORITY_DEFAULT = 0
+PRIORITY_DEFAULT_APP = 80
+
 # Helper functions.
 def url_get(url):
     return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
