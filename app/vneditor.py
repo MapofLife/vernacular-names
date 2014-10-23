@@ -149,7 +149,7 @@ class MainPage(BaseHandler):
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
-            lookup_results = vnnames.getVernacularNames([lookup_search], language_names_list, flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
+            lookup_results = vnnames.getVernacularNames([lookup_search], languages.language_names_list, flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
 
             lookup_results_languages = lookup_results[lookup_search]
 
