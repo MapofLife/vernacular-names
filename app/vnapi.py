@@ -32,7 +32,7 @@ def encode_b64_for_psql(text):
 
 # Prepare a bit of code for PostgreSQL to decode a string on the server side.
 def decode_b64_on_psql(text):
-    base64_only = re.compile(r"^[a-zA-Z0-9=]*$")
+    base64_only = re.compile(r"^[a-zA-Z0-9+/=]*$")
     if not base64_only.match(text):
         raise RuntimeError("Error: '" + text + "' sent to decode_b64_on_psql is not base64!")
 

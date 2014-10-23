@@ -28,7 +28,7 @@
         </div>
         {% endif %}
 
-        <form>
+        <form action="/" method="GET">
             Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Search"> <input type="submit" name="clear" value="Clear">
             <input name="dataset" type="hidden" value="{{dataset_filter}}">
         </form>
