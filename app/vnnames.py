@@ -31,10 +31,12 @@ def format_name(name):
 
 # Datatypes
 class VernacularName:
-    def __init__(self, scientificName, lang, vernacularName, sources, tax_class, tax_order, tax_family):
+    def __init__(self, scientificName, flag_uninomial, lang, vernacularName, max_source_priority, sources, tax_class, tax_order, tax_family):
         self.scname = scientificName
+        self.flag_uninomial = bool(flag_uninomial)
         self.lang = lang
         self.cmname = vernacularName
+        self.max_source_priority = int(max_source_priority)
         self.sources = sources
         self.tax_class = tax_class
         self.tax_order = tax_order
@@ -52,12 +54,20 @@ class VernacularName:
         return self.scname
 
     @property
+    def flag_uninomial(self):
+        return self.flag_uninomial
+
+    @property
     def lang(self):
         return self.lang
 
     @property
     def vernacularname(self):
         return self.cmname
+
+    @property
+    def max_source_priority(self):
+        return self.max_source_priority 
 
     @property
     def sources(self):
@@ -294,6 +304,9 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 vn_vernacularname = ""
                 vn_sources = set()
 
+                vn_max_source_priority = -1
+                vn_flag_uninomial = False
+
                 vn_all_entries = []
 
                 if (lang in results_by_lang) and (len(results_by_lang[lang]) > 0):
@@ -302,8 +315,11 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                     if flag_all_results:
                         for result in lang_results:
                             vn_all_entries.append(VernacularName(
-                                scname, lang,
+                                scname, 
+                                result['flag_uninomial'],
+                                lang,
                                 result['cmname'] if not flag_format_cmnames else format_name(result['cmname']),
+                                result['max_source_priority'],
                                 result['sources'],
                                 vn_tax_class,
                                 vn_tax_order,
@@ -313,13 +329,18 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                         vn_vernacularname = lang_results[0]['cmname']
                         vn_sources = lang_results[0]['sources']
 
+                        vn_flag_uninomial = lang_results[0]['flag_uninomial']
+                        vn_max_source_priority = lang_results[0]['max_source_priority']
+
                 if flag_all_results:
                     best_names[lang] = []
                     for vname in vn_all_entries:
                         best_names[lang].append(VernacularName(
                             vname.scientificname,
+                            vname.flag_uninomial,
                             vname.lang,
                             vname.vernacularname if not flag_format_cmnames else format_name(vnname.venacularname),
+                            vname.max_source_priority,
                             vname.sources,
                             vn_tax_class,
                             vn_tax_order,
@@ -328,8 +349,10 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 else:
                     best_names[lang] = VernacularName(
                         scname,
+                        vn_flag_uninomial,
                         lang,
                         vn_vernacularname if not flag_format_cmnames else format_name(vn_vernacularname),
+                        vn_max_source_priority,
                         vn_sources,
                         vn_tax_class,
                         vn_tax_order,

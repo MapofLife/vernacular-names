@@ -1,12 +1,6 @@
 {% extends "templates/base.html" %}
 {% block page_title %}Editor{% endblock %}
 {% block javascript %}
-/*
- -- Turned off: this deactivates the scroll-to-lang functionality.
-$(document).ready(function() {
-    $('.selected').get(0).scrollIntoView(false);
-});
-*/
 {% endblock %}
 {% block style %}
 #scrolled_search_results {
@@ -110,6 +104,7 @@ table.search_results tr:nth-child(even) {
                                     <div class="display_name" id="display_name_{{language}}_{{loop.index}}">
                                         {% if loop.first %}<strong>{% endif %}
                                         <a class="nohistory" href="#" onclick="$('.display_name').show(); $('.edit_name').hide(); $('#display_name_{{language}}_{{loop.index}}').hide(); $('#edit_name_{{language}}_{{loop.index}}').show(); $('#edit_name_{{language}}_{{loop.index}} input:first').focus(); return false">{{ result.cmname }}</a>
+                                        {% if result.max_source_priority == 80 %}(added manually){% elif result.max_source_priority != 0%}(Priority: {{ result.max_source_priority }}){%endif%}
                                         {% if loop.first %}</strong>{% endif %}
                                         {# TODO: reactivate once we have this in the result
                                         {% if result.max_source_priority > 80 %}
