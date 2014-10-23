@@ -224,10 +224,8 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
             "OR LOWER(SPLIT_PART(qn.qname, ' ', 1)) = LOWER(scname)" if flag_lookup_genera else "",
         )
 
-        # TODO: on CartoDB, getting rid of the WHERE clause REALLY speeds things up! So do that.
-
-        print("Sql = <<" + sql_query + ">>")
-        print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
+        # print("Sql = <<" + sql_query + ">>")
+        # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
 
         urlresponse = urlfetch.fetch(access.CDB_URL,
             payload=urllib.urlencode(dict(

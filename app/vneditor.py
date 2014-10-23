@@ -893,7 +893,7 @@ class ListViewHandler(BaseHandler):
 
         # Get offset and display_count.
         offset = int(use_last_or_default("offset", 0))
-        display_count = int(use_last_or_default("display", 20))
+        display_count = int(use_last_or_default("display", 100))
 
         # We hand this results object to each filter function, and allow it
         # to modify it as it sees fit based on the request.
