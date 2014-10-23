@@ -72,6 +72,9 @@
             >{{language_names[lang]}}</input>
         {% endfor %}
     </p>
+
+    <p>(Genus common names are italicized)</p>
+
     <table class="sortable" border="1" width="100%">
         <thead><tr>
             <th>&nbsp;</th>
@@ -97,8 +100,10 @@
                     <td><em><a href="/?lookup={{genus}}">{{genus}}</a></em></td>
                     {% for lang in language_names_list %}
                         {% if lang in vnames[name] and vnames[name][lang].vernacularname != '' %}
-                            <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a>
-                            {% if vnames[name][lang].flag_uninomial %}<br>(genus common name){% endif %}
+                            <td>
+                            {% if vnames[name][lang].flag_uninomial %}<em>{% endif %}
+                            <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a>
+                            {% if vnames[name][lang].flag_uninomial %}</em>{% endif %}
                             </td>
                         {% else %}
                             <td>&nbsp;<!-- <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><center><em>None</em></center></a> --></td>
