@@ -185,15 +185,15 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
         )
 
         sql = """
-            SELECT 
+            SELECT %s
                 scname,
+                lang, 
+                cmname, 
                 LOWER(scname) AS scname_lc,
+                array_agg(source) AS sources, 
                 array_agg(DISTINCT LOWER(tax_order)) AS agg_order, 
                 array_agg(DISTINCT LOWER(tax_class)) AS agg_class, 
                 array_agg(DISTINCT LOWER(tax_family)) AS agg_family, 
-                lang, 
-                cmname, 
-                array_agg(source) AS sources, 
                 COUNT(DISTINCT LOWER(source)) AS count_sources,
                 array_agg(url) AS urls, 
                 MAX(updated_at) AS max_updated_at, 
@@ -205,12 +205,14 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
             GROUP BY 
                 scname, lang, cmname 
             ORDER BY
+                scname, lang,
                 max_source_priority DESC, 
                 count_sources DESC,
                 max_updated_at DESC,
                 cmname ASC
         """
         sql_query = sql % (
+            "DISTINCT ON (scname, lang)" if not flag_all_results else "",
             access.ALL_NAMES_TABLE,
             scientificname_list,
             languages_list
