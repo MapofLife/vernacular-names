@@ -14,7 +14,6 @@ import json
 import re
 import os
 
-import languages
 import access
 
 # Constants
@@ -100,7 +99,7 @@ def clearVernacularNamesCache():
 #   results[nameN][lang]
 #
 
-def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=False):
+def getVernacularNames(names, languages_list, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=False):
     namekey = "|".join(sorted(names))
     if not flag_no_memoize and namekey in getVernacularNames_cache:
         return getVernacularNames_cache[namekey]
@@ -116,7 +115,7 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_
         results[name]['tax_class'] = higher_taxonomy['class']
         results[name]['tax_family'] = higher_taxonomy['family']
 
-    searchVernacularNames(addToDict, names, flag_no_higher, flag_all_results, flag_lookup_genera, flag_format_cmnames)
+    searchVernacularNames(addToDict, names, languages_list, flag_no_higher, flag_all_results, flag_lookup_genera, flag_format_cmnames)
     
     if not flag_no_memoize:
         getVernacularNames_cache[namekey] = results
@@ -144,15 +143,10 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_
 #   - flag_no_higher: don't recurse into higher taxonomy.
 #   - flag_all_results: return all results, not just the best one
 #
-def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=False):
+def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_higher=False, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=False):
     # Reassert uniqueness and sort names. We need to sort them because
     # sets are not actually iterable.
     query_names_sorted = sorted(set(query_names))
-
-    # Prepare a list of languages we're interested in.
-    languages_list = ", ".join(
-        map(lambda name: vnapi.encode_b64_for_psql(name), languages.language_names_list)
-    )
 
     # Log.
     if len(query_names_sorted) >= 10:
@@ -275,13 +269,13 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
             taxonomy['family'] = set(filter(lambda x: x.lower() != scname, taxonomy['family']))
 
             # For every language we are interested in.
-            for lang in languages.language_names_list:
+            for lang in languages_list:
                 def simplify_to_list(simplify_names):
                     if flag_no_higher:
                         return set()
 
                     vnames = set()
-                    vnresults = getVernacularNames(simplify_names, flag_no_higher=True)
+                    vnresults = getVernacularNames(simplify_names, languages_list, flag_no_higher=True)
 
                     for simplify_name in simplify_names:
                         if not lang in vnresults[simplify_name]:

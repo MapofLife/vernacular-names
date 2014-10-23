@@ -149,7 +149,7 @@ class MainPage(BaseHandler):
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
-            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
+            lookup_results = vnnames.getVernacularNames([lookup_search], language_names_list, flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
 
             lookup_results_languages = lookup_results[lookup_search]
 
@@ -350,7 +350,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # searchVernacularNames doesn't use the cache, but it calls 
         # getVernacularNames for higher taxonomy, which does.
         vnnames.clearVernacularNamesCache()
-        vnnames.searchVernacularNames(add_name, all_names, flag_format_cmnames=True)
+        vnnames.searchVernacularNames(add_name, all_names, languages.language_names_list, flag_format_cmnames=True)
 
         # File completed!
         gzfile.close()
@@ -974,7 +974,7 @@ class ListViewHandler(BaseHandler):
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
 
-        vnames = vnnames.getVernacularNames(name_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=True)
+        vnames = vnnames.getVernacularNames(name_list, languages.language_names_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=True)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
