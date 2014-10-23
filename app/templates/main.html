@@ -78,13 +78,18 @@ table.search_results tr:nth-child(even) {
                 </h2>
 
                 {% set genus = lookup_search.split()[0] %}
-                <p>Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em></p>
+                <p>
+                Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em><br>
+                Family: {% for family in tax_family %}<a href="?lookup={{family}}">{{family|capitalize}}</a> {%endfor%}<br>
+                Order: {% for order in tax_order %}<a href="?lookup={{order}}">{{order|capitalize}}</a> {%endfor%}<br>
+                Class: {% for class in tax_class %}<a href="?lookup={{class}}">{{class|capitalize}}</a> {%endfor%}
+                </p>
 
 <!--
                     <div style="float: right; padding: 0.5em; border: 1px; background: #ddd">
                         <center><strong>Languages</strong></center>
-                        {% for language in lookup_results_languages %}
-                            <a href="#lang-{{language}}">{{lookup_results_language_names[language]}}</a>
+                        {% for lang in language_names_list %}
+                            <a href="#lang-{{language}}">{{language_names[lang]}}</a>
                             <br>
                         {% endfor %}
                         <a href="#lang-completely-new">Add new name</a>
@@ -94,9 +99,9 @@ table.search_results tr:nth-child(even) {
                     {% for language in language_names_list %}
                         <div class="results-lang{% if language in language_names_list %} results-lang-mol{% endif %}" id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}>
                         {% if language in lookup_results[lookup_search] and (lookup_results[lookup_search][language])|length > 0 %}
-                            <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: {{ lookup_results[lookup_search][language][0].vernacularname }}</h3>
+                            <h3 id="lang-{{language}}">{{ language_names[language] }}: {{ lookup_results[lookup_search][language][0].vernacularname }}</h3>
                         {% else %}
-                            <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: <em>None</em></h3>
+                            <h3 id="lang-{{language}}">{{ language_names[language] }}: <em>None</em></h3>
                         {% endif %}
                         <ol>
                             {% for result in lookup_results[lookup_search][language] %}

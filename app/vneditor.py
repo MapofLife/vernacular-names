@@ -151,13 +151,10 @@ class MainPage(BaseHandler):
         if lookup_search != '':
             lookup_results = vnnames.getVernacularNames([lookup_search], languages.language_names_list, flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
 
-            lookup_results_languages = lookup_results[lookup_search]
-
-            for lang in lookup_results_languages:
-                if lang in languages.language_names:
-                    lookup_results_lang_names[lang] = languages.language_names[lang]
-                else:
-                    lookup_results_lang_names[lang] = lang
+            # Summarize higher taxonomy.
+            tax_family = lookup_results[lookup_search]['tax_family']
+            tax_order = lookup_results[lookup_search]['tax_order']
+            tax_class = lookup_results[lookup_search]['tax_class']
 
         # Get list of datasets
         datasets = vnapi.getDatasets()
@@ -174,10 +171,11 @@ class MainPage(BaseHandler):
             'current_search': current_search,
             'search_results': search_results,
             'search_results_scnames': search_results_scnames,
+            'tax_family': tax_family,
+            'tax_order': tax_order,
+            'tax_class': tax_class,
             'lookup_search': lookup_search,
             'lookup_results': lookup_results,
-            'lookup_results_languages': lookup_results_languages,
-            'lookup_results_language_names': lookup_results_lang_names,
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
             'vneditor_version': version.VNEDITOR_VERSION
