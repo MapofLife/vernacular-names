@@ -96,10 +96,12 @@
                     {% set genus = name.split()[0] %}
                     <td><em><a href="/?lookup={{genus}}">{{genus}}</a></em></td>
                     {% for lang in language_names_list %}
-                        {% if lang in vnames[name] %}
-                            <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a></td>
+                        {% if lang in vnames[name] and vnames[name][lang].vernacularname != '' %}
+                            <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a>
+                            {% if vnames[name][lang].flag_uninomial %}<br>(genus common name){% endif %}
+                            </td>
                         {% else %}
-                            <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><em>None</em></a></td>
+                            <td><a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><center><em>None</em></center></a></td>
                         {% endif %}
                     {% endfor %}
                 </tr>
