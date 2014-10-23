@@ -187,9 +187,12 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
         # qn, qname: query name
         sql = """
             SELECT %s
-                qn.qname AS qname,
+                qname,
+                scname,
                 lang, 
                 cmname,
+                scname,
+                POSITION(' ' IN scname) = 0 AS flag_uninomial,
                 array_agg(source) AS sources, 
                 array_agg(DISTINCT LOWER(tax_order)) AS agg_order, 
                 array_agg(DISTINCT LOWER(tax_class)) AS agg_class, 
@@ -200,14 +203,13 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                 MAX(source_priority) AS max_source_priority 
             FROM %s RIGHT JOIN (SELECT '' AS qname UNION VALUES %s) qn
                 ON 
-                    LOWER(qn.qname) = LOWER(scname) 
+                    LOWER(qname) = LOWER(scname) 
                     %s
-            WHERE 
-                lang in (%s)
             GROUP BY 
-                qn.qname, lang, cmname 
+                qname, lang, scname, cmname 
             ORDER BY
-                qn.qname, lang,
+                qname, lang,
+                flag_uninomial ASC,
                 max_source_priority DESC, 
                 count_sources DESC,
                 max_updated_at DESC,
@@ -220,7 +222,6 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
             scientificname_list,
             # If we can't find the name itself, look up the genus name.
             "OR LOWER(SPLIT_PART(qn.qname, ' ', 1)) = LOWER(scname)" if flag_lookup_genera else "",
-            languages_list
         )
 
         # TODO: on CartoDB, getting rid of the WHERE clause REALLY speeds things up! So do that.
