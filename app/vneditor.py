@@ -356,9 +356,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         gzfile.close()
 
         # E-mail the response to me.
-        settings = ""
-        if vnnames.FLAG_LOOKUP_GENERA:
-            settings = " with genera lookups turned on"
+        settings = " with genera lookups turned on"
 
         email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS,
             subject = 'Taxonomy translations download',
