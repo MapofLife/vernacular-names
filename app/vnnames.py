@@ -177,7 +177,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             SELECT %s
                 qname,
                 scname,
-                lang, 
+                LOWER(lang) AS lang_lc, 
                 cmname,
                 scname,
                 POSITION(' ' IN scname) = 0 AS flag_uninomial,
@@ -194,9 +194,9 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                     LOWER(qname) = LOWER(scname) 
                     %s
             GROUP BY 
-                qname, lang, scname, cmname 
+                qname, lang_lc, scname, cmname 
             ORDER BY
-                qname, lang,
+                qname, lang_lc,
                 flag_uninomial ASC,
                 max_source_priority DESC, 
                 count_sources DESC,
@@ -205,7 +205,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
         """
         sql_query = sql.strip() % (
             # Return only the best match for each set of values.
-            "DISTINCT ON (qname, lang)" if not flag_all_results else "",
+            "DISTINCT ON (qname, lang_lc)" if not flag_all_results else "",
             access.ALL_NAMES_TABLE,
             scientificname_list,
             # If we can't find the name itself, look up the genus name.
@@ -244,7 +244,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             if scname in rows_by_scname:
                 results = rows_by_scname[scname]
 
-            results_by_lang = vnapi.groupBy(results, 'lang')
+            results_by_lang = vnapi.groupBy(results, 'lang_lc')
 
             best_names = dict()
             taxonomy = {
