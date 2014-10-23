@@ -19,17 +19,11 @@ import access
 
 # Constants
 SEARCH_CHUNK_SIZE = 2000        # Number of names to query at once.
-FLAG_LOOKUP_GENERA = False      # Look up genera when scientific names could not be matched.
 
 # Check whether we're in production (PROD = True) or not.
 PROD = True
 if 'SERVER_SOFTWARE' in os.environ:
     PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
-
-# If we're not in PROD, change some stuff.
-if not PROD:
-    logging.info("Developer environment detected, activating genus lookups.")
-    FLAG_LOOKUP_GENERA = True
 
 # Utility function: format a common name.
 def format_name(name):
@@ -106,7 +100,7 @@ def clearVernacularNamesCache():
 #   results[nameN][lang]
 #
 
-def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False, flag_lookup_genera=FLAG_LOOKUP_GENERA, flag_format_cmnames=False):
+def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=False):
     namekey = "|".join(sorted(names))
     if not flag_no_memoize and namekey in getVernacularNames_cache:
         return getVernacularNames_cache[namekey]
@@ -150,7 +144,7 @@ def getVernacularNames(names, flag_no_higher=False, flag_no_memoize=False, flag_
 #   - flag_no_higher: don't recurse into higher taxonomy.
 #   - flag_all_results: return all results, not just the best one
 #
-def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_all_results=False, flag_lookup_genera=FLAG_LOOKUP_GENERA, flag_format_cmnames=False):
+def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=False):
     # Reassert uniqueness and sort names. We need to sort them because
     # sets are not actually iterable.
     query_names_sorted = sorted(set(query_names))
