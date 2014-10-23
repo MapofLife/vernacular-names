@@ -181,15 +181,15 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
         # Get higher taxonomy, language, common name.
         # TODO: fallback to trinomial names (where we have Panthera tigris tigris but not Panthera tigris.
         scientificname_list = ", ".join(
-            map(lambda name: vnapi.encode_b64_for_psql(name.lower()), chunk_names)
+            map(lambda name: "(" + vnapi.encode_b64_for_psql(name) + ")", chunk_names)
         )
 
+        # qn, qname: query name
         sql = """
             SELECT %s
-                scname,
+                qn.qname AS qname,
                 lang, 
-                cmname, 
-                LOWER(scname) AS scname_lc,
+                cmname,
                 array_agg(source) AS sources, 
                 array_agg(DISTINCT LOWER(tax_order)) AS agg_order, 
                 array_agg(DISTINCT LOWER(tax_class)) AS agg_class, 
@@ -198,25 +198,35 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                 array_agg(url) AS urls, 
                 MAX(updated_at) AS max_updated_at, 
                 MAX(source_priority) AS max_source_priority 
-            FROM %s 
+            FROM %s RIGHT JOIN (SELECT '' AS qname UNION VALUES %s) qn
+                ON 
+                    LOWER(qn.qname) = LOWER(scname) 
+                    %s
             WHERE 
-                LOWER(scname) IN (%s) AND
                 lang in (%s)
             GROUP BY 
-                scname, lang, cmname 
+                qn.qname, lang, cmname 
             ORDER BY
-                scname, lang,
+                qn.qname, lang,
                 max_source_priority DESC, 
                 count_sources DESC,
                 max_updated_at DESC,
                 cmname ASC
         """
-        sql_query = sql % (
-            "DISTINCT ON (scname, lang)" if not flag_all_results else "",
+        sql_query = sql.strip() % (
+            # Return only the best match for each set of values.
+            "DISTINCT ON (qname, lang)" if not flag_all_results else "",
             access.ALL_NAMES_TABLE,
             scientificname_list,
+            # If we can't find the name itself, look up the genus name.
+            "OR LOWER(SPLIT_PART(qn.qname, ' ', 1)) = LOWER(scname)" if flag_lookup_genera else "",
             languages_list
         )
+
+        # TODO: on CartoDB, getting rid of the WHERE clause REALLY speeds things up! So do that.
+
+        print("Sql = <<" + sql_query + ">>")
+        print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
 
         urlresponse = urlfetch.fetch(access.CDB_URL,
             payload=urllib.urlencode(dict(
@@ -231,14 +241,16 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
             raise IOError("Could not read from CartoDB: " + str(response.status_code) + ": " + str(response.content))
             
         results = json.loads(urlresponse.content)
-        rows_by_scname = vnapi.groupBy(results['rows'], 'scname_lc')
+        rows_by_scname = vnapi.groupBy(results['rows'], 'qname')
 
         def clean_agg(list):
             return set(filter(lambda x: x is not None and x != '', list))
 
         # Process each input name in this chunk, not just every resulting name.
         for query_scname in chunk_names:
-            scname = query_scname.lower()
+            # This used to be lowercased, but we're now smart enough to keep
+            # the input case unchanged, hooray!
+            scname = query_scname
             
             results = []
 
@@ -304,7 +316,7 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                         for result in lang_results:
                             vn_all_entries.append(VernacularName(
                                 scname, lang,
-                                result['cmname'] if not flag_lookup_genera else format_name(result['cmname']),
+                                result['cmname'] if not flag_format_cmnames else format_name(result['cmname']),
                                 result['sources'],
                                 vn_tax_class,
                                 vn_tax_order,
@@ -313,33 +325,6 @@ def searchVernacularNames(fn_callback, query_names, flag_no_higher=False, flag_a
                     else:
                         vn_vernacularname = lang_results[0]['cmname']
                         vn_sources = lang_results[0]['sources']
-                else:
-                    if flag_lookup_genera:
-                        # No match? Try genus?
-                        match = re.search('^(\w+)\s+([\w\-]+)$', scname)
-                        if match:
-                            genus = match.group(1)
-                            genus_matches = getVernacularNames([genus])
-
-                            if genus in genus_matches:
-                                if lang in genus_matches[genus]:
-                                    vn_vernacularname = genus_matches[genus][lang].vernacularname
-                                    vn_sources = genus_matches[genus][lang].sources
-
-                                    #if vn_vernacularname != '':
-                                    #    logging.info("genus '" + genus + "' looked up in '" + lang + "' and found: '" + vn_vernacularname + "'")
-
-                                if len(taxonomy['class']) == 0:
-                                    taxonomy['class'] = genus_matches[genus]['tax_class']
-                                    vn_tax_class = simplify_to_list(taxonomy['class'])
-
-                                if len(taxonomy['order']) == 0:
-                                    taxonomy['order'] = genus_matches[genus]['tax_order']
-                                    vn_tax_order = simplify_to_list(taxonomy['order'])
-     
-                                if len(taxonomy['family']) == 0:
-                                    taxonomy['family'] = genus_matches[genus]['tax_family']
-                                    vn_tax_family = simplify_to_list(taxonomy['family'])
 
                 if flag_all_results:
                     best_names[lang] = []
