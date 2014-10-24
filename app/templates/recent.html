@@ -16,6 +16,7 @@
             <thead><tr>
                 <th>&nbsp;</th>
                 <th>Scientific name</th>
+                <th>Higher taxonomy</th>
                 <th>Language</th>
                 <th>Common name</th>
                 <th>Source</th>
@@ -27,7 +28,21 @@
                 <tr>
                     <td>{{ loop.index + offset }}</td>
                     <td><a href="/?lookup={{recent_change.scname}}">{{ recent_change.scname }}</a></td>
-                    <td>{% set lang = recent_change.lang %}{% if lang in language_names %}{{ language_names[lang] }}{% else %}{{ lang }}{% endif %}</td>
+                    <td>
+                        {% if not recent_change.tax_class is none and recent_change.tax_class != '' %}Class {{recent_change.tax_class|capitalize}}<br>{%endif%}
+                        {% if not recent_change.tax_order is none and recent_change.tax_order != '' %}Order {{recent_change.tax_order|capitalize}}<br>{%endif%}
+                        {% if not recent_change.tax_family is none and recent_change.tax_family != '' %}Family {{recent_change.tax_family|capitalize}}{%endif%}
+                        &nbsp;
+                    </td>
+                    <td>
+                        {% set lang = recent_change.lang %}
+                        {% if lang in language_names %}
+                            {{ language_names[lang] }}
+                        {% else %}
+                            {{ lang }}
+                        {% endif %}
+                        &nbsp;
+                    </td>
                     <td><a href="/?lookup={{recent_change.scname}}#lang-{{recent_change.lang}}">{{recent_change.cmname}}</a></td>
                     <td>{{ recent_change.source|urlize }}{% if recent_change.source_priority|int != 80 %}(priority: {{recent_change.source_priority}}){% endif %}{% if recent_change.url %}<br>{{ recent_change.url|urlize }}{% endif %}</td>
                     <td>{{ recent_change.added_by }} at {{ recent_change.updated_at }}</td>

@@ -235,14 +235,19 @@ class AddNameHandler(BaseHandler):
         source = self.request.get('source')
         source_priority = self.request.get_range('priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT_APP)
 
+        tax_class = self.request.get('tax_class')
+        tax_order = self.request.get('tax_order')
+        tax_family = self.request.get('tax_family')
+
         if scname == '':
             message = "Error: scientific name is blank."
-        elif cmname == '':
-            message = "Error: vernacular name is blank."
-        elif lang == '':
-            message = "Error: language is blank."
         elif source == '':
             message = "Error: source is blank."
+        # No common name or lang is fine, as long as we have higher taxonomy instead.
+        elif cmname == '' and not (tax_class != '' or tax_order != '' or tax_family != ''):
+            message = "Error: vernacular name is blank."
+        elif lang == '' and not (tax_class != '' or tax_order != '' or tax_family != ''):
+            message = "Error: language is blank."
         else:
             # Metadata
             added_by = current_user.nickname()
@@ -254,8 +259,12 @@ class AddNameHandler(BaseHandler):
             lang_b64 = vnapi.encode_b64_for_psql(lang)
             source_b64 = vnapi.encode_b64_for_psql(source)
 
+            tax_class_b64 = vnapi.encode_b64_for_psql(tax_class.strip().lower())
+            tax_order_b64 = vnapi.encode_b64_for_psql(tax_order.strip().lower())
+            tax_family_b64 = vnapi.encode_b64_for_psql(tax_family.strip().lower())
+
             # Synthesize SQL
-            sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority) VALUES (%s, %s, %s, %s, NULL, %s, '" + SOURCE_URL + "', %d);"
+            sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority, tax_class, tax_order, tax_family) VALUES (%s, %s, %s, %s, NULL, %s, '" + SOURCE_URL + "', %d, %s, %s, %s);"
             sql_query = sql % (
                 access.ALL_NAMES_TABLE,
                 added_by_b64,
@@ -263,7 +272,10 @@ class AddNameHandler(BaseHandler):
                 lang_b64,
                 cmname_b64,
                 source_b64,
-                source_priority
+                source_priority,
+                tax_class_b64,
+                tax_order_b64,
+                tax_family_b64
             )
 
             # Make it so.
@@ -878,7 +890,7 @@ class RecentChangesHandler(BaseHandler):
         display_count = 100
 
         # Synthesize SQL
-        recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, added_by, created_at, updated_at,
+        recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, tax_class, tax_order, tax_family, added_by, created_at, updated_at,
             COUNT(*) OVER() AS total_count
             FROM %s
             WHERE source_url='""" + SOURCE_URL + """'

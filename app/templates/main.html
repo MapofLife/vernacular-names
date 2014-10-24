@@ -79,10 +79,32 @@ table.search_results tr:nth-child(even) {
 
                 {% set genus = lookup_search.split()[0] %}
                 <p>
-                Class: {% for class in tax_class %}<a href="?lookup={{class}}">{{class|capitalize}}</a> {%endfor%}<br>
-                Order: {% for order in tax_order %}<a href="?lookup={{order}}">{{order|capitalize}}</a> {%endfor%}<br>
-                Family: {% for family in tax_family %}<a href="?lookup={{family}}">{{family|capitalize}}</a> {%endfor%}<br>
-                Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em>
+                    <form method="post" action="/add/name">
+                        <input type="hidden" name="dataset" value="{{dataset_filter}}">
+                        <input type="hidden" name="search" value="{{current_search}}">
+                        <input type="hidden" name="lookup" value="{{lookup_search}}">
+
+                        Class: {% for class in tax_class %}<a href="?lookup={{class}}">{{class|capitalize}}</a> {%endfor%}
+                        <a href="#" onclick="$('#tax_class_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <input id="tax_class_add" name="tax_class" style="display:none">
+                        <br>
+                        Order: {% for order in tax_order %}<a href="?lookup={{order}}">{{order|capitalize}}</a> {%endfor%}
+                        <a href="#" onclick="$('#tax_order_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <input id="tax_order_add" name="tax_order" style="display:none">
+                        <br>
+                        Family: {% for family in tax_family %}<a href="?lookup={{family}}">{{family|capitalize}}</a> {%endfor%}
+                        <a href="#" onclick="$('#tax_family_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <input id="tax_family_add" name="tax_family" style="display:none">
+                        <br>
+                        Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em><br>
+
+                        <div id="tax_source_add" style="display:none">
+                            <em>Higher taxonomy source</em>: <input name="source" size=50>
+                            <input name="add_to_current_lookup_in_{{language}}" 
+                                value="Add" type="submit">
+                        </div> 
+
+                   </form>
                 </p>
 
 <!--
