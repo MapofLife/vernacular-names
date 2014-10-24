@@ -24,7 +24,7 @@
         <tbody>
         {% for class,v in higher_taxonomy_tree|dictsort %}
             <tr>
-                <td id="class_{{class}}" >Class {% if class == '' %}(blank){% else %}<a href="/?lookup={{class}}">{{ class|capitalize }}</a>{% endif %}</td>
+                <td id="class_{{class}}" >Class <a href="/?lookup={{class}}">{{ class|capitalize }}</a></td>
                 {% for lang in language_names_list %}
                     {% if class is none or class == '' or vnames[class][lang].vernacularname == '' %}
                         <td>&nbsp;</td>
@@ -36,25 +36,17 @@
             </tr>
             {% for order,v in higher_taxonomy_tree[class]|dictsort %}
                 <tr>
-                    <td id="order_{{order}}">&nbsp;&nbsp;Order {% if order == '' %}(blank){% else %}<a href="/?lookup={{order}}">{{ order|capitalize }}</a>{% endif %}</td>
+                    <td id="order_{{order}}">&nbsp;&nbsp;Order <a href="/?lookup={{order}}">{{ order|capitalize }}</a></td>
                     {% for lang in language_names_list %}
-                        {% if order is none or order == '' or vnames[order][lang].vernacularname == '' %}
-                            <td>&nbsp;</td>
-                        {% else %}
-                            <td><a href="/?lookup={{order}}#lang-{{lang}}">{{vnames[order][lang].vernacularname}}</a></td>
-                        {% endif %}
+                        <td><a href="/?lookup={{order}}#lang-{{lang}}">{{vnames[order][lang].vernacularname}}</a></td>
                     {% endfor %}
                     <td><a href="/list?class={{class}}&order={{order}}">TBD</a></td>
                 </tr>
                 {% for family,v in higher_taxonomy_tree[class][order]|dictsort %}
                     <tr>
-                        <td id="family_{{family}}">&nbsp;&nbsp;&nbsp;&nbsp;Family {% if family == '' %}(blank){% else %}<a href="/?lookup={{family}}">{{ family|capitalize }}</a>{% endif %}</td>
+                        <td id="family_{{family}}">&nbsp;&nbsp;&nbsp;&nbsp;Family <a href="/?lookup={{family}}">{{ family|capitalize }}</a></td>
                         {% for lang in language_names_list %}
-                            {% if family is none or family == '' or vnames[family][lang].vernacularname == '' %}
-                                <td>&nbsp;</td>
-                            {% else %}
-                                <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacularname}}</a></td> 
-                            {% endif %}
+                            <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacularname}}</a></td> 
                         {% endfor %}
                         <td><a href="/list?class={{class}}&order={{order}}&family={{family}}">{{ higher_taxonomy_tree[class][order][family][0]['count_species'] }}</a></td>
                     </tr>

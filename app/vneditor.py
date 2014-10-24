@@ -146,6 +146,9 @@ class MainPage(BaseHandler):
             lookup_search = current_search
 
         # Find all names for all species in the languages of interest.
+        tax_family = set()
+        tax_order = set()
+        tax_class = set()
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
@@ -764,9 +767,21 @@ class HigherTaxonomyHandler(BaseHandler):
         # scientific names in the master list.
         higher_taxonomy_sql = """
             SELECT 
-                LOWER(tax_class) AS tax_class_lc,
-                LOWER(tax_order) AS tax_order_lc, 
-                LOWER(tax_family) AS tax_family_lc, 
+                CASE    WHEN tax_class IS NULL THEN '_null'
+                        WHEN tax_class = '' THEN '_blank'
+                        ELSE LOWER(tax_class) 
+                END AS tax_class_lc,
+
+                CASE    WHEN tax_order IS NULL THEN '_null'
+                        WHEN tax_order = '' THEN '_blank'
+                        ELSE LOWER(tax_order) 
+                END AS tax_order_lc, 
+
+                CASE    WHEN tax_family IS NULL THEN '_null'
+                        WHEN tax_family = '' THEN '_blank'
+                        ELSE LOWER(tax_family)
+                END AS tax_family_lc,
+
                 COUNT(DISTINCT LOWER(scname)) AS count_species,
                 COUNT(*) OVER() AS total_count
             FROM %s RIGHT JOIN %s ON LOWER(scientificname) = LOWER(scname)
