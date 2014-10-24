@@ -745,6 +745,104 @@ class BulkImportHandler(BaseHandler):
             'vnames_source': vnames_source
         })
 
+# Display higher taxonomy view.
+class HigherTaxonomyHandler(BaseHandler):
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+        
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Get list of higher taxonomy, limited to those referred from
+        # scientific names in the master list.
+        higher_taxonomy_sql = """
+            SELECT 
+                LOWER(tax_class) AS tax_class_lc,
+                LOWER(tax_order) AS tax_order_lc, 
+                LOWER(tax_family) AS tax_family_lc, 
+                COUNT(DISTINCT LOWER(scname)) AS count_species,
+                COUNT(*) OVER() AS total_count
+            FROM %s RIGHT JOIN %s ON LOWER(scientificname) = LOWER(scname)
+            GROUP BY tax_class_lc, tax_order_lc, tax_family_lc
+            ORDER BY tax_class_lc, tax_order_lc, tax_family_lc
+        """ %  (
+            access.ALL_NAMES_TABLE,
+            access.MASTER_LIST
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = higher_taxonomy_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        higher_taxonomy = []
+        total_count = 0
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + higher_taxonomy_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            results = {"rows": []}
+        else:
+            results = json.loads(response.content)
+            higher_taxonomy = results['rows']
+            if len(higher_taxonomy) > 0:
+                total_count = higher_taxonomy[0]['total_count']
+
+        higher_taxonomy_tree = {}
+
+        classes = vnapi.groupBy(higher_taxonomy, 'tax_class_lc')
+        for tax_class in classes:
+            orders = vnapi.groupBy(classes[tax_class], 'tax_order_lc')
+            for tax_order in orders:
+                families = vnapi.groupBy(orders[tax_order], 'tax_family_lc')
+                for tax_family in families:
+                    if not tax_class in higher_taxonomy_tree:
+                        higher_taxonomy_tree[tax_class] = {}
+                    if not tax_order in higher_taxonomy_tree[tax_class]:
+                        higher_taxonomy_tree[tax_class][tax_order] = {}
+
+                    higher_taxonomy_tree[tax_class][tax_order][tax_family] = families[tax_family]
+
+        tax_class = sorted(set(map(lambda x: x['tax_class_lc'], higher_taxonomy)))
+        tax_order = sorted(set(map(lambda x: x['tax_order_lc'], higher_taxonomy)))
+        tax_family = sorted(set(map(lambda x: x['tax_family_lc'], higher_taxonomy)))
+
+        all_names = filter(lambda x: x is not None and x != '', set(tax_class) | set(tax_order) | set(tax_family))
+
+        # Render recent changes.
+        self.render_template('taxonomy.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+            'vnames': vnnames.getVernacularNames(all_names, languages.language_names_list, flag_no_higher = True, flag_no_memoize = False, flag_lookup_genera = False, flag_format_cmnames = True),
+            'tax_class': tax_class,
+            'tax_order': tax_order,
+            'tax_family': tax_family,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'total_count': total_count,
+            'higher_taxonomy': higher_taxonomy,
+            'higher_taxonomy_tree': higher_taxonomy_tree,
+            'vneditor_version': version.VNEDITOR_VERSION
+        })
+
+
+
 # Return a list of recent changes, and allow some to be deleted.
 class RecentChangesHandler(BaseHandler):
     def get(self):
@@ -999,6 +1097,7 @@ application = webapp2.WSGIApplication([
     ('/list', ListViewHandler),
     ('/delete/cartodb_id', DeleteByCDBIDHandler),
     ('/recent', RecentChangesHandler),
+    ('/taxonomy', HigherTaxonomyHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/import', BulkImportHandler),
