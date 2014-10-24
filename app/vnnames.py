@@ -189,12 +189,11 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 scname,
                 LOWER(lang) AS lang_lc, 
                 cmname,
-                scname,
                 POSITION(' ' IN scname) = 0 AS flag_uninomial,
                 array_agg(source) AS sources, 
-                array_agg(DISTINCT LOWER(tax_order)) AS agg_order, 
-                array_agg(DISTINCT LOWER(tax_class)) AS agg_class, 
-                array_agg(DISTINCT LOWER(tax_family)) AS agg_family, 
+                array_agg(LOWER(tax_class)) OVER (PARTITION BY scname) AS agg_class, 
+                array_agg(LOWER(tax_order)) OVER (PARTITION BY scname) AS agg_order, 
+                array_agg(LOWER(tax_family)) OVER (PARTITION BY scname) AS agg_family, 
                 COUNT(DISTINCT LOWER(source)) AS count_sources,
                 array_agg(url) AS urls, 
                 MAX(updated_at) AS max_updated_at, 
@@ -204,7 +203,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                     LOWER(qname) = LOWER(scname) 
                     %s
             GROUP BY 
-                qname, lang_lc, scname, cmname 
+                qname, lang_lc, scname, cmname, tax_order, tax_class, tax_family
             ORDER BY
                 qname, lang_lc,
                 flag_uninomial ASC,
@@ -235,7 +234,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
         )
 
         if urlresponse.status_code != 200:
-            raise IOError("Could not read from CartoDB: " + str(response.status_code) + ": " + str(response.content))
+            raise IOError("Could not read from CartoDB: " + str(urlresponse.status_code) + ": " + str(urlresponse.content))
             
         results = json.loads(urlresponse.content)
         rows_by_scname = vnapi.groupBy(results['rows'], 'qname')

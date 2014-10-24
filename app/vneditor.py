@@ -932,29 +932,6 @@ class RecentChangesHandler(BaseHandler):
 
 # Display a section of the Big List as a table.
 class ListViewHandler(BaseHandler):
-    # Filter by higher taxonomy.
-    def filterByHigherTaxonomy(self, request, results):
-        tax_class = request.get('class')
-        if tax_class != '':
-            # TODO: add support for null and blank values.
-            tax_class = tax_class.lower()
-            results['search_criteria'].append("filter by class '" + tax_class + "'")
-            results['where'].append("tax_class = " + vnapi.encode_b64_for_psql(tax_class))
-
-        tax_order= request.get('order')
-        if tax_order != '':
-            # TODO: add support for null and blank values.
-            tax_order = tax_order.lower()
-            results['search_criteria'].append("filter by order '" + tax_order + "'")
-            results['where'].append("tax_order = " + vnapi.encode_b64_for_psql(tax_order))
-
-        tax_family = request.get('family')
-        if tax_family != '':
-            # TODO: add support for null and blank values.
-            tax_family = tax_family.lower()
-            results['search_criteria'].append("filter by family '" + tax_family + "'")
-            results['where'].append("tax_family = " + vnapi.encode_b64_for_psql(tax_family))
-
     # Filter by datasets.
     def filterByDatasets(self, request, results):
         datasets = request.get_all('dataset')
@@ -1038,7 +1015,6 @@ class ListViewHandler(BaseHandler):
 
         self.filterByDatasets(self.request, results)
         self.filterByBlankLangs(self.request, results)
-        self.filterByHigherTaxonomy(self.request, results)
 
         # There's an implicit first filter if there is no filter.
         if len(results['search_criteria']) == 0:
@@ -1058,7 +1034,7 @@ class ListViewHandler(BaseHandler):
         order_by = "ORDER BY scientificname COLLATE \"POSIX\" ASC"
             # We collate POSIX because otherwise spaces get ignored while
             # sorting in CartoDB.
-        results['search_criteria'].append("sorted by ascending  scientific name")
+        results['search_criteria'].append("sorted by ascending scientific name")
 
         limit_offset = "LIMIT %d OFFSET %d" % (
             display_count,

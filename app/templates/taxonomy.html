@@ -32,7 +32,7 @@
                         <td><a href="/?lookup={{class}}#lang-{{lang}}">{{vnames[class][lang].vernacularname}}</a></td>
                     {% endif %}
                 {% endfor %}
-                <td><a href="/list?class={{class}}">TBD</a></td>
+                <td>TBD</td>
             </tr>
             {% for order,v in higher_taxonomy_tree[class]|dictsort %}
                 <tr>
@@ -40,7 +40,7 @@
                     {% for lang in language_names_list %}
                         <td><a href="/?lookup={{order}}#lang-{{lang}}">{{vnames[order][lang].vernacularname}}</a></td>
                     {% endfor %}
-                    <td><a href="/list?class={{class}}&order={{order}}">TBD</a></td>
+                    <td>TBD</td>
                 </tr>
                 {% for family,v in higher_taxonomy_tree[class][order]|dictsort %}
                     <tr>
@@ -48,7 +48,7 @@
                         {% for lang in language_names_list %}
                             <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacularname}}</a></td> 
                         {% endfor %}
-                        <td><a href="/list?class={{class}}&order={{order}}&family={{family}}">{{ higher_taxonomy_tree[class][order][family][0]['count_species'] }}</a></td>
+                        <td>{{ higher_taxonomy_tree[class][order][family][0]['count_species'] }}</td>
                     </tr>
                 {% endfor %}
             {% endfor %}

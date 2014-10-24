@@ -79,10 +79,10 @@ table.search_results tr:nth-child(even) {
 
                 {% set genus = lookup_search.split()[0] %}
                 <p>
-                Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em><br>
-                Family: {% for family in tax_family %}<a href="?lookup={{family}}">{{family|capitalize}}</a> {%endfor%}<br>
+                Class: {% for class in tax_class %}<a href="?lookup={{class}}">{{class|capitalize}}</a> {%endfor%}<br>
                 Order: {% for order in tax_order %}<a href="?lookup={{order}}">{{order|capitalize}}</a> {%endfor%}<br>
-                Class: {% for class in tax_class %}<a href="?lookup={{class}}">{{class|capitalize}}</a> {%endfor%}
+                Family: {% for family in tax_family %}<a href="?lookup={{family}}">{{family|capitalize}}</a> {%endfor%}<br>
+                Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em>
                 </p>
 
 <!--

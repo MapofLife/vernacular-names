@@ -79,6 +79,9 @@
         <thead><tr>
             <th>&nbsp;</th>
             <th>Species</th>
+            <th>Class</th>
+            <th>Order</th>
+            <th>Family</th>
             <th>Genus</th>
             {% for name in language_names_list %}
                 <th>{{ language_names[name] }}</th>
@@ -96,6 +99,9 @@
                     <!--
                     <td style="font-size: 8pt"><tt>http://names.mol-api.appspot.com/?lookup={{name|replace(' ', '+')}}&amp;search={{name|replace(' ', '+')}}</tt></td>
                     -->
+                    <td>{{vnames[name]['tax_class']|join(", ") }}&nbsp;</td>
+                    <td>{{vnames[name]['tax_order']|join(", ") }}&nbsp;</td>
+                    <td>{{vnames[name]['tax_family']|join(", ") }}&nbsp;</td>
                     {% set genus = name.split()[0] %}
                     <td><em><a href="/?lookup={{genus}}">{{genus}}</a></em></td>
                     {% for lang in language_names_list %}
