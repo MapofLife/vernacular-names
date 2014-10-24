@@ -7,15 +7,13 @@
 {% endblock %}
 
 {% block content %}
-    <p>Total count: {{total_count}}</p>
-
     <p><strong>Classes</strong>: {% for class in tax_class %}<a href="#class_{{class}}">{{class|capitalize if class != '' else "(blank)" }}</a> {% endfor %}</p>
     <p><strong>Orders</strong>: {% for order in tax_order %}<a href="#order_{{order}}">{{order|capitalize}}</a> {% endfor %}</p>
     <!--
     <p><strong>Families</strong>: {% for family in tax_family %}<a href="#family_{{family}}">{{family|capitalize}}</a> {% endfor %}</p>
     -->
 
-    <table border="1">
+    <table border="1" class="sortable">
         <thead><tr>
             <th>Higher taxonomy</th>
             {% for lang in language_names_list %}
