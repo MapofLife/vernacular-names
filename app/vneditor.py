@@ -760,8 +760,8 @@ class BulkImportHandler(BaseHandler):
             'vnames_source': vnames_source
         })
 
-# Families view.
-class FamiliesHandler(BaseHandler):
+# GeneraHandler view.
+class GeneraHandler(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
 
@@ -777,7 +777,7 @@ class FamiliesHandler(BaseHandler):
 
         # Get list of higher taxonomy, limited to those referred from
         # scientific names in the master list.
-        families_sql = """
+        genera_sql = """
             SELECT 
                 LOWER(split_part(scientificname, ' ', 1)) AS genus,
                 family,
@@ -796,7 +796,7 @@ class FamiliesHandler(BaseHandler):
         response = urlfetch.fetch(access.CDB_URL,
             payload=urllib.urlencode(
                 dict(
-                    q = families_sql
+                    q = genera_sql
                 )),
             method=urlfetch.POST,
             headers={'Content-type': 'application/x-www-form-urlencoded'},
@@ -806,26 +806,26 @@ class FamiliesHandler(BaseHandler):
         # Retrieve results. Store the total count if there is one.
         all_species = []
         if response.status_code != 200:
-            message += "<br><strong>Error</strong>: query ('" + families_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            message += "<br><strong>Error</strong>: query ('" + genera_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
             results = {"rows": []}
         else:
             results = json.loads(response.content)
             all_species = results['rows']
 
-        missing_families = filter(lambda x: x['family'] is None, all_species)
-        families = filter(lambda x: x['family'] is not None, all_species)
+        missing_genera = filter(lambda x: x['family'] is None, all_species)
+        genera = filter(lambda x: x['family'] is not None, all_species)
         all_names = filter(lambda x: x is not None, map(lambda x: x['family'], all_species))
 
         # Render recent changes.
-        self.render_template('families.html', {
+        self.render_template('genera.html', {
             'message': message,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
             'user_name': user_name,
             'datasets_data': vnapi.getDatasets(),
-            'missing_families': missing_families,
-            'families': families,
+            'missing_genera': missing_genera,
+            'genera': genera,
             'vnames': vnnames.getVernacularNames(
                 all_names, 
                 languages.language_names_list, 
@@ -1204,7 +1204,7 @@ application = webapp2.WSGIApplication([
     ('/delete/cartodb_id', DeleteByCDBIDHandler),
     ('/recent', RecentChangesHandler),
     ('/taxonomy', HigherTaxonomyHandler),
-    ('/families', FamiliesHandler),
+    ('/genera', GeneraHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/import', BulkImportHandler),

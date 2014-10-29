@@ -1,6 +1,6 @@
 {% extends "templates/base.html" %}
 
-{% block page_title %}Families{% endblock %}
+{% block page_title %}Genera{% endblock %}
 
 {% block head %}
     <script src="/static/sorttable.js"></script>
@@ -13,7 +13,7 @@
     with nomenclatural names</a> instead.
     </p>
 
-    {% if missing_families|length > 0 %}
+    {% if missing_genera|length > 0 %}
         <strong>Warning</strong>: the following species are missing higher
         taxonomy.
 
@@ -22,9 +22,8 @@
                 <th>&nbsp;</th>
                 <th>Genus</th>
                 <th>Dataset</th>
-                <th>Family</th>
             </tr></thead>
-            {% for missing in missing_families %}
+            {% for missing in missing_genera %}
                 <tr>
                     <td>{{loop.index}}</td>
                     <td><em><a href="/?lookup={{missing['genus']}}">{{missing['genus']|capitalize}}</a></em></td>
@@ -32,7 +31,6 @@
                         <a href="/list?dataset={{dataset}}">{{dataset}}</a> 
                     {% endfor %}
                     </td>
-                    <td><input name="family"><button type="submit">Set</button></td>
                 </tr>
             {% endfor %}
         </table>
@@ -51,7 +49,7 @@
             {% endfor %}
         </tr></thead>
         <tbody>
-        {% for row in families %}
+        {% for row in genera %}
             {% set family = row['family'] %}
             <tr>
                 <td>{{ loop.index }}</td>
