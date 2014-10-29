@@ -760,6 +760,85 @@ class BulkImportHandler(BaseHandler):
             'vnames_source': vnames_source
         })
 
+# Families view.
+class FamiliesHandler(BaseHandler):
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Get list of higher taxonomy, limited to those referred from
+        # scientific names in the master list.
+        families_sql = """
+            SELECT 
+                LOWER(split_part(scientificname, ' ', 1)) AS genus,
+                family,
+                COUNT(DISTINCT LOWER(scientificname)) AS count_species,
+                ARRAY_AGG(DISTINCT master.dataset ORDER BY master.dataset ASC) AS datasets
+            FROM %s AS higher RIGHT JOIN %s AS master
+                ON LOWER(genus) = LOWER(split_part(scientificname, ' ', 1)) 
+            GROUP BY LOWER(split_part(scientificname, ' ', 1)), family
+            ORDER BY genus ASC, family ASC NULLS FIRST
+        """ % (
+            access.HIGHER_LIST,
+            access.MASTER_LIST
+        )
+  
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = families_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        all_species = []
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + families_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            results = {"rows": []}
+        else:
+            results = json.loads(response.content)
+            all_species = results['rows']
+
+        missing_families = filter(lambda x: x['family'] is None, all_species)
+        families = filter(lambda x: x['family'] is not None, all_species)
+        all_names = filter(lambda x: x is not None, map(lambda x: x['family'], all_species))
+
+        # Render recent changes.
+        self.render_template('families.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+            'missing_families': missing_families,
+            'families': families,
+            'vnames': vnnames.getVernacularNames(
+                all_names, 
+                languages.language_names_list, 
+                flag_no_higher = True, 
+                flag_no_memoize = True, 
+                flag_lookup_genera = False, 
+                flag_format_cmnames = True),
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'vneditor_version': version.VNEDITOR_VERSION
+        })
+       
+
 # Display higher taxonomy view.
 class HigherTaxonomyHandler(BaseHandler):
     def get(self):
@@ -1125,6 +1204,7 @@ application = webapp2.WSGIApplication([
     ('/delete/cartodb_id', DeleteByCDBIDHandler),
     ('/recent', RecentChangesHandler),
     ('/taxonomy', HigherTaxonomyHandler),
+    ('/families', FamiliesHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/import', BulkImportHandler),
