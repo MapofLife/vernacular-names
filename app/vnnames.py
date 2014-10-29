@@ -17,7 +17,7 @@ import os
 import access
 
 # Constants
-SEARCH_CHUNK_SIZE = 2000        # Number of names to query at once.
+SEARCH_CHUNK_SIZE = 1000        # Number of names to query at once.
 
 # Check whether we're in production (PROD = True) or not.
 PROD = True
@@ -190,18 +190,20 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 LOWER(lang) AS lang_lc, 
                 cmname,
                 POSITION(' ' IN scname) = 0 AS flag_uninomial,
+                MIN(higher.family) AS family,
                 array_agg(source) AS sources, 
                 array_agg(LOWER(tax_class)) OVER (PARTITION BY scname) AS agg_class, 
                 array_agg(LOWER(tax_order)) OVER (PARTITION BY scname) AS agg_order, 
                 array_agg(LOWER(tax_family)) OVER (PARTITION BY scname) AS agg_family, 
                 COUNT(DISTINCT LOWER(source)) AS count_sources,
                 array_agg(url) AS urls, 
-                MAX(updated_at) AS max_updated_at, 
+                MAX(vnames.updated_at) AS max_updated_at, 
                 MAX(source_priority) AS max_source_priority 
-            FROM %s RIGHT JOIN (SELECT '' AS qname UNION VALUES %s) qn
+            FROM %s vnames RIGHT JOIN (SELECT '' AS qname UNION VALUES %s) qn
                 ON 
                     LOWER(qname) = LOWER(scname) 
                     %s
+                LEFT JOIN %s higher ON LOWER(SPLIT_PART(scname, ' ', 1)) = LOWER(higher.genus)
             GROUP BY 
                 qname, lang_lc, scname, cmname, tax_order, tax_class, tax_family
             ORDER BY
@@ -219,6 +221,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             scientificname_list,
             # If we can't find the name itself, look up the genus name.
             "OR LOWER(SPLIT_PART(qn.qname, ' ', 1)) = LOWER(scname)" if flag_lookup_genera else "",
+            access.HIGHER_LIST 
         )
 
         # print("Sql = <<" + sql_query + ">>")
@@ -275,12 +278,14 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             # that is part of our current query.
             taxonomy['class'] = set(filter(lambda x: x.lower() != scname, taxonomy['class']))
             taxonomy['order'] = set(filter(lambda x: x.lower() != scname, taxonomy['order']))
-            taxonomy['family'] = set(filter(lambda x: x.lower() != scname, taxonomy['family']))
+            taxonomy['tax_family'] = set(filter(lambda x: x.lower() != scname, taxonomy['family']))
+            families = filter(lambda x: x is not None, map(lambda x: x['family'], results))
+            taxonomy['family'] = [families[0]] if len(families) > 0 else []
 
             # For every language we are interested in.
             for lang in languages_list:
                 def simplify_to_list(simplify_names):
-                    if flag_no_higher:
+                    if flag_no_higher or len(simplify_names) == 0:
                         return set()
 
                     vnames = set()
@@ -290,15 +295,19 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                         if not lang in vnresults[simplify_name]:
                             continue
 
+                        vname = vnresults[simplify_name][lang].vernacularname
+
                         if flag_format_cmnames:
-                            vnames.add(format_name(vnresults[simplify_name][lang].vernacularname))
+                            vnames.add(format_name(vname))
                         else:
-                            vnames.add(vnresults[simplify_name][lang].vernacularname)
+                            vnames.add(vname)
 
                     return clean_agg(vnames)
 
-                vn_tax_class = simplify_to_list(taxonomy['class'])
-                vn_tax_order = simplify_to_list(taxonomy['order'])
+                # Reactivate taxonomy common names here if you want.
+                vn_tax_class = [] # simplify_to_list(taxonomy['class'])
+                vn_tax_order = [] # simplify_to_list(taxonomy['order'])
+                vn_agg_family = [] # simplify_to_list(taxonomy['tax_family'])
                 vn_tax_family = simplify_to_list(taxonomy['family'])
                 vn_vernacularname = ""
                 vn_sources = set()

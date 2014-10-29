@@ -330,7 +330,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
         for lang in languages.language_names_list:
-            header.extend([lang + '_name', lang + '_source', lang + '_family', lang + '_order', lang + '_class'])
+            header.extend([lang + '_name', lang + '_source', lang + '_family'])
         header.extend(['empty'])
         csvfile.writerow(header)
 
@@ -351,12 +351,10 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     row.extend([
                         vname.encode('utf-8'), 
                         "|".join(sorted(sources)).encode('utf-8'),
-                        concat_names(vnames_by_lang[lang].tax_family),
-                        concat_names(vnames_by_lang[lang].tax_order),
-                        concat_names(vnames_by_lang[lang].tax_class)
+                        concat_names(vnames_by_lang[lang].tax_family)
                     ])
                 else:
-                    row.extend([None, None, None, None, None])
+                    row.extend([None, None, None])
 
             csvfile.writerow(row)
         
