@@ -622,8 +622,8 @@ class BulkImportHandler(BaseHandler):
 
         # Read in any vernacular names.
         vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
-        vnames = [dict() for i in range(len(scnames) + 1)]
-        vnames_source = [dict() for i in range(len(scnames) + 1)]
+        vnames = [dict() for i in range(1, len(scnames) + 2)]
+        vnames_source = [dict() for i in range(1, len(scnames) + 2)]
         for vname_arg in vnames_args:
             match = re.match(r"^vname_(\d+)_(\w+?)(_source)?$", vname_arg)
             if match:
@@ -642,7 +642,7 @@ class BulkImportHandler(BaseHandler):
                         vnames[loop_index] = {}
 
                     if vname != '':
-                        print(("scnames[" + str(loop_index) + "] = " + scnames[loop_index] + " => vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'").encode('utf8'))
+                        print(("scnames[" + str(loop_index - 1) + "] = " + scnames[loop_index - 1] + " => vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'").encode('utf8'))
                         vnames[loop_index][lang] = vname.strip()
                         vnames_source[loop_index][lang] = source.strip()
 
@@ -670,10 +670,10 @@ class BulkImportHandler(BaseHandler):
                     # print("source = '" + source + "'")
 
                     if source is None or source == "":
-                        save_errors.append("No source provided for '" + scnames[loop_index] + "', cancelling.")
+                        save_errors.append("No source provided for '" + scnames[loop_index - 1] + "', cancelling.")
                         break
 
-                    debug_save += "<tr><td>" + scnames[loop_index] + "</td><td>" + lang + "</td><td>" + vnames[loop_index][lang] + "</td><td>" + source + "</td></tr>\n"
+                    debug_save += "<tr><td>" + scnames[loop_index - 1] + "</td><td>" + lang + "</td><td>" + vnames[loop_index][lang] + "</td><td>" + source + "</td></tr>\n"
 
                     entries.append("(" + 
                         vnapi.encode_b64_for_psql(added_by) + ", " + 
