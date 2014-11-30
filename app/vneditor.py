@@ -622,8 +622,8 @@ class BulkImportHandler(BaseHandler):
 
         # Read in any vernacular names.
         vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
-        vnames = [dict() for i in range(len(scnames))]
-        vnames_source = [dict() for i in range(len(scnames))]
+        vnames = [dict() for i in range(len(scnames) + 1)]
+        vnames_source = [dict() for i in range(len(scnames) + 1)]
         for vname_arg in vnames_args:
             match = re.match(r"^vname_(\d+)_(\w+?)(_source)?$", vname_arg)
             if match:
@@ -635,10 +635,6 @@ class BulkImportHandler(BaseHandler):
                 if source_str is None:
                     vname = self.request.get(vname_arg)
                     source = self.request.get(vname_arg + "_source")
-
-                    # loop_index is 1-based, but arrays in Python are 0-based.
-                    # So ...
-                    loop_index -= 1
 
                     # print("vname = " + vname + ", source = " + source + ".")
 
@@ -662,7 +658,7 @@ class BulkImportHandler(BaseHandler):
             save_errors = []
 
             debug_save = "<table border='1'>\n"
-            for loop_index in range(len(scnames)):
+            for loop_index in range(1, len(scnames) + 1):
                 # print("loop_index = " + str(loop_index) + ": " + str(vnames[loop_index]))
 
                 for lang in vnames[loop_index]:
@@ -681,7 +677,9 @@ class BulkImportHandler(BaseHandler):
 
                     entries.append("(" + 
                         vnapi.encode_b64_for_psql(added_by) + ", " + 
-                        vnapi.encode_b64_for_psql(scnames[loop_index]) + ", " +
+                        vnapi.encode_b64_for_psql(scnames[loop_index - 1]) + ", " +
+                            # loop_index - 1, since loop_index is 1-based (as it comes from the template)
+                            # but the index on scnames is 0-based.
                         vnapi.encode_b64_for_psql(lang) + ", " + 
                         vnapi.encode_b64_for_psql(vnames[loop_index][lang]) + ", " +
                         vnapi.encode_b64_for_psql(source) + ", " + 
