@@ -569,6 +569,86 @@ class SourcesHandler(BaseHandler):
             'vneditor_version': version.VNEDITOR_VERSION
         })
 
+# Display and edit the master list.
+class MasterListHandler(BaseHandler):
+    def get(self):
+        self.post()
+
+    def post(self):
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Any message?
+        message = self.request.get('message')
+
+        # Retrieve master list.
+        dataset_filter = self.request.get('dataset')
+        if dataset_filter == '':
+            datasets = map(lambda x: x['dataset'], vnapi.getDatasets())
+        else:
+            datasets = set([dataset_filter])
+
+        species = dict()
+        for dataset in datasets:
+            scnames = vnapi.getDatasetNames(dataset)
+
+            for scname in scnames:
+                scname = scname.lower()
+                if scname in species:
+                    species[scname]['datasets'].add(dataset)
+                else:
+                    species[scname] = dict(
+                        datasets=set([dataset])
+                    )
+
+        scnames = sorted(species.keys())
+    
+        # Do a diff.
+        diff_names = self.request.get('diff_names')
+        names = set(map(lambda x: x.lower(), re.split("\s*\n+\s*", diff_names)))
+
+        diff_names_count = len(names)
+
+        # How many names does the definitive list have that we don't?
+        names_added = names.difference(scnames)
+        names_deleted = set(scnames).difference(names)
+
+        print("names_added = " + ", ".join(names_added))
+        # print("names_deleted = " + ", ".join(names_deleted))
+
+        # Render template.
+        self.render_template('masterlist.html', {
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'vneditor_version': version.VNEDITOR_VERSION,
+            'datasets_data': vnapi.getDatasets(),
+
+            'message': message,
+
+            'dataset_filter': dataset_filter,
+            'species': species,
+            'species_sorted': scnames,
+
+            'diff_names_count': diff_names_count,
+            'diff_names_added': len(names_added),
+            'diff_names_deleted': len(names_deleted)
+# ,
+
+            # 'sql_add_to_master_list': sql_add_to_master_list,
+
+        })
+
+
+
+
 # Handle bulk uploads. The plan is to see if we can do this mostly in browser,
 # using the following flow:
 #   - no arguments: provide a form to upload a list of names.
@@ -1204,5 +1284,6 @@ application = webapp2.WSGIApplication([
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/import', BulkImportHandler),
+    ('/masterlist', MasterListHandler),
     ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)
