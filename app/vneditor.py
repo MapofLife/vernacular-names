@@ -388,6 +388,9 @@ class CoverageViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        langs = languages.language_names_list
+        langs = ["en"]
+
         # Stats are per-dataset, per-language.
         datasets = vnapi.getDatasets()
         datasets_coverage = {}
@@ -396,9 +399,9 @@ class CoverageViewHandler(BaseHandler):
 
             # Get coverage information on all languages at once.
             datasets_coverage[dname] = dict()
-            coverage = vnapi.getDatasetCoverage(dname, languages.language_names_list)
+            coverage = vnapi.getDatasetCoverage(dname, langs)
 
-            for lang in languages.language_names_list:
+            for lang in langs:
                 # TODO: move this into the template.
                 datasets_coverage[dname][lang] = """
                     %d have species common names (%.2f%%)<br>
