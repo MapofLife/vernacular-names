@@ -609,16 +609,47 @@ class MasterListHandler(BaseHandler):
     
         # Do a diff.
         diff_names = self.request.get('diff_names')
-        names = set(map(lambda x: x.lower(), re.split("\s*\n+\s*", diff_names)))
+        diff_names_count = 0
+        names_added = []
+        names_deleted = []
+        if diff_names != '':
+            names = set(map(lambda x: x.lower(), re.split("\s*\n+\s*", diff_names)))
 
-        diff_names_count = len(names)
+            diff_names_count = len(names)
 
-        # How many names does the definitive list have that we don't?
-        names_added = names.difference(scnames)
-        names_deleted = set(scnames).difference(names)
+            # How many names does the definitive list have that we don't?
+            names_added = names.difference(scnames)
+            names_deleted = set(scnames).difference(names)
 
-        print("names_added = " + ", ".join(names_added))
+        # print("names_added = " + ", ".join(names_added))
         # print("names_deleted = " + ", ".join(names_deleted))
+
+        # Generate SQL statements
+        sql_statements = ""
+        if len(names_added) > 0:
+            sql_statements += "INSERT INTO %s (dataset, scientificname) VALUES\n" % (
+                access.MASTER_LIST
+            )
+            for name in names_added:
+                sql_statements += "\t(%s, %s),\n" % (
+                    vnapi.encode_b64_for_psql(dataset_filter),
+                    vnapi.encode_b64_for_psql(name.capitalize()),
+                )
+
+            sql_statements = sql_statements.rstrip(",\n")
+            sql_statements += "\n\n"
+
+        if len(names_deleted) > 0:
+            sql_statements += "DELETE FROM %s WHERE\n" % (
+                access.MASTER_LIST
+            )
+            for name in names_deleted:
+                sql_statements += "\t(dataset = %s AND LOWER(scientificname) = %s) OR\n" % (
+                    vnapi.encode_b64_for_psql(dataset_filter),
+                    vnapi.encode_b64_for_psql(name.lower()),
+                )
+
+            sql_statements += "\tFALSE\n\n"
 
         # Render template.
         self.render_template('masterlist.html', {
@@ -638,8 +669,9 @@ class MasterListHandler(BaseHandler):
             'species_sorted': scnames,
 
             'diff_names_count': diff_names_count,
-            'diff_names_added': len(names_added),
-            'diff_names_deleted': len(names_deleted)
+            'diff_names_added': names_added,
+            'diff_names_deleted': names_deleted,
+            'diff_sql_statements': sql_statements
 # ,
 
             # 'sql_add_to_master_list': sql_add_to_master_list,

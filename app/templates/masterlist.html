@@ -13,14 +13,18 @@
 
     <div style="margin-left: 4em">
         {% if diff_names_count %}
-            <p>Compared {{diff_names_count}} names: found {{ diff_names_added }} additions and {{ diff_names_deleted }} deletions.</p>
+            <p>Compared {{diff_names_count}} names: found {{ diff_names_added|count }} additions and {{ diff_names_deleted|count }} deletions.</p>
+
+            <p>Names added:<br><textarea rows=20 cols=40>{{ diff_names_added|join("\n") }}</textarea></p>
+            <p>Names deleted:<br><textarea rows=20 cols=40>{{ diff_names_deleted|join("\n") }}</textarea></p>
+            <p>SQL statements:<br><textarea rows=20 cols=40>{{ diff_sql_statements }}</textarea></p>
         {% endif %}
 
-        <p>To compare these names against a definitive list, enter it here.</p>
+        <p>To compare these names against a definitive list, enter the list here:</p>
 
         <form method="POST">
             <input type="hidden" name="search" value="{{ dataset_filter }}">
-            <textarea name="diff_names"></textarea>
+            <textarea name="diff_names" rows=20 cols=40></textarea>
             <input type="submit" value="Compare">
         </form>
     </div>
