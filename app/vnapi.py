@@ -237,7 +237,7 @@ def searchForName(name):
         if not scname in match_table:
             match_table[scname] = []
 
-        if match['cmname'].find(name) >= 0:
+        if match['cmname'].find(name.lower()) >= 0:
             match_table[scname].append(match['cmname'])
 
     return match_table
