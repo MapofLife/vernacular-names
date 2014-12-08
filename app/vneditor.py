@@ -388,12 +388,18 @@ class CoverageViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        # Pagination
+        offset = int(self.request.get('offset', 0))
+        default_display = 6
+        display = int(self.request.get('display', default_display))
+
         langs = languages.language_names_list
 
         # Stats are per-dataset, per-language.
-        datasets = vnapi.getDatasets()
+        all_datasets = vnapi.getDatasets()
 
-        datasets = filter(lambda x: x['dataset'] != "na_trees" and x['dataset'] != "new_world_palms", datasets)
+        # Display 'display', offset by offset.
+        datasets = all_datasets[offset:offset+display]
 
         datasets_coverage = dict()
         datasets_count = dict()
@@ -416,8 +422,12 @@ class CoverageViewHandler(BaseHandler):
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
             'datasets_data': datasets,
+            'all_datasets': all_datasets,
             'datasets_count': datasets_count,
-            'datasets_coverage': datasets_coverage
+            'datasets_coverage': datasets_coverage,
+            'default_display': default_display,
+            'display': display,
+            'offset': offset
         }) 
 
 # Lists the sources and their priorities, and (eventually) allows you to change them.
