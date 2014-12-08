@@ -128,6 +128,8 @@ def getDatasetCoverage(dataset, langs):
         raise RuntimeError("Could not read server response: " + response.content)
 
     species_lookups = json.loads(response.content)['rows']
+
+    logging.info(" - species lookups complete")
     
     # Retrieve names with languages with genus lookups.
     sql = """
@@ -162,8 +164,12 @@ def getDatasetCoverage(dataset, langs):
 
     genus_lookups_by_row = json.loads(response.content)['rows']
 
+    logging.info(" - genus lookups complete")
+
     # We're going to lookup genus by scname.
     genus_lookups = groupBy(genus_lookups_by_row, 'scname')
+
+    logging.info(" - genus grouping complete")
  
     # For each scname, figure out if it has a genus name and species name in each language.
     coverage = dict()
@@ -203,11 +209,15 @@ def getDatasetCoverage(dataset, langs):
             else:
                 coverage[lang]['as_unmatched'] += 1
 
+    logging.info(" - coverage counting complete")
+
     # Generate percentages.
     for lang in coverage:
         coverage[lang]['as_species_pc'] = int(coverage[lang]['as_species'])/float(num_species)*100
         coverage[lang]['as_genus_pc'] = int(coverage[lang]['as_genus'])/float(num_species)*100
         coverage[lang]['unmatched_pc'] = int(coverage[lang]['as_unmatched'])/float(num_species)*100
+
+    logging.info(" - coverage summary complete")
 
     return dict(
         num_species = num_species,
