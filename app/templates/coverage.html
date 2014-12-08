@@ -2,27 +2,54 @@
 {% block page_title %}Coverage{% endblock %}
 {% block head %}
         <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+        <style type="text/css">
+            table#coverage .coverage_100,.coverage_90 { background: rgb(0, 255, 0); }
+            table#coverage .coverage_80,.coverage_70 { background: rgb(0, 200, 0); }
+            table#coverage .coverage_60,.coverage_50 { background: rgb(0, 100, 0); }
+            table#coverage .coverage_40,.coverage_30 { background: rgb(200, 0, 0); }
+            table#coverage .coverage_20,.coverage_10,.coverage_0 { background: rgb(255, 0, 0); }
+        </style>
 {% endblock %}
 
 {% block content %}
-            <div id="dataset-list">
-                <table border="1">
+            <p>Coverage for datasets currently on the <a href="/masterlist">Master List</a>.</p>
+
+            <div>
+                <table id="coverage" border="1">
                     <tr>
                         <th>Dataset</th>
                         {% for lang in language_names_list %}
-                            <th>{{language_names[lang]}}</th>
+                            <th colspan="3">{{language_names[lang]}}</th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th>&nbsp;</th>
+                        {% for lang in language_names_list %}
+                            <th>Species</th>
+                            <th>Genus</th>
+                            <th>None</th>
                         {% endfor %}
                     </tr>
                     {% for dataset in datasets_data %}
+                        {% set cdataset = dataset['dataset'] %}
                         <tr>
                             <td align="left">
                                 <!-- TODO: Add URL encoding here -->
                                 <a href="/list?dataset={{dataset['dataset']|trim}}">{{ dataset['dataset']|trim }}</a>
                                 <br>
-                                {{ dataset['count'] }} names
+                                {{ datasets_count[cdataset] }} names
                             </td>
                             {% for lang in language_names_list %}
-                                <td>{{ datasets_coverage[dataset['dataset']][lang]|safe }}</td>
+                                {% if lang in datasets_coverage[cdataset] %}
+                                    {% set coverage_score = ((datasets_coverage[cdataset][lang]['as_species_pc'] // 10) * 10)|int %}
+                                    <td class="coverage_{{coverage_score}}">{{ datasets_coverage[cdataset][lang]['as_species_pc']|round(2) }}%</td>
+                                    <td >{{ datasets_coverage[cdataset][lang]['as_genus_pc']|round(2) }}%</td>
+                                    <td >{{ datasets_coverage[cdataset][lang]['unmatched_pc']|round(2) }}%</td>
+                                {% else %}
+                                    <td class="coverage_0">0.00%</td>
+                                    <td >0.00%</td>
+                                    <td >100.00%</td>
+                                {% endif %}
                             {% endfor %}
                         </tr>
                     {% endfor %}
