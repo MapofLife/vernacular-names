@@ -389,35 +389,18 @@ class CoverageViewHandler(BaseHandler):
         user_url = users.create_login_url('/')
 
         langs = languages.language_names_list
-        langs = ["en"]
 
         # Stats are per-dataset, per-language.
         datasets = vnapi.getDatasets()
-        datasets_coverage = {}
+        datasets_coverage = dict()
+        datasets_count = dict()
         for dataset in datasets:
             dname = dataset['dataset']
 
             # Get coverage information on all languages at once.
-            datasets_coverage[dname] = dict()
             coverage = vnapi.getDatasetCoverage(dname, langs)
-
-            for lang in langs:
-                # TODO: move this into the template.
-                datasets_coverage[dname][lang] = """
-                    %d have species common names (%.2f%%)<br>
-                    %d have genus common names (%.2f%%)<br>
-                    %d have <a href="/list?dataset=%s&blank_lang=%s">no common names</a> (%.2f%%)
-                    <!-- Total: %d -->
-                """ % (
-                    coverage[lang]['matched_with_species_name'],
-                    int(coverage[lang]['matched_with_species_name']) / float(coverage[lang]['total']) * 100,
-                    coverage[lang]['matched_with_genus_name'],
-                    int(coverage[lang]['matched_with_genus_name']) / float(coverage[lang]['total']) * 100,
-                    coverage[lang]['unmatched'],
-                    dname, lang,
-                    int(coverage[lang]['unmatched']) / float(coverage[lang]['total']) * 100,
-                    coverage[lang]['total'] 
-                )
+            datasets_count[dname] = coverage['num_species']
+            datasets_coverage[dname] = coverage['coverage']
 
         # Render coverage template.
         self.render_template('coverage.html', {
@@ -430,6 +413,7 @@ class CoverageViewHandler(BaseHandler):
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
             'datasets_data': datasets,
+            'datasets_count': datasets_count,
             'datasets_coverage': datasets_coverage
         }) 
 
