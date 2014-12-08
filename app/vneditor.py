@@ -392,6 +392,9 @@ class CoverageViewHandler(BaseHandler):
 
         # Stats are per-dataset, per-language.
         datasets = vnapi.getDatasets()
+
+        datasets = filter(lambda x: x['dataset'] != "na_trees" and x['dataset'] != "new_world_palms", datasets)
+
         datasets_coverage = dict()
         datasets_count = dict()
         for dataset in datasets:
