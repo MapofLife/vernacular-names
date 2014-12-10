@@ -390,7 +390,7 @@ class CoverageViewHandler(BaseHandler):
 
         # Pagination
         offset = int(self.request.get('offset', 0))
-        default_display = 6
+        default_display = 4
         display = int(self.request.get('display', default_display))
 
         langs = languages.language_names_list
@@ -421,8 +421,8 @@ class CoverageViewHandler(BaseHandler):
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'datasets_data': datasets,
-            'all_datasets': all_datasets,
+            'datasets_data': all_datasets,
+            'datasets': datasets,
             'datasets_count': datasets_count,
             'datasets_coverage': datasets_coverage,
             'default_display': default_display,
