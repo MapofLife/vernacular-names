@@ -92,12 +92,13 @@ def getDatasetNames(dataset):
     return scnames
 
 # Get the dataset coverage for a particular dataset.
-def getDatasetCoverage(dataset, langs):
-    logging.info("getDatasetCoverage('" + dataset + "')")
+def getDatasetCoverage(datasets, langs):
+    logging.info("getDatasetCoverage('" + ", ".join(datasets) + "')")
 
     # Retrieve names with languages without genus lookups.
     sql = """
         SELECT 
+            ml.dataset AS dataset,
             LOWER(ml.scientificname) AS scname, 
             ARRAY_AGG(DISTINCT LOWER(vn.lang)) AS langs
         FROM
@@ -105,14 +106,12 @@ def getDatasetCoverage(dataset, langs):
             LEFT OUTER JOIN %s vn
             ON LOWER(ml.scientificname) = LOWER(vn.scname)
         WHERE 
-            dataset = %s AND
-            lang IN (%s)
-        GROUP BY scientificname
+            dataset IN (%s)
+        GROUP BY ml.dataset, ml.scientificname
     """
     sql_query = sql % (
         access.MASTER_LIST, access.ALL_NAMES_TABLE, 
-        encode_b64_for_psql(dataset),
-        ", ".join(map(lambda lang: encode_b64_for_psql(lang), langs))
+        ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
     )
 
     response = urlfetch.fetch(access.CDB_URL,
@@ -133,7 +132,8 @@ def getDatasetCoverage(dataset, langs):
     
     # Retrieve names with languages with genus lookups.
     sql = """
-        SELECT 
+        SELECT
+            ml.dataset AS dataset,
             LOWER(ml.scientificname) AS scname, 
             ARRAY_AGG(DISTINCT LOWER(vn.lang)) AS langs
         FROM
@@ -141,13 +141,12 @@ def getDatasetCoverage(dataset, langs):
             LEFT OUTER JOIN %s vn
             ON LOWER(SPLIT_PART(ml.scientificname, ' ', 1)) = LOWER(vn.scname)
         WHERE 
-            dataset = %s AND
-            lang IN (%s)
-        GROUP BY scientificname
+            dataset IN (%s) 
+        GROUP BY ml.dataset, ml.scientificname
     """
     sql_query = sql % (
-        access.MASTER_LIST, access.ALL_NAMES_TABLE, encode_b64_for_psql(dataset),
-        ", ".join(map(lambda lang: encode_b64_for_psql(lang), langs))
+        access.MASTER_LIST, access.ALL_NAMES_TABLE, 
+        ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
     )
 
     response = urlfetch.fetch(access.CDB_URL,
@@ -166,63 +165,79 @@ def getDatasetCoverage(dataset, langs):
 
     logging.info(" - genus lookups complete")
 
-    # We're going to lookup genus by scname.
-    genus_lookups = groupBy(genus_lookups_by_row, 'scname')
+    # Group by dataset, so we can go through the data dataset by dataset.
+    species_by_dataset = groupBy(species_lookups, 'dataset')
+    genus_by_dataset = groupBy(genus_lookups_by_row, 'dataset')
+    
+    logging.info(" - grouping by dataset complete")
 
-    logging.info(" - genus grouping complete")
- 
-    # For each scname, figure out if it has a genus name and species name in each language.
-    coverage = dict()
-    num_species = 0
-    for row in species_lookups:
-        scname = row['scname']
-        langs_species = row['langs']
-        langs_genus = []
-        if scname in genus_lookups:
-            langs_genus = genus_lookups[scname][0]['langs']
+    # Process each dataset separately.
+    results = dict(
+        coverage = dict(),
+        num_species = dict()
+    )
 
-        if len(langs_species) == 1 and langs_species[0] is None:
-            langs_species = []
-        
-        if len(langs_genus) == 1 and langs_genus[0] is None:
+    for dataset in species_by_dataset:
+        species_rows = species_by_dataset[dataset]
+        genus_by_scname = dict()
+        if dataset in genus_by_dataset:
+            genus_by_scname = groupBy(genus_by_dataset[dataset], 'scname')
+
+        # For each scname, figure out if it has a genus name and species name in each language.
+        num_species = 0
+        coverage = dict()
+        for row in species_rows:
+            scname = row['scname']
+            langs_species = row['langs']
             langs_genus = []
+            if scname in genus_by_scname:
+                langs_genus = genus_by_scname[scname][0]['langs']
 
-        # print("scname = " + scname + ", species = " + ", ".join(langs_species) + ", genus = " + ", ".join(langs_genus))
+            if len(langs_species) == 1 and langs_species[0] is None:
+                langs_species = []
+            
+            if len(langs_genus) == 1 and langs_genus[0] is None:
+                langs_genus = []
 
-        num_species += 1
+            # print("scname = " + scname + ", species = " + ", ".join(langs_species) + ", genus = " + ", ".join(langs_genus))
 
-        for lang in langs:
-            if lang not in coverage:
-                coverage[lang] = dict(
-                    count = 0,
-                    as_species = 0,
-                    as_genus = 0,
-                    as_unmatched = 0
-                )
+            num_species += 1
 
-            coverage[lang]['count'] += 1
+            for lang in langs:
+                if lang not in coverage:
+                    coverage[lang] = dict(
+                        count = 0,
+                        as_species = 0,
+                        as_genus = 0,
+                        as_unmatched = 0
+                    )
 
-            if lang in langs_species:
-                coverage[lang]['as_species'] += 1
-            elif lang in langs_genus:
-                coverage[lang]['as_genus'] += 1
-            else:
-                coverage[lang]['as_unmatched'] += 1
+                coverage[lang]['count'] += 1
+
+                if lang in langs_species:
+                    coverage[lang]['as_species'] += 1
+                elif lang in langs_genus:
+                    coverage[lang]['as_genus'] += 1
+                else:
+                    coverage[lang]['as_unmatched'] += 1
+
+            results['coverage'][dataset] = coverage
+            results['num_species'][dataset] = num_species
 
     logging.info(" - coverage counting complete")
 
     # Generate percentages.
-    for lang in coverage:
-        coverage[lang]['as_species_pc'] = int(coverage[lang]['as_species'])/float(num_species)*100
-        coverage[lang]['as_genus_pc'] = int(coverage[lang]['as_genus'])/float(num_species)*100
-        coverage[lang]['unmatched_pc'] = int(coverage[lang]['as_unmatched'])/float(num_species)*100
+    for dataset in results['coverage']:
+        coverage = results['coverage'][dataset]
+        num_species = results['num_species'][dataset]
+        for lang in coverage:
+            coverage[lang]['as_species_pc'] = int(coverage[lang]['as_species'])/float(num_species)*100
+            coverage[lang]['as_genus_pc'] = int(coverage[lang]['as_genus'])/float(num_species)*100
+            coverage[lang]['unmatched_pc'] = int(coverage[lang]['as_unmatched'])/float(num_species)*100
 
     logging.info(" - coverage summary complete")
 
-    return dict(
-        num_species = num_species,
-        coverage = coverage
-    )
+    return results
 
 # Check if a dataset contains name. It caches the entire list
 # of names in that dataset to make its job easier.

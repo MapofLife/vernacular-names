@@ -390,7 +390,7 @@ class CoverageViewHandler(BaseHandler):
 
         # Pagination
         offset = int(self.request.get('offset', 0))
-        default_display = 4
+        default_display = 50
         display = int(self.request.get('display', default_display))
 
         langs = languages.language_names_list
@@ -401,15 +401,10 @@ class CoverageViewHandler(BaseHandler):
         # Display 'display', offset by offset.
         datasets = all_datasets[offset:offset+display]
 
-        datasets_coverage = dict()
-        datasets_count = dict()
-        for dataset in datasets:
-            dname = dataset['dataset']
-
-            # Get coverage information on all languages at once.
-            coverage = vnapi.getDatasetCoverage(dname, langs)
-            datasets_count[dname] = coverage['num_species']
-            datasets_coverage[dname] = coverage['coverage']
+        dataset_names = map(lambda x: x['dataset'], all_datasets)
+        coverage = vnapi.getDatasetCoverage(dataset_names, langs)
+        datasets_count = coverage['num_species']
+        datasets_coverage = coverage['coverage']
 
         # Render coverage template.
         self.render_template('coverage.html', {
