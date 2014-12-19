@@ -283,10 +283,29 @@
                 </td>
                 {% for lang in language_names_list %}
                     <td>
-                        <input id="vname_{{scname_index}}_{{lang}}" class="vname lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}" value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" oninput="$(this).css('background-color', '{{COLOR_MANUAL_ENTRY}}')" />
-                        <select id="vname_{{scname_index}}_{{lang}}_source"  class="source_list lang_{{lang}}" style="width: 100%" name="vname_{{scname_index}}_{{lang}}_source">
+                        <input 
+                            id="vname_{{scname_index}}_{{lang}}" 
+                            class="vname lang_{{lang}}" 
+                            style="width: 100%" 
+                            name="vname_{{scname_index}}_{{lang}}" 
+                            value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" 
+                            oninput="$(this).css('background-color', '{{COLOR_MANUAL_ENTRY}}')" 
+                        />
+                        <input 
+                            name="vname_{{scname_index}}_{{lang}}_in_nomdb"
+                            type="hidden"
+                            value="{% if vnames_in_nomdb|length >= scname_index and lang in vnames_in_nomdb[scname_index] %}{{ vnames_in_nomdb[scname_index][lang] }}{% endif %}"
+                        />
+                        <select 
+                            id="vname_{{scname_index}}_{{lang}}_source"  
+                            class="source_list lang_{{lang}}" 
+                            style="width: 100%" 
+                            name="vname_{{scname_index}}_{{lang}}_source"
+                        >
                             {% for source in sources %}
-                                <option {% if vnames_source|length >= scname_index and lang in vnames_source[scname_index] and vnames_source[scname_index][lang]==source %}selected="1"{% endif %}>{{source}}</option>
+                                <option 
+                                    {% if vnames_source|length >= scname_index and lang in vnames_source[scname_index] and vnames_source[scname_index][lang]==source %}selected="1"{% endif %}
+                                >{{source}}</option>
                             {% endfor %}
                         </select>
                     </td>
