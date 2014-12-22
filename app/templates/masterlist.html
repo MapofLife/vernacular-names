@@ -33,7 +33,7 @@
         <p>Displaying {{species_sorted|count}} names from the following datasets:</p>
         <ul>
             {% for dataset_data in datasets_data %}
-                <li><a href="?dataset={{dataset_data['dataset']}}">{{ dataset_data['dataset'] }}</a></li>
+                <li><a href="?dataset={{dataset_data['dataset']}}">{{ dataset_data['dataset'] }}</a> ({{ dataset_data['count'] }} species)</li>
             {% endfor %}
         </ul>
     {% else %}

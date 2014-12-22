@@ -4,6 +4,7 @@
 
 {% set COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.46)' %}
 {% set COLOR_VNNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)' %}
+{% set COLOR_IDENTICAL_TO_SERVER = 'rgba(0, 255, 0, 0.46)' %}
 {% set COLOR_AUTOMATIC_ENTRY = 'rgba(192, 192, 0, 0.23)' %}
 {% set COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)' %}
 
@@ -235,6 +236,8 @@
                 <th colspan="8">Legend</th>
             </tr>
             <tr>
+                <td style="background-color: {{COLOR_IDENTICAL_TO_SERVER}}">&nbsp;&nbsp;</td>
+                <td>Identical to server</td>
                 <td style="background-color: {{COLOR_MANUAL_ENTRY}}">&nbsp;&nbsp;</td>
                 <td>Entered manually</td>
                 <td style="background-color: {{COLOR_AUTOMATIC_ENTRY}}">&nbsp;&nbsp;</td>
@@ -269,32 +272,41 @@
                     </span>
                     </th>
                 {% endfor %}
+                <th>&nbsp;</th>
             </tr>
             {% for scname in scnames %}
             <tr>
                 {% set scname_index = loop.index %}
                 <td>{{ scname_index }}</td>
                 <td>{% if scname not in scnames_not_in_master_list %}
-                        <em><a href="/?lookup={{scname}}">{{ scname }}</a></em>
+                        <em><a href="/?lookup={{scname}}">{{ scname|capitalize }}</a></em>
                     {% else %}
-                        <span style="color: red"><em>{{ scname }}</em></span><br><strong>Warning: not in master list!</strong>
+                        <span style="color: red"><em>{{ scname|capitalize }}</em></span><br><strong>Warning: not in master list!</strong>
                     {% endif %}
                     <input type="hidden" id="scname_{{scname_index}}" name="scname_{{scname_index}}" value="{{scname}}" />
                 </td>
                 {% for lang in language_names_list %}
+                    {% set vname = "" %}
+                    {% if vnames|length >= scname_index and lang in vnames[scname_index] %}
+                        {% set vname = vnames[scname_index][lang] %}
+                    {% endif %}
+                    {% set vname_in_nomdb = "" %}
+                    {% if vnames_in_nomdb|length >= scname_index and lang in vnames_in_nomdb[scname_index] %}
+                        {% set vname_in_nomdb = vnames_in_nomdb[scname_index][lang] %}
+                    {% endif %}
                     <td>
                         <input 
                             id="vname_{{scname_index}}_{{lang}}" 
                             class="vname lang_{{lang}}" 
-                            style="width: 100%" 
+                            style="width: 100%; {% if vname_in_nomdb != '' and vname_in_nomdb == vname %} background-color: {{COLOR_IDENTICAL_TO_SERVER}};{% endif %}"
                             name="vname_{{scname_index}}_{{lang}}" 
-                            value="{% if vnames|length >= scname_index and lang in vnames[scname_index] %}{{ vnames[scname_index][lang] }}{% endif %}" 
+                            value="{{ vname }}" 
                             oninput="$(this).css('background-color', '{{COLOR_MANUAL_ENTRY}}')" 
                         />
                         <input 
                             name="vname_{{scname_index}}_{{lang}}_in_nomdb"
                             type="hidden"
-                            value="{% if vnames_in_nomdb|length >= scname_index and lang in vnames_in_nomdb[scname_index] %}{{ vnames_in_nomdb[scname_index][lang] }}{% endif %}"
+                            value="{{ vname_in_nomdb }}"
                         />
                         <select 
                             id="vname_{{scname_index}}_{{lang}}_source"  
@@ -310,6 +322,9 @@
                         </select>
                     </td>
                 {% endfor %} 
+                <td>
+                    <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
+                </td>
             </tr>
             {% endfor %}
         </table>

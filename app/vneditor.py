@@ -732,7 +732,7 @@ class BulkImportHandler(BaseHandler):
         vnames = [dict() for i in range(1, len(scnames) + 2)]
         vnames_source = [dict() for i in range(1, len(scnames) + 2)]
         for vname_arg in vnames_args:
-            match = re.match(r"^vname_(\d+)_(\w+?)(_source)?$", vname_arg)
+            match = re.match(r"^vname_(\d+)_(\w+?)(_source|_in_nomdb)?$", vname_arg)
             if match:
                 loop_index = int(match.group(1))
                 lang = match.group(2)
@@ -860,7 +860,7 @@ class BulkImportHandler(BaseHandler):
                     vname = names_in_nomdb[scname][lang]
                     vnames[loop_index][lang] = vname.cmname
                     source = "; ".join(sorted(vname.sources))
-                    if source not in sources:
+                    if source not in sources and source != '':
                         sources.append(source)
                     vnames_source[loop_index][lang] = source
 
