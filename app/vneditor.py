@@ -732,7 +732,7 @@ class BulkImportHandler(BaseHandler):
         vnames = [dict() for i in range(1, len(scnames) + 2)]
         vnames_source = [dict() for i in range(1, len(scnames) + 2)]
         for vname_arg in vnames_args:
-            match = re.match(r"^vname_(\d+)_(\w+?)(_source)?$", vname_arg)
+            match = re.match(r"^vname_(\d+)_(\w+?)(_source|_in_nomdb)?$", vname_arg)
             if match:
                 loop_index = int(match.group(1))
                 lang = match.group(2)
@@ -747,6 +747,12 @@ class BulkImportHandler(BaseHandler):
 
                     if vnames[loop_index] == 0:
                         vnames[loop_index] = {}
+
+                    # Ignore any names which are identical to the name as in
+                    # NomDB.
+                    vname_in_nomdb = self.request.get(vname_arg + "_in_nomdb")
+                    if vname_in_nomdb != '' and vname_in_nomdb == vname:
+                        continue
 
                     if vname != '':
                         print(("scnames[" + str(loop_index - 1) + "] = " + scnames[loop_index - 1] + " => vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'").encode('utf8'))
@@ -835,6 +841,32 @@ class BulkImportHandler(BaseHandler):
                         dataset = input_dataset
                     )))
 
+        # So far, we've processed all user input. Let's fill in the gaps with
+        # data that already exists in the system. To simplify this query and
+        # save me coding time, we'll retrieve *all* best match names.
+        names_in_nomdb = dict()
+        vnames_in_nomdb = [dict() for i in range(1, len(scnames) + 2)]
+        if len(scnames) > 0:
+            names_in_nomdb = vnnames.getVernacularNames(scnames,
+                languages.language_names_list,
+                flag_no_higher = True,
+                flag_no_memoize = False
+            )
+
+        for loop_index in range(1, len(scnames) + 1):
+            scname = scnames[loop_index - 1]
+            for lang in languages.language_names_list:
+                if lang not in vnames[loop_index]:
+                    vname = names_in_nomdb[scname][lang]
+                    vnames[loop_index][lang] = vname.cmname
+                    source = "; ".join(sorted(vname.sources))
+                    if source not in sources and source != '':
+                        sources.append(source)
+                    vnames_source[loop_index][lang] = source
+
+                    # Store in vnames_in_nomdb so we know if they've been edited.
+                    vnames_in_nomdb[loop_index][lang] = vname.cmname
+
         # If this is a get request, we can only be in display-first-page mode.
         # So display first page and quit.
         self.render_template('import.html', {
@@ -860,6 +892,7 @@ class BulkImportHandler(BaseHandler):
             'input_dataset' : input_dataset,
             'sources': sources,
             'vnames': vnames,
+            'vnames_in_nomdb': vnames_in_nomdb,
             'vnames_source': vnames_source
         })
 

@@ -33,11 +33,19 @@
         <p>Displaying {{species_sorted|count}} names from the following datasets:</p>
         <ul>
             {% for dataset_data in datasets_data %}
-                <li><a href="?dataset={{dataset_data['dataset']}}">{{ dataset_data['dataset'] }}</a></li>
+                <li><a href="?dataset={{dataset_data['dataset']}}">{{ dataset_data['dataset'] }}</a> ({{ dataset_data['count'] }} species)</li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>Displaying {{species_sorted|count}} names from dataset <em><a href="/list?dataset={{dataset_filter}}">{{ dataset_filter }}</a></em> (<a href="?dataset=">reset</a>).</p>
+        <p>Displaying {{species_sorted|count}} names from dataset <em><a href="/list?dataset={{dataset_filter}}">{{ dataset_filter }}</a></em> (<a href="?dataset=">reset</a>).
+
+        <form action="/import" method="POST">
+            <input type="hidden" name="input_dataset" value="{{dataset_filter}}" />
+            <textarea style="display: none" name="scnames">{{species_sorted|join("\n")}}</textarea>
+            <input type="submit" value="Display dataset in bulk import">
+        </form>
+
+        </p>
     {% endif %}
 
     <table border="1" class="sortable">
