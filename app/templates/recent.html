@@ -12,6 +12,10 @@
     {% else %}
         <p>Displaying {{ recent_changes|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
+        <p>{% if offset > 0 %}<a href="?offset=0">Start</a> <a href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>{% endif %}
+        {% if offset + display_count < total_count %}<a href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>{% endif %}
+        </p>
+
         <table border="1" class="sortable">
             <thead><tr>
                 <th>&nbsp;</th>
@@ -26,15 +30,29 @@
             {% for recent_change in recent_changes %}
                 <tr>
                     <td>{{ loop.index + offset }}</td>
-                    <td><a href="/?lookup={{recent_change.scname}}">{{ recent_change.scname }}</a></td>
-                    <td>{% set lang = recent_change.lang %}{% if lang in language_names %}{{ language_names[lang] }}{% else %}{{ lang }}{% endif %}</td>
+                    <td><a href="/?lookup={{recent_change.scname}}"><em>{{ recent_change.scname | capitalize }}</em></a></td>
+                    <td>
+                        {% set lang = recent_change.lang %}
+                        {% if lang in language_names %}
+                            {{ language_names[lang] }}
+                        {% else %}
+                            {{ lang }}
+                        {% endif %}
+                        &nbsp;
+                    </td>
                     <td><a href="/?lookup={{recent_change.scname}}#lang-{{recent_change.lang}}">{{recent_change.cmname}}</a></td>
-                    <td>{{ recent_change.source|urlize }}{% if recent_change.source_priority|int != 80 %}(priority: {{recent_change.source_priority}}){% endif %}{% if recent_change.url %}<br>{{ recent_change.url|urlize }}{% endif %}</td>
+                    <td>{{ recent_change.source|urlize }}{% if recent_change.source_priority|int != 80 %} (priority: {{recent_change.source_priority}}){% endif %}{% if recent_change.url %}<br>{{ recent_change.url|urlize }}{% endif %}</td>
                     <td>{{ recent_change.added_by }} at {{ recent_change.updated_at }}</td>
-                    <td><form method="POST" action="/delete/cartodb_id"><button type="submit" name="cartodb_id" value="{{ recent_change.cartodb_id }}">Delete</button></td>
+                    <td><form method="POST" action="/delete/cartodb_id"><button type="submit" name="cartodb_id" value="{{ recent_change.cartodb_id }}">Delete</button></form></td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
+
+        <p>{% if offset > 0 %}<a href="?offset=0">Start</a> <a href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>{% endif %}
+        {% if offset + display_count < total_count %}<a href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>{% endif %}
+        </p>
+
+
     {% endif %}
 {% endblock %}

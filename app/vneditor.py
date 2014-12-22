@@ -146,18 +146,18 @@ class MainPage(BaseHandler):
             lookup_search = current_search
 
         # Find all names for all species in the languages of interest.
+        tax_family = set()
+        tax_order = set()
+        tax_class = set()
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
-            lookup_results = vnnames.getVernacularNames([lookup_search], flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
+            lookup_results = vnnames.getVernacularNames([lookup_search], languages.language_names_list, flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
 
-            lookup_results_languages = lookup_results[lookup_search]
-
-            for lang in lookup_results_languages:
-                if lang in languages.language_names:
-                    lookup_results_lang_names[lang] = languages.language_names[lang]
-                else:
-                    lookup_results_lang_names[lang] = lang
+            # Summarize higher taxonomy.
+            tax_family = lookup_results[lookup_search]['tax_family']
+            tax_order = lookup_results[lookup_search]['tax_order']
+            tax_class = lookup_results[lookup_search]['tax_class']
 
         # Get list of datasets
         datasets = vnapi.getDatasets()
@@ -174,10 +174,11 @@ class MainPage(BaseHandler):
             'current_search': current_search,
             'search_results': search_results,
             'search_results_scnames': search_results_scnames,
+            'tax_family': tax_family,
+            'tax_order': tax_order,
+            'tax_class': tax_class,
             'lookup_search': lookup_search,
             'lookup_results': lookup_results,
-            'lookup_results_languages': lookup_results_languages,
-            'lookup_results_language_names': lookup_results_lang_names,
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
             'vneditor_version': version.VNEDITOR_VERSION
@@ -190,7 +191,7 @@ class DeleteByCDBIDHandler(BaseHandler):
         current_user = self.check_user()
 
         # Retrieve cartodb_id to delete.
-        cartodb_id = int(self.request.get('cartodb_id'))
+        cartodb_id = self.request.get_range('cartodb_id')
 
         # Synthesize SQL
         sql = "DELETE FROM %s WHERE cartodb_id=%d"
@@ -230,48 +231,65 @@ class AddNameHandler(BaseHandler):
         # Retrieve name to add
         scname = lookup
         cmname = self.request.get('name_to_add')
-        lang = self.request.get('lang')
+        lang = self.request.get('lang').lower()
         source = self.request.get('source')
-        try:
-            source_priority = int(self.request.get('priority'))
-        except ValueError:
-            # All manual sources come in with a default priority of 80
-            source_priority = 80
+        source_priority = self.request.get_range('priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT_APP)
 
-        # Metadata
-        added_by = current_user.nickname()
+        tax_class = self.request.get('tax_class')
+        tax_order = self.request.get('tax_order')
+        tax_family = self.request.get('tax_family')
 
-        # Base64 anything we don't absolutely trust
-        added_by_b64 = vnapi.encode_b64_for_psql(added_by)
-        scname_b64 = vnapi.encode_b64_for_psql(scname)
-        cmname_b64 = vnapi.encode_b64_for_psql(cmname)
-        lang_b64 = vnapi.encode_b64_for_psql(lang)
-        source_b64 = vnapi.encode_b64_for_psql(source)
-
-        # Synthesize SQL
-        sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority) VALUES (%s, %s, %s, %s, NULL, %s, '" + SOURCE_URL + "', %d);"
-        sql_query = sql % (
-            access.ALL_NAMES_TABLE,
-            added_by_b64,
-            scname_b64,
-            lang_b64,
-            cmname_b64,
-            source_b64,
-            source_priority
-        )
-
-        # Make it so.
-        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
-            dict(
-                q = sql_query,
-                api_key = access.CARTODB_API_KEY
-            )
-        ))
-
-        if response.status_code != 200:
-            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+        if scname == '':
+            message = "Error: scientific name is blank."
+        elif source == '':
+            message = "Error: source is blank."
+        # No common name or lang is fine, as long as we have higher taxonomy instead.
+        elif cmname == '' and not (tax_class != '' or tax_order != '' or tax_family != ''):
+            message = "Error: vernacular name is blank."
+        elif lang == '' and not (tax_class != '' or tax_order != '' or tax_family != ''):
+            message = "Error: language is blank."
         else:
-            message = "Name added to language '" + lang + "'."
+            # Metadata
+            added_by = current_user.nickname()
+
+            # Base64 anything we don't absolutely trust
+            added_by_b64 = vnapi.encode_b64_for_psql(added_by)
+            scname_b64 = vnapi.encode_b64_for_psql(scname)
+            cmname_b64 = vnapi.encode_b64_for_psql(cmname)
+            lang_b64 = vnapi.encode_b64_for_psql(lang)
+            source_b64 = vnapi.encode_b64_for_psql(source)
+
+            tax_class_b64 = vnapi.encode_b64_for_psql(tax_class.strip().lower())
+            tax_order_b64 = vnapi.encode_b64_for_psql(tax_order.strip().lower())
+            tax_family_b64 = vnapi.encode_b64_for_psql(tax_family.strip().lower())
+
+            # Synthesize SQL
+            sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority, tax_class, tax_order, tax_family) VALUES (%s, %s, %s, %s, NULL, %s, '" + SOURCE_URL + "', %d, %s, %s, %s);"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                added_by_b64,
+                scname_b64,
+                lang_b64,
+                cmname_b64,
+                source_b64,
+                source_priority,
+                tax_class_b64,
+                tax_order_b64,
+                tax_family_b64
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+                dict(
+                    q = sql_query,
+                    api_key = access.CARTODB_API_KEY
+                )
+            ))
+
+            if response.status_code != 200:
+                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+            else:
+                message = "Name added to language '" + lang + "'."
 
         # Redirect to the main page.
         self.redirect("/?" + urllib.urlencode(dict(
@@ -312,7 +330,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Prepare to write out CSV.
         header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
         for lang in languages.language_names_list:
-            header.extend([lang + '_name', lang + '_source', lang + '_family', lang + '_order', lang + '_class'])
+            header.extend([lang + '_name', lang + '_source', lang + '_family'])
         header.extend(['empty'])
         csvfile.writerow(header)
 
@@ -333,27 +351,23 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     row.extend([
                         vname.encode('utf-8'), 
                         "|".join(sorted(sources)).encode('utf-8'),
-                        concat_names(vnames_by_lang[lang].tax_family),
-                        concat_names(vnames_by_lang[lang].tax_order),
-                        concat_names(vnames_by_lang[lang].tax_class)
+                        concat_names(vnames_by_lang[lang].tax_family)
                     ])
                 else:
-                    row.extend([None, None, None, None, None])
+                    row.extend([None, None, None])
 
             csvfile.writerow(row)
         
         # searchVernacularNames doesn't use the cache, but it calls 
         # getVernacularNames for higher taxonomy, which does.
         vnnames.clearVernacularNamesCache()
-        vnnames.searchVernacularNames(add_name, all_names, flag_format_cmnames=True)
+        vnnames.searchVernacularNames(add_name, all_names, languages.language_names_list, flag_format_cmnames=True)
 
         # File completed!
         gzfile.close()
 
         # E-mail the response to me.
-        settings = ""
-        if vnnames.FLAG_LOOKUP_GENERA:
-            settings = " with genera lookups turned on"
+        settings = " with genera lookups turned on"
 
         email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS,
             subject = 'Taxonomy translations download',
@@ -374,33 +388,23 @@ class CoverageViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        # Pagination
+        offset = int(self.request.get('offset', 0))
+        default_display = 50
+        display = int(self.request.get('display', default_display))
+
+        langs = languages.language_names_list
+
         # Stats are per-dataset, per-language.
-        datasets = vnapi.getDatasets()
-        datasets_coverage = {}
-        for dataset in datasets:
-            dname = dataset['dataset']
+        all_datasets = vnapi.getDatasets()
 
-            # Get coverage information on all languages at once.
-            datasets_coverage[dname] = dict()
-            coverage = vnapi.getDatasetCoverage(dname, languages.language_names_list)
+        # Display 'display', offset by offset.
+        datasets = all_datasets[offset:offset+display]
 
-            for lang in languages.language_names_list:
-                # TODO: move this into the template.
-                datasets_coverage[dname][lang] = """
-                    %d have species common names (%.2f%%)<br>
-                    %d have genus common names (%.2f%%)<br>
-                    %d have <a href="/list?dataset=%s&blank_lang=%s">no common names</a> (%.2f%%)
-                    <!-- Total: %d -->
-                """ % (
-                    coverage[lang]['matched_with_species_name'],
-                    int(coverage[lang]['matched_with_species_name']) / float(coverage[lang]['total']) * 100,
-                    coverage[lang]['matched_with_genus_name'],
-                    int(coverage[lang]['matched_with_genus_name']) / float(coverage[lang]['total']) * 100,
-                    coverage[lang]['unmatched'],
-                    dname, lang,
-                    int(coverage[lang]['unmatched']) / float(coverage[lang]['total']) * 100,
-                    coverage[lang]['total'] 
-                )
+        dataset_names = map(lambda x: x['dataset'], all_datasets)
+        coverage = vnapi.getDatasetCoverage(dataset_names, langs)
+        datasets_count = coverage['num_species']
+        datasets_coverage = coverage['coverage']
 
         # Render coverage template.
         self.render_template('coverage.html', {
@@ -412,8 +416,13 @@ class CoverageViewHandler(BaseHandler):
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'datasets_data': datasets,
-            'datasets_coverage': datasets_coverage
+            'datasets_data': all_datasets,
+            'datasets': datasets,
+            'datasets_count': datasets_count,
+            'datasets_coverage': datasets_coverage,
+            'default_display': default_display,
+            'display': display,
+            'offset': offset
         }) 
 
 # Lists the sources and their priorities, and (eventually) allows you to change them.
@@ -555,6 +564,118 @@ class SourcesHandler(BaseHandler):
             'vneditor_version': version.VNEDITOR_VERSION
         })
 
+# Display and edit the master list.
+class MasterListHandler(BaseHandler):
+    def get(self):
+        self.post()
+
+    def post(self):
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Any message?
+        message = self.request.get('message')
+
+        # Retrieve master list.
+        dataset_filter = self.request.get('dataset')
+        if dataset_filter == '':
+            datasets = map(lambda x: x['dataset'], vnapi.getDatasets())
+        else:
+            datasets = set([dataset_filter])
+
+        species = dict()
+        for dataset in datasets:
+            scnames = vnapi.getDatasetNames(dataset)
+
+            for scname in scnames:
+                scname = scname.lower()
+                if scname in species:
+                    species[scname]['datasets'].add(dataset)
+                else:
+                    species[scname] = dict(
+                        datasets=set([dataset])
+                    )
+
+        scnames = sorted(species.keys())
+    
+        # Do a diff.
+        diff_names = self.request.get('diff_names')
+        diff_names_count = 0
+        names_added = []
+        names_deleted = []
+        if diff_names != '':
+            names = set(map(lambda x: x.lower(), re.split("\s*\n+\s*", diff_names)))
+
+            diff_names_count = len(names)
+
+            # How many names does the definitive list have that we don't?
+            names_added = names.difference(scnames)
+            names_deleted = set(scnames).difference(names)
+
+        # print("names_added = " + ", ".join(names_added))
+        # print("names_deleted = " + ", ".join(names_deleted))
+
+        # Generate SQL statements
+        sql_statements = ""
+        if len(names_added) > 0:
+            sql_statements += "INSERT INTO %s (dataset, scientificname) VALUES\n" % (
+                access.MASTER_LIST
+            )
+            for name in names_added:
+                sql_statements += "\t(%s, %s),\n" % (
+                    vnapi.encode_b64_for_psql(dataset_filter),
+                    vnapi.encode_b64_for_psql(name.capitalize()),
+                )
+
+            sql_statements = sql_statements.rstrip(",\n")
+            sql_statements += "\n\n"
+
+        if len(names_deleted) > 0:
+            sql_statements += "DELETE FROM %s WHERE\n" % (
+                access.MASTER_LIST
+            )
+            for name in names_deleted:
+                sql_statements += "\t(dataset = %s AND LOWER(scientificname) = %s) OR\n" % (
+                    vnapi.encode_b64_for_psql(dataset_filter),
+                    vnapi.encode_b64_for_psql(name.lower()),
+                )
+
+            sql_statements += "\tFALSE\n\n"
+
+        # Render template.
+        self.render_template('masterlist.html', {
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'vneditor_version': version.VNEDITOR_VERSION,
+            'datasets_data': vnapi.getDatasets(),
+
+            'message': message,
+
+            'dataset_filter': dataset_filter,
+            'species': species,
+            'species_sorted': scnames,
+
+            'diff_names_count': diff_names_count,
+            'diff_names_added': names_added,
+            'diff_names_deleted': names_deleted,
+            'diff_sql_statements': sql_statements
+# ,
+
+            # 'sql_add_to_master_list': sql_add_to_master_list,
+
+        })
+
+
+
+
 # Handle bulk uploads. The plan is to see if we can do this mostly in browser,
 # using the following flow:
 #   - no arguments: provide a form to upload a list of names.
@@ -601,17 +722,17 @@ class BulkImportHandler(BaseHandler):
         sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split('\s*[\r\n]+\s*', all_sources))))
 
         # Source priority
-        source_priority = self.request.get_range('source_priority', 0, 100, 0)
+        source_priority = self.request.get_range('source_priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT)
 
         # This needs to go on top as it should be the default.
         sources.insert(0, manual_change) 
 
         # Read in any vernacular names.
         vnames_args = filter(lambda x: x.startswith('vname_'), self.request.arguments())
-        vnames = [dict() for i in range(len(scnames)+1)]
-        vnames_source = [dict() for i in range(len(scnames)+1)]
+        vnames = [dict() for i in range(1, len(scnames) + 2)]
+        vnames_source = [dict() for i in range(1, len(scnames) + 2)]
         for vname_arg in vnames_args:
-            match = re.match(r"^vname_(\d+)_(\w+?)(_source)?$", vname_arg)
+            match = re.match(r"^vname_(\d+)_(\w+?)(_source|_in_nomdb)?$", vname_arg)
             if match:
                 loop_index = int(match.group(1))
                 lang = match.group(2)
@@ -622,11 +743,19 @@ class BulkImportHandler(BaseHandler):
                     vname = self.request.get(vname_arg)
                     source = self.request.get(vname_arg + "_source")
 
+                    # print("vname = " + vname + ", source = " + source + ".")
+
                     if vnames[loop_index] == 0:
                         vnames[loop_index] = {}
 
+                    # Ignore any names which are identical to the name as in
+                    # NomDB.
+                    vname_in_nomdb = self.request.get(vname_arg + "_in_nomdb")
+                    if vname_in_nomdb != '' and vname_in_nomdb == vname:
+                        continue
+
                     if vname != '':
-                        # print("vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'")
+                        print(("scnames[" + str(loop_index - 1) + "] = " + scnames[loop_index - 1] + " => vnames[" + str(loop_index) + "][" + lang + "] = '" + vname + "'").encode('utf8'))
                         vnames[loop_index][lang] = vname.strip()
                         vnames_source[loop_index][lang] = source.strip()
 
@@ -639,18 +768,31 @@ class BulkImportHandler(BaseHandler):
             # For now, we'll indicate what's going on in msg.
             entries = []
 
+            save_errors = []
+
             debug_save = "<table border='1'>\n"
-            for loop_index in range(len(scnames)):
+            for loop_index in range(1, len(scnames) + 1):
+                # print("loop_index = " + str(loop_index) + ": " + str(vnames[loop_index]))
+
                 for lang in vnames[loop_index]:
+                    source = ""
+
                     if lang in vnames_source[loop_index]:
                         source = vnames_source[loop_index][lang]
-                    else:
-                        source = ""
-                    debug_save += "<tr><td>" + scnames[loop_index] + "</td><td>" + lang + "</td><td>" + vnames[loop_index][lang] + "</td><td>" + source + "</td></tr>\n"
+
+                    # print("source = '" + source + "'")
+
+                    if source is None or source == "":
+                        save_errors.append("No source provided for '" + scnames[loop_index - 1] + "', cancelling.")
+                        break
+
+                    debug_save += "<tr><td>" + scnames[loop_index - 1] + "</td><td>" + lang + "</td><td>" + vnames[loop_index][lang] + "</td><td>" + source + "</td></tr>\n"
 
                     entries.append("(" + 
                         vnapi.encode_b64_for_psql(added_by) + ", " + 
-                        vnapi.encode_b64_for_psql(scnames[loop_index]) + ", " +
+                        vnapi.encode_b64_for_psql(scnames[loop_index - 1]) + ", " +
+                            # loop_index - 1, since loop_index is 1-based (as it comes from the template)
+                            # but the index on scnames is 0-based.
                         vnapi.encode_b64_for_psql(lang) + ", " + 
                         vnapi.encode_b64_for_psql(vnames[loop_index][lang]) + ", " +
                         vnapi.encode_b64_for_psql(source) + ", " + 
@@ -659,40 +801,71 @@ class BulkImportHandler(BaseHandler):
 
             debug_save += "</table>\n"
 
-            # Write all the entries into CartoDB.
-            # TODO: chunk this so we can add huge datasets.
+            print("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
 
-            # Synthesize SQL
-            sql = "INSERT INTO %s (added_by, scname, lang, cmname, source, source_url, source_priority) VALUES %s"
-            sql_query = sql % (
-                access.ALL_NAMES_TABLE,
-                ", ".join(entries)
-            )
-
-            # Make it so.
-            response = urlfetch.fetch(access.CDB_URL,
-                payload=urllib.urlencode(
-                    dict(
-                        q = sql_query,
-                        api_key = access.CARTODB_API_KEY
-                    )),
-                method=urlfetch.POST,
-                headers={'Content-type': 'application/x-www-form-urlencoded'},
-                deadline=vnapi.DEADLINE_FETCH
-            )
-
-            if response.status_code != 200:
-                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-                print("Error: server returned error " + str(response.status_code) + " on SQL '" + sql_query + "': " + response.content)
-
+            if len(save_errors) > 0:
+                message = "<strong>Error:</strong>" + "<br>".join(save_errors)
             else:
-                message = str(len(entries)) + " entries added to dataset '" + input_dataset + "'."
+                # Write all the entries into CartoDB.
+                # TODO: chunk this so we can add huge datasets.
 
-                # Redirect to the main page.
-                self.redirect("/list?" + urllib.urlencode(dict(
-                    msg = message,
-                    dataset = input_dataset
-                )))
+                # Synthesize SQL
+                sql = "INSERT INTO %s (added_by, scname, lang, cmname, source, source_url, source_priority) VALUES %s"
+                sql_query = sql % (
+                    access.ALL_NAMES_TABLE,
+                    ", ".join(entries)
+                )
+
+                # Make it so.
+                response = urlfetch.fetch(access.CDB_URL,
+                    payload=urllib.urlencode(
+                        dict(
+                            q = sql_query,
+                            api_key = access.CARTODB_API_KEY
+                        )),
+                    method=urlfetch.POST,
+                    headers={'Content-type': 'application/x-www-form-urlencoded'},
+                    deadline=vnapi.DEADLINE_FETCH
+                )
+
+                if response.status_code != 200:
+                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                    print("Error: server returned error " + str(response.status_code) + " on SQL '" + sql_query + "': " + response.content)
+
+                else:
+                    message = str(len(entries)) + " entries added to dataset '" + input_dataset + "'."
+
+                    # Redirect to the main page.
+                    self.redirect("/list?" + urllib.urlencode(dict(
+                        msg = message,
+                        dataset = input_dataset
+                    )))
+
+        # So far, we've processed all user input. Let's fill in the gaps with
+        # data that already exists in the system. To simplify this query and
+        # save me coding time, we'll retrieve *all* best match names.
+        names_in_nomdb = dict()
+        vnames_in_nomdb = [dict() for i in range(1, len(scnames) + 2)]
+        if len(scnames) > 0:
+            names_in_nomdb = vnnames.getVernacularNames(scnames,
+                languages.language_names_list,
+                flag_no_higher = True,
+                flag_no_memoize = False
+            )
+
+        for loop_index in range(1, len(scnames) + 1):
+            scname = scnames[loop_index - 1]
+            for lang in languages.language_names_list:
+                if lang not in vnames[loop_index]:
+                    vname = names_in_nomdb[scname][lang]
+                    vnames[loop_index][lang] = vname.cmname
+                    source = "; ".join(sorted(vname.sources))
+                    if source not in sources and source != '':
+                        sources.append(source)
+                    vnames_source[loop_index][lang] = source
+
+                    # Store in vnames_in_nomdb so we know if they've been edited.
+                    vnames_in_nomdb[loop_index][lang] = vname.cmname
 
         # If this is a get request, we can only be in display-first-page mode.
         # So display first page and quit.
@@ -719,8 +892,198 @@ class BulkImportHandler(BaseHandler):
             'input_dataset' : input_dataset,
             'sources': sources,
             'vnames': vnames,
+            'vnames_in_nomdb': vnames_in_nomdb,
             'vnames_source': vnames_source
         })
+
+# GeneraHandler view.
+class GeneraHandler(BaseHandler):
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Get list of higher taxonomy, limited to those referred from
+        # scientific names in the master list.
+        genera_sql = """
+            SELECT 
+                LOWER(split_part(scientificname, ' ', 1)) AS genus,
+                family,
+                COUNT(DISTINCT LOWER(scientificname)) AS count_species,
+                ARRAY_AGG(DISTINCT master.dataset ORDER BY master.dataset ASC) AS datasets
+            FROM %s AS higher RIGHT JOIN %s AS master
+                ON LOWER(genus) = LOWER(split_part(scientificname, ' ', 1)) 
+            GROUP BY LOWER(split_part(scientificname, ' ', 1)), family
+            ORDER BY genus ASC, family ASC NULLS FIRST
+        """ % (
+            access.HIGHER_LIST,
+            access.MASTER_LIST
+        )
+  
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = genera_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        all_species = []
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + genera_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            results = {"rows": []}
+        else:
+            results = json.loads(response.content)
+            all_species = results['rows']
+
+        missing_genera = filter(lambda x: x['family'] is None, all_species)
+        genera = filter(lambda x: x['family'] is not None, all_species)
+        all_names = filter(lambda x: x is not None, map(lambda x: x['family'], all_species))
+
+        # Render recent changes.
+        self.render_template('genera.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+            'missing_genera': missing_genera,
+            'genera': genera,
+            'vnames': vnnames.getVernacularNames(
+                all_names, 
+                languages.language_names_list, 
+                flag_no_higher = True, 
+                flag_no_memoize = True, 
+                flag_lookup_genera = False, 
+                flag_format_cmnames = True),
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'vneditor_version': version.VNEDITOR_VERSION
+        })
+       
+
+# Display higher taxonomy view.
+class HigherTaxonomyHandler(BaseHandler):
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+        
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Get list of higher taxonomy, limited to those referred from
+        # scientific names in the master list.
+        higher_taxonomy_sql = """
+            SELECT 
+                CASE    WHEN tax_class IS NULL THEN '_null'
+                        WHEN tax_class = '' THEN '_blank'
+                        ELSE LOWER(tax_class) 
+                END AS tax_class_lc,
+
+                CASE    WHEN tax_order IS NULL THEN '_null'
+                        WHEN tax_order = '' THEN '_blank'
+                        ELSE LOWER(tax_order) 
+                END AS tax_order_lc, 
+
+                CASE    WHEN tax_family IS NULL THEN '_null'
+                        WHEN tax_family = '' THEN '_blank'
+                        ELSE LOWER(tax_family)
+                END AS tax_family_lc,
+
+                COUNT(DISTINCT LOWER(scname)) AS count_species,
+                COUNT(*) OVER() AS total_count
+            FROM %s RIGHT JOIN %s ON LOWER(scientificname) = LOWER(scname)
+            GROUP BY tax_class_lc, tax_order_lc, tax_family_lc
+            ORDER BY tax_class_lc, tax_order_lc, tax_family_lc
+        """ %  (
+            access.ALL_NAMES_TABLE,
+            access.MASTER_LIST
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = higher_taxonomy_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        higher_taxonomy = []
+        total_count = 0
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + higher_taxonomy_sql + "'), server returned error " + str(response.status_code) + ": " + response.content
+            results = {"rows": []}
+        else:
+            results = json.loads(response.content)
+            higher_taxonomy = results['rows']
+            if len(higher_taxonomy) > 0:
+                total_count = higher_taxonomy[0]['total_count']
+
+        higher_taxonomy_tree = {}
+
+        classes = vnapi.groupBy(higher_taxonomy, 'tax_class_lc')
+        for tax_class in classes:
+            orders = vnapi.groupBy(classes[tax_class], 'tax_order_lc')
+            for tax_order in orders:
+                families = vnapi.groupBy(orders[tax_order], 'tax_family_lc')
+                for tax_family in families:
+                    if not tax_class in higher_taxonomy_tree:
+                        higher_taxonomy_tree[tax_class] = {}
+                    if not tax_order in higher_taxonomy_tree[tax_class]:
+                        higher_taxonomy_tree[tax_class][tax_order] = {}
+
+                    higher_taxonomy_tree[tax_class][tax_order][tax_family] = families[tax_family]
+
+        tax_class = sorted(set(map(lambda x: x['tax_class_lc'], higher_taxonomy)))
+        tax_order = sorted(set(map(lambda x: x['tax_order_lc'], higher_taxonomy)))
+        tax_family = sorted(set(map(lambda x: x['tax_family_lc'], higher_taxonomy)))
+
+        all_names = filter(lambda x: x is not None and x != '', set(tax_class) | set(tax_order) | set(tax_family))
+
+        # Render recent changes.
+        self.render_template('taxonomy.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+            'vnames': vnnames.getVernacularNames(all_names, languages.language_names_list, flag_no_higher = True, flag_no_memoize = False, flag_lookup_genera = False, flag_format_cmnames = True),
+            'tax_class': tax_class,
+            'tax_order': tax_order,
+            'tax_family': tax_family,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'total_count': total_count,
+            'higher_taxonomy': higher_taxonomy,
+            'higher_taxonomy_tree': higher_taxonomy_tree,
+            'vneditor_version': version.VNEDITOR_VERSION
+        })
+
+
 
 # Return a list of recent changes, and allow some to be deleted.
 class RecentChangesHandler(BaseHandler):
@@ -742,7 +1105,7 @@ class RecentChangesHandler(BaseHandler):
         display_count = 100
 
         # Synthesize SQL
-        recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, added_by, created_at, updated_at,
+        recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, tax_class, tax_order, tax_family, added_by, created_at, updated_at,
             COUNT(*) OVER() AS total_count
             FROM %s
             WHERE source_url='""" + SOURCE_URL + """'
@@ -866,7 +1229,7 @@ class ListViewHandler(BaseHandler):
 
         # Get offset and display_count.
         offset = int(use_last_or_default("offset", 0))
-        display_count = int(use_last_or_default("display", 20))
+        display_count = int(use_last_or_default("display", 100))
 
         # We hand this results object to each filter function, and allow it
         # to modify it as it sees fit based on the request.
@@ -895,8 +1258,10 @@ class ListViewHandler(BaseHandler):
         select = ", ".join(results['select'])
         where = " AND ".join(results['where'])
         having = " AND ".join(results['having'])
-        order_by = "ORDER BY scientificname ASC"
-        results['search_criteria'].append("sorted by ascending  scientific name")
+        order_by = "ORDER BY scientificname COLLATE \"POSIX\" ASC"
+            # We collate POSIX because otherwise spaces get ignored while
+            # sorting in CartoDB.
+        results['search_criteria'].append("sorted by ascending scientific name")
 
         limit_offset = "LIMIT %d OFFSET %d" % (
             display_count,
@@ -908,7 +1273,7 @@ class ListViewHandler(BaseHandler):
         # Put all the pieces of the SELECT statement together.
         list_sql = """SELECT
             %s
-            FROM %s INNER JOIN %s ON (LOWER(scname) = LOWER(scientificname))
+            FROM %s LEFT JOIN %s ON (LOWER(scname) = LOWER(scientificname))
             %s
             GROUP BY scientificname
             %s
@@ -947,7 +1312,7 @@ class ListViewHandler(BaseHandler):
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
 
-        vnames = vnnames.getVernacularNames(name_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=True)
+        vnames = vnnames.getVernacularNames(name_list, languages.language_names_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=True)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
@@ -974,8 +1339,11 @@ application = webapp2.WSGIApplication([
     ('/list', ListViewHandler),
     ('/delete/cartodb_id', DeleteByCDBIDHandler),
     ('/recent', RecentChangesHandler),
+    ('/taxonomy', HigherTaxonomyHandler),
+    ('/genera', GeneraHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/import', BulkImportHandler),
+    ('/masterlist', MasterListHandler),
     ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
 ], debug=not PROD)

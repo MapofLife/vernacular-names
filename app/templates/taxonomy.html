@@ -1,0 +1,61 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Higher Taxonomy From Database{% endblock %}
+
+{% block head %}
+    <script src="/static/sorttable.js"></script>
+{% endblock %}
+
+{% block content %}
+    <p><strong>Classes</strong>: {% for class in tax_class %}<a href="#class_{{class}}">{{class|capitalize if class != '' else "(blank)" }}</a> {% endfor %}</p>
+    <p><strong>Orders</strong>: {% for order in tax_order %}<a href="#order_{{order}}">{{order|capitalize}}</a> {% endfor %}</p>
+    <!--
+    <p><strong>Families</strong>: {% for family in tax_family %}<a href="#family_{{family}}">{{family|capitalize}}</a> {% endfor %}</p>
+    -->
+
+    <table border="1" class="sortable">
+        <thead><tr>
+            <th>Higher taxonomy</th>
+            {% for lang in language_names_list %}
+                <th>{{language_names[lang]}}</th>
+            {% endfor %}
+            <th>Count species</th>
+        </tr></thead>
+        <tbody>
+        {% for class,v in higher_taxonomy_tree|dictsort %}
+            <tr>
+                <td id="class_{{class}}" >Class <a href="/?lookup={{class}}">{{ class|capitalize }}</a></td>
+                {% for lang in language_names_list %}
+                    {% if class is none or class == '' or vnames[class][lang].vernacularname == '' %}
+                        <td>&nbsp;</td>
+                    {% else %}
+                        <td><a href="/?lookup={{class}}#lang-{{lang}}">{{vnames[class][lang].vernacularname}}</a></td>
+                    {% endif %}
+                {% endfor %}
+                <td>TBD</td>
+            </tr>
+            {% for order,v in higher_taxonomy_tree[class]|dictsort %}
+                <tr>
+                    <td id="order_{{order}}">&nbsp;&nbsp;Order <a href="/?lookup={{order}}">{{ order|capitalize }}</a></td>
+                    {% for lang in language_names_list %}
+                        <td><a href="/?lookup={{order}}#lang-{{lang}}">{{vnames[order][lang].vernacularname}}</a></td>
+                    {% endfor %}
+                    <td>TBD</td>
+                </tr>
+                {% for family,v in higher_taxonomy_tree[class][order]|dictsort %}
+                    <tr>
+                        <td id="family_{{family}}">&nbsp;&nbsp;&nbsp;&nbsp;Family <a href="/?lookup={{family}}">{{ family|capitalize }}</a></td>
+                        {% for lang in language_names_list %}
+                            <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacularname}}</a></td> 
+                        {% endfor %}
+                        <td>{{ higher_taxonomy_tree[class][order][family][0]['count_species'] }}</td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+            <tr>
+                <td colspan="{{ language_names_list|length + 3}}">&nbsp;</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

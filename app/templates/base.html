@@ -28,24 +28,26 @@
         </div>
         {% endif %}
 
-        <form>
+        <form action="/" method="GET">
             Search: <input name="search" value="{{ current_search }}"> <input type="submit" value="Search"> <input type="submit" name="clear" value="Clear">
             <input name="dataset" type="hidden" value="{{dataset_filter}}">
         </form>
 
         <div>
             <a href="/coverage">{{ datasets_data|length }} datasets</a>
+            <a href="/masterlist">Master List</a>
             <a href="/list">List names</a>
+            <a href="/genera">Genera</a>
             <a href="/sources">Sources</a>
             <a href="/recent">Recent changes</a>
             <a href="/import">Bulk import</a>
         </div>
 
         {% block content %}
-        This page has not been configured. Please report this <a href="https://github.com/gaurav/vernacular-names/issues">as a bug</a>.
+        This page has not been configured. Please report this <a href="https://github.com/mapoflife/vernacular-names/issues">as a bug</a>.
         {% endblock %}
 
-    <p>&copy; Map of Life, 2014. Please report any <a href="https://github.com/gaurav/vernacular-names/issues">any issues</a> and <a href="https://github.com/gaurav/vernacular-names">fork our code</a>. This is version {{ vneditor_version }}.</p>
+    <p>&copy; Map of Life, 2014. Please report any <a href="https://github.com/mapoflife/vernacular-names/issues">any issues</a> and <a href="https://github.com/mapoflife/vernacular-names">fork our code</a>. This is version {{ vneditor_version }}.</p>
 
     </body>
 </html>

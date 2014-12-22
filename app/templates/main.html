@@ -1,12 +1,6 @@
 {% extends "templates/base.html" %}
 {% block page_title %}Editor{% endblock %}
 {% block javascript %}
-/*
- -- Turned off: this deactivates the scroll-to-lang functionality.
-$(document).ready(function() {
-    $('.selected').get(0).scrollIntoView(false);
-});
-*/
 {% endblock %}
 {% block style %}
 #scrolled_search_results {
@@ -73,24 +67,51 @@ table.search_results tr:nth-child(even) {
                     <strong>External links</strong>
                     <br>
                     <br>
-                    <a href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{lookup_search}}">English Wikipedia</a>
+                    <a target="_blank" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{lookup_search}}">English Wikipedia</a>
                     <br>
-                    <a href="http://eol.org/{{lookup_search}}">EOL</a>
+                    <a target="_blank" href="http://eol.org/{{lookup_search}}">EOL</a>
                     <br>
-                    <a href="http://www.gbif.org/species/search?q={{lookup_search}}">GBIF</a>
+                    <a target="_blank" href="http://www.gbif.org/species/search?q={{lookup_search}}">GBIF</a>
                 </div>
 
                 <h2><em>{{ lookup_search }}</em>
                 </h2>
 
                 {% set genus = lookup_search.split()[0] %}
-                <p>Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em></p>
+                <p>
+                    <form method="post" action="/add/name">
+                        <input type="hidden" name="dataset" value="{{dataset_filter}}">
+                        <input type="hidden" name="search" value="{{current_search}}">
+                        <input type="hidden" name="lookup" value="{{lookup_search}}">
+
+                        Class: {% for class in tax_class %}<a href="?lookup={{class}}">{{class|capitalize}}</a> {%endfor%}
+                        <a href="#" onclick="$('#tax_class_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <input id="tax_class_add" name="tax_class" style="display:none">
+                        <br>
+                        Order: {% for order in tax_order %}<a href="?lookup={{order}}">{{order|capitalize}}</a> {%endfor%}
+                        <a href="#" onclick="$('#tax_order_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <input id="tax_order_add" name="tax_order" style="display:none">
+                        <br>
+                        Family: {% for family in tax_family %}<a href="?lookup={{family}}">{{family|capitalize}}</a> {%endfor%}
+                        <a href="#" onclick="$('#tax_family_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <input id="tax_family_add" name="tax_family" style="display:none">
+                        <br>
+                        Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em><br>
+
+                        <div id="tax_source_add" style="display:none">
+                            <em>Higher taxonomy source</em>: <input name="source" size=50>
+                            <input name="add_to_current_lookup_in_{{language}}" 
+                                value="Add" type="submit">
+                        </div> 
+
+                   </form>
+                </p>
 
 <!--
                     <div style="float: right; padding: 0.5em; border: 1px; background: #ddd">
                         <center><strong>Languages</strong></center>
-                        {% for language in lookup_results_languages %}
-                            <a href="#lang-{{language}}">{{lookup_results_language_names[language]}}</a>
+                        {% for lang in language_names_list %}
+                            <a href="#lang-{{language}}">{{language_names[lang]}}</a>
                             <br>
                         {% endfor %}
                         <a href="#lang-completely-new">Add new name</a>
@@ -100,9 +121,9 @@ table.search_results tr:nth-child(even) {
                     {% for language in language_names_list %}
                         <div class="results-lang{% if language in language_names_list %} results-lang-mol{% endif %}" id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}>
                         {% if language in lookup_results[lookup_search] and (lookup_results[lookup_search][language])|length > 0 %}
-                            <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: {{ lookup_results[lookup_search][language][0].vernacularname }}</h3>
+                            <h3 id="lang-{{language}}">{{ language_names[language] }}: {{ lookup_results[lookup_search][language][0].vernacularname }}</h3>
                         {% else %}
-                            <h3 id="lang-{{language}}">{{ lookup_results_language_names[language] }}: <em>None</em></h3>
+                            <h3 id="lang-{{language}}">{{ language_names[language] }}: <em>None</em></h3>
                         {% endif %}
                         <ol>
                             {% for result in lookup_results[lookup_search][language] %}
@@ -110,6 +131,7 @@ table.search_results tr:nth-child(even) {
                                     <div class="display_name" id="display_name_{{language}}_{{loop.index}}">
                                         {% if loop.first %}<strong>{% endif %}
                                         <a class="nohistory" href="#" onclick="$('.display_name').show(); $('.edit_name').hide(); $('#display_name_{{language}}_{{loop.index}}').hide(); $('#edit_name_{{language}}_{{loop.index}}').show(); $('#edit_name_{{language}}_{{loop.index}} input:first').focus(); return false">{{ result.cmname }}</a>
+                                        {% if result.max_source_priority == 80 %}(added manually){% elif result.max_source_priority != 0%}(Priority: {{ result.max_source_priority }}){%endif%}
                                         {% if loop.first %}</strong>{% endif %}
                                         {# TODO: reactivate once we have this in the result
                                         {% if result.max_source_priority > 80 %}

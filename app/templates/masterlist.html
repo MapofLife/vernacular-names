@@ -1,0 +1,77 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Master List{% endblock %}
+
+{% block head %}
+    <script src="/static/sorttable.js"></script>
+{% endblock %}
+
+{% block content %}
+
+    <p>The Master List is the list of species names that are exported. Each species is present in one or more datasets.
+    </p>
+
+    <div style="margin-left: 4em">
+        {% if diff_names_count %}
+            <p>Compared {{diff_names_count}} names: found {{ diff_names_added|count }} additions and {{ diff_names_deleted|count }} deletions.</p>
+
+            <p>Names added:<br><textarea rows=20 cols=40>{{ diff_names_added|join("\n") }}</textarea></p>
+            <p>Names deleted:<br><textarea rows=20 cols=40>{{ diff_names_deleted|join("\n") }}</textarea></p>
+            <p>SQL statements:<br><textarea rows=20 cols=40>{{ diff_sql_statements }}</textarea></p>
+        {% endif %}
+
+        <p>To compare these names against a definitive list, enter the list here:</p>
+
+        <form method="POST">
+            <input type="hidden" name="search" value="{{ dataset_filter }}">
+            <textarea name="diff_names" rows=20 cols=40></textarea>
+            <input type="submit" value="Compare">
+        </form>
+    </div>
+    
+    {% if dataset_filter == "" %}
+        <p>Displaying {{species_sorted|count}} names from the following datasets:</p>
+        <ul>
+            {% for dataset_data in datasets_data %}
+                <li><a href="?dataset={{dataset_data['dataset']}}">{{ dataset_data['dataset'] }}</a> ({{ dataset_data['count'] }} species)</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Displaying {{species_sorted|count}} names from dataset <em><a href="/list?dataset={{dataset_filter}}">{{ dataset_filter }}</a></em> (<a href="?dataset=">reset</a>).
+
+        <form action="/import" method="POST">
+            <input type="hidden" name="input_dataset" value="{{dataset_filter}}" />
+            <textarea style="display: none" name="scnames">{{species_sorted|join("\n")}}</textarea>
+            <input type="submit" value="Display dataset in bulk import">
+        </form>
+
+        </p>
+    {% endif %}
+
+    <table border="1" class="sortable">
+        <thead><tr>
+            <th>&nbsp;</th>
+            <th>Species</th>
+            <th>Dataset</th>
+        </tr></thead>
+        <tbody>
+        {% for scname in species_sorted %}
+            {% set family = species[scname]['family'] %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><em><a href="/?lookup={{scname}}">{{scname|capitalize}}</a></em></td>
+                <td>{% for dataset in species[scname]['datasets']|sort %}
+                    {% if dataset == dataset_filter %}
+                        {{dataset}}
+                    {% else %}
+                        <a href="?dataset={{dataset}}">{{dataset}}</a> 
+                    {% endif %}
+                {% endfor %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+
+        <p>
+    </table>
+{% endblock %}

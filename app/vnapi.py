@@ -9,12 +9,19 @@ import base64
 import json
 import urllib
 import re
+import logging
 
 import access
 import vnnames
 
 # Configuration.
 DEADLINE_FETCH = 60 # seconds to wait during URL fetch (max: 60)
+
+# Min, max and default values for source_priority
+PRIORITY_MIN = 0
+PRIORITY_MAX = 100
+PRIORITY_DEFAULT = 0
+PRIORITY_DEFAULT_APP = 80
 
 # Helper functions.
 def url_get(url):
@@ -26,7 +33,7 @@ def encode_b64_for_psql(text):
 
 # Prepare a bit of code for PostgreSQL to decode a string on the server side.
 def decode_b64_on_psql(text):
-    base64_only = re.compile(r"^[a-zA-Z0-9=]*$")
+    base64_only = re.compile(r"^[a-zA-Z0-9+/=]*$")
     if not base64_only.match(text):
         raise RuntimeError("Error: '" + text + "' sent to decode_b64_on_psql is not base64!")
 
@@ -60,10 +67,6 @@ def getDatasets():
     results = json.loads(response.content)
     return results['rows']
 
-# Get the dataset coverage for a particular dataset.
-def getDatasetCoverage(dataset, langs):
-    return getNamesCoverage(getDatasetNames(dataset), langs)
-
 # Return a list of every scientific name in every dataset.
 def getMasterList():
     datasets = getDatasets()
@@ -88,104 +91,153 @@ def getDatasetNames(dataset):
 
     return scnames
 
-# Return the coverage we have on this set of names in the specified language.
-# This code is based on vnnames.searchVernacularNames()
-def getNamesCoverage(query_names, langs):
-    query_names_sorted = sorted(set(query_names))
+# Get the dataset coverage for a particular dataset.
+def getDatasetCoverage(datasets, langs):
+    logging.info("getDatasetCoverage('" + ", ".join(datasets) + "')")
 
-    # From http://stackoverflow.com/a/312464/27310
-    def chunks(items, size):
-        for i in xrange(0, len(items), size):
-            yield items[i:i+size]
+    # Retrieve names with languages without genus lookups.
+    sql = """
+        SELECT 
+            ml.dataset AS dataset,
+            LOWER(ml.scientificname) AS scname, 
+            ARRAY_AGG(DISTINCT LOWER(vn.lang)) AS langs
+        FROM
+            %s ml
+            LEFT OUTER JOIN %s vn
+            ON LOWER(ml.scientificname) = LOWER(vn.scname)
+        WHERE 
+            dataset IN (%s)
+        GROUP BY ml.dataset, ml.scientificname
+    """
+    sql_query = sql % (
+        access.MASTER_LIST, access.ALL_NAMES_TABLE, 
+        ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
+    )
 
-    # Counts
-    counts = dict()
+    response = urlfetch.fetch(access.CDB_URL,
+        payload=urllib.urlencode(dict(
+            q = sql_query
+        )),
+        method=urlfetch.POST,
+        headers={'Content-type': 'application/x-www-form-urlencoded'},
+        deadline=DEADLINE_FETCH
+    )
 
-    # Query through all names in chunks.
-    row = 0
-    for chunk_names in chunks(query_names_sorted, vnnames.SEARCH_CHUNK_SIZE):
-        row += len(chunk_names)
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
 
-        genera = set()
-        for name in chunk_names:
-            match = re.search('^(\w+)\s+(\w+)$', name)
-            if match:
-                genus = match.group(1)
-                genera.add(genus)
+    species_lookups = json.loads(response.content)['rows']
 
-        chunk_names_with_genera = list(chunk_names)
-        chunk_names_with_genera.extend(genera)
+    logging.info(" - species lookups complete")
+    
+    # Retrieve names with languages with genus lookups.
+    sql = """
+        SELECT
+            ml.dataset AS dataset,
+            LOWER(ml.scientificname) AS scname, 
+            ARRAY_AGG(DISTINCT LOWER(vn.lang)) AS langs
+        FROM
+            %s ml
+            LEFT OUTER JOIN %s vn
+            ON LOWER(SPLIT_PART(ml.scientificname, ' ', 1)) = LOWER(vn.scname)
+        WHERE 
+            dataset IN (%s) 
+        GROUP BY ml.dataset, ml.scientificname
+    """
+    sql_query = sql % (
+        access.MASTER_LIST, access.ALL_NAMES_TABLE, 
+        ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
+    )
 
-        # Search for scientific names AND genus name in the same query.
-        scname_list = ", ".join(map(lambda name: encode_b64_for_psql(name.lower()), chunk_names_with_genera))
-        langs_list = ", ".join(map(lambda lang: encode_b64_for_psql(lang), langs))
-        sql = """
-            SELECT LOWER(scname) AS scname_lc, scname, lang, COUNT(*) AS count FROM %s
-            WHERE LOWER(scname) IN (%s) AND lang IN (%s)
-            GROUP BY scname_lc, scname, lang
-        """
-        sql_query = sql % (access.ALL_NAMES_TABLE, scname_list, langs_list)
-        response = urlfetch.fetch(access.CDB_URL,
-            payload=urllib.urlencode(dict(
-                q = sql_query
-            )),
-            method=urlfetch.POST,
-            headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=DEADLINE_FETCH
-        )
+    response = urlfetch.fetch(access.CDB_URL,
+        payload=urllib.urlencode(dict(
+            q = sql_query
+        )),
+        method=urlfetch.POST,
+        headers={'Content-type': 'application/x-www-form-urlencoded'},
+        deadline=DEADLINE_FETCH
+    )
 
-        if response.status_code != 200:
-            raise RuntimeError("Could not read server response: " + response.content)
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
 
-        # Group by language so we can do lookups quickly.
-        results = json.loads(response.content)
-        rows_by_lang = groupBy(results['rows'], 'lang')
+    genus_lookups_by_row = json.loads(response.content)['rows']
 
-        for lang in langs:
-            # counts[lang] persists across the chunk runs.
-            if not lang in counts:
-                counts[lang] = {
-                    'total': 0,
-                    'matched_with_species_name': 0,
-                    'matched_with_genus_name': 0,
-                    'unmatched': 0
-                }
+    logging.info(" - genus lookups complete")
 
-            if lang in rows_by_lang:
-                rows_by_scname_lc = groupBy(rows_by_lang[lang], 'scname_lc')
-            else:
-                rows_by_scname_lc = []
+    # Group by dataset, so we can go through the data dataset by dataset.
+    species_by_dataset = groupBy(species_lookups, 'dataset')
+    genus_by_dataset = groupBy(genus_lookups_by_row, 'dataset')
+    
+    logging.info(" - grouping by dataset complete")
 
-            # Note that we're looking through chunk_names: 
-            for scname in chunk_names:
-                scname_lc = scname.lower()
-                counts[lang]['total'] += 1
+    # Process each dataset separately.
+    results = dict(
+        coverage = dict(),
+        num_species = dict()
+    )
 
-                flag_matched = False
+    for dataset in species_by_dataset:
+        species_rows = species_by_dataset[dataset]
+        genus_by_scname = dict()
+        if dataset in genus_by_dataset:
+            genus_by_scname = groupBy(genus_by_dataset[dataset], 'scname')
 
-                # If this language never showed up in the results,
-                # it's pointless searching for it.
-                if lang in rows_by_lang:
+        # For each scname, figure out if it has a genus name and species name in each language.
+        num_species = 0
+        coverage = dict()
+        for row in species_rows:
+            scname = row['scname']
+            langs_species = row['langs']
+            langs_genus = []
+            if scname in genus_by_scname:
+                langs_genus = genus_by_scname[scname][0]['langs']
 
-                    # Try matching species common name.
-                    if scname_lc in rows_by_scname_lc:
-                        counts[lang]['matched_with_species_name'] += 1
-                        flag_matched = True
+            if len(langs_species) == 1 and langs_species[0] is None:
+                langs_species = []
+            
+            if len(langs_genus) == 1 and langs_genus[0] is None:
+                langs_genus = []
 
-                    # If that fails, try matching genus common name.
-                    else:
-                        match = re.search('^(\w+)\s+(\w+)$', scname_lc)
-                        if match:
-                            genus = match.group(1)
+            # print("scname = " + scname + ", species = " + ", ".join(langs_species) + ", genus = " + ", ".join(langs_genus))
 
-                            if genus in rows_by_scname_lc:
-                                counts[lang]['matched_with_genus_name'] += 1
-                                flag_matched = True
+            num_species += 1
 
-                if not flag_matched:
-                    counts[lang]['unmatched'] += 1
+            for lang in langs:
+                if lang not in coverage:
+                    coverage[lang] = dict(
+                        count = 0,
+                        as_species = 0,
+                        as_genus = 0,
+                        as_unmatched = 0
+                    )
 
-    return counts
+                coverage[lang]['count'] += 1
+
+                if lang in langs_species:
+                    coverage[lang]['as_species'] += 1
+                elif lang in langs_genus:
+                    coverage[lang]['as_genus'] += 1
+                else:
+                    coverage[lang]['as_unmatched'] += 1
+
+            results['coverage'][dataset] = coverage
+            results['num_species'][dataset] = num_species
+
+    logging.info(" - coverage counting complete")
+
+    # Generate percentages.
+    for dataset in results['coverage']:
+        coverage = results['coverage'][dataset]
+        num_species = results['num_species'][dataset]
+        for lang in coverage:
+            coverage[lang]['as_species_pc'] = int(coverage[lang]['as_species'])/float(num_species)*100
+            coverage[lang]['as_genus_pc'] = int(coverage[lang]['as_genus'])/float(num_species)*100
+            coverage[lang]['unmatched_pc'] = int(coverage[lang]['as_unmatched'])/float(num_species)*100
+
+    logging.info(" - coverage summary complete")
+
+    return results
 
 # Check if a dataset contains name. It caches the entire list
 # of names in that dataset to make its job easier.
@@ -231,7 +283,7 @@ def searchForName(name):
         if not scname in match_table:
             match_table[scname] = []
 
-        if match['cmname'].find(name) >= 0:
+        if match['cmname'].find(name.lower()) >= 0:
             match_table[scname].append(match['cmname'])
 
     return match_table
