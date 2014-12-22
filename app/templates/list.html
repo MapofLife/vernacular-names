@@ -7,13 +7,20 @@
 {% endblock %}
 
 {% block content %}
-    <p><strong>{{ search_criteria }}</strong></p>
+    <p><strong>{{ search_criteria|capitalize }}</strong></p>
+
+        <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
+
+        <form method="POST" action="/import">
+            <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
+            <textarea style="display: none" name="scnames">{{ name_list|join("\n") }}</textarea>
+            <input type="submit" value="Edit currently displayed names" />
+        </form>
+
 
         <form method="GET">
             <input type="hidden" name="offset" value="{{offset}}">
             <input type="hidden" name="display" value="{{display_count}}">
-
-        <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
     <div id="list_content" style="width: 100%; margins: auto; text-align: center">
     <p>
