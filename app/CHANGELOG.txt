@@ -1,4 +1,4 @@
-development
+0.5: December 21, 2014
  - /import now includes names already in NomDB for the entered species.
  - /list and /masterlist now have buttons to send the current list of names to
    the bulk import/editor.
