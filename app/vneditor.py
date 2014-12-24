@@ -101,6 +101,9 @@ class MainPage(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        if user is None:
+            return
+
         # Load the current search term.
         current_search = self.request.get('search')
         if self.request.get('clear') != '':
@@ -190,6 +193,9 @@ class DeleteByCDBIDHandler(BaseHandler):
         # Fail without login.
         current_user = self.check_user()
 
+        if current_user is None:
+            return
+
         # Retrieve cartodb_id to delete.
         cartodb_id = self.request.get_range('cartodb_id')
 
@@ -223,6 +229,9 @@ class AddNameHandler(BaseHandler):
     def post(self):
         # Fail without login.
         current_user = self.check_user()
+
+        if current_user is None:
+            return
 
         # Retrieve state. We only use this for the final redirect.
         search = self.request.get('search')
@@ -316,6 +325,9 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # Fail without login.
         current_user = self.check_user()
 
+        if current_user is None:
+            return
+
         # Create file in memory and make it gzipped.
         fgz = cStringIO.StringIO()
         csv_filename = "taxonomy_translations_" + time.strftime("%Y_%B_%d_%H%MZ", time.gmtime())  + ".csv"
@@ -388,6 +400,9 @@ class CoverageViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        if user is None:
+            return
+
         # Pagination
         offset = int(self.request.get('offset', 0))
         default_display = 50
@@ -432,6 +447,9 @@ class SourcesHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Set up error msg.
         msg = ""
@@ -479,6 +497,9 @@ class SourcesHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
@@ -576,6 +597,9 @@ class MasterListHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Any message?
         message = self.request.get('message')
@@ -692,6 +716,9 @@ class BulkImportHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Any input dataset name?
         input_dataset = self.request.get('input_dataset')
@@ -906,6 +933,9 @@ class GeneraHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        if user is None:
+            return
+
         # Is there a message?
         message = self.request.get('msg')
         if not message:
@@ -984,6 +1014,9 @@ class HigherTaxonomyHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Is there a message?
         message = self.request.get('msg')
@@ -1095,6 +1128,9 @@ class RecentChangesHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        if user is None:
+            return
+
         # Is there a message?
         message = self.request.get('msg')
         if not message:
@@ -1201,6 +1237,9 @@ class ListViewHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Message?
         message = self.request.get('msg')
