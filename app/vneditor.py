@@ -364,7 +364,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
                     # Use family latin name instead of common name 
                     # if we don't have one.
                     if len(tax_family) == 0:
-                        tax_family = higher_taxonomy['family']
+                        tax_family = map(lambda x: x.capitalize(), higher_taxonomy['family'])
 
                     row.extend([
                         vname.encode('utf-8'), 
