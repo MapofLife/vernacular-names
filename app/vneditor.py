@@ -323,10 +323,10 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # We have no parameters. We just generate.
 
         # Fail without login.
-        current_user = self.check_user()
+        #current_user = self.check_user()
 
-        if current_user is None:
-            return
+        #if current_user is None:
+        #    return
 
         # Create file in memory and make it gzipped.
         fgz = cStringIO.StringIO()
@@ -351,9 +351,9 @@ class GenerateTaxonomyTranslations(BaseHandler):
 
         def add_name(name, higher_taxonomy, vnames_by_lang):
             row = [name.capitalize(), 
-                "|".join(sorted(higher_taxonomy['family'])),
-                "|".join(sorted(higher_taxonomy['order'])),
-                "|".join(sorted(higher_taxonomy['class']))]
+                concat_names(higher_taxonomy['family']),
+                concat_names(higher_taxonomy['order']),
+                concat_names(higher_taxonomy['class'])]
 
             for lang in languages.language_names_list:
                 if lang in vnames_by_lang:
@@ -362,7 +362,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
 
                     row.extend([
                         vname.encode('utf-8'), 
-                        "|".join(sorted(sources)).encode('utf-8'),
+                        concat_names(sources),
                         concat_names(vnames_by_lang[lang].tax_family)
                     ])
                 else:
@@ -946,15 +946,13 @@ class GeneraHandler(BaseHandler):
         genera_sql = """
             SELECT 
                 LOWER(split_part(scientificname, ' ', 1)) AS genus,
-                family,
+                ARRAY_AGG(DISTINCT family) AS family,
                 COUNT(DISTINCT LOWER(scientificname)) AS count_species,
-                ARRAY_AGG(DISTINCT master.dataset ORDER BY master.dataset ASC) AS datasets
-            FROM %s AS higher RIGHT JOIN %s AS master
-                ON LOWER(genus) = LOWER(split_part(scientificname, ' ', 1)) 
+                ARRAY_AGG(DISTINCT dataset ORDER BY dataset ASC) AS datasets
+            FROM %s AS master
             GROUP BY LOWER(split_part(scientificname, ' ', 1)), family
             ORDER BY genus ASC, family ASC NULLS FIRST
         """ % (
-            access.HIGHER_LIST,
             access.MASTER_LIST
         )
   
@@ -978,6 +976,10 @@ class GeneraHandler(BaseHandler):
             results = json.loads(response.content)
             all_species = results['rows']
 
+        # http://stackoverflow.com/a/408281/27310
+        def flatten(iter_list):
+            return list(item for iter_ in iter_list for item in iter_)
+
         missing_genera = filter(lambda x: x['family'] is None, all_species)
         genera = filter(lambda x: x['family'] is not None, all_species)
         all_names = filter(lambda x: x is not None, map(lambda x: x['family'], all_species))
@@ -993,7 +995,7 @@ class GeneraHandler(BaseHandler):
             'missing_genera': missing_genera,
             'genera': genera,
             'vnames': vnnames.getVernacularNames(
-                all_names, 
+                flatten(all_names), 
                 languages.language_names_list, 
                 flag_no_higher = True, 
                 flag_no_memoize = True, 
@@ -1347,6 +1349,7 @@ class ListViewHandler(BaseHandler):
             results = json.loads(response.content)
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
+        genera_list = set(map(lambda x: x['scientificname'].partition(' ')[0], results['rows']))
         total_count = 0
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
@@ -1364,6 +1367,7 @@ class ListViewHandler(BaseHandler):
             'message': message,
             'search_criteria': search_criteria,
             'name_list': name_list,
+            'genera_list': genera_list,
             'vnames': vnames,
             'offset': offset,
             'display_count': display_count,

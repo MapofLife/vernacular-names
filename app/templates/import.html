@@ -12,7 +12,7 @@
     <script src="/static/sorttable.js"></script>
     <script><!--
         function addToSources(source) { 
-            if(source) { 
+            if(source) {
                 $('.source_list').append('<option>' + source + '</option>'); 
                 $('#sources').val(
                     $('#sources').val().trim()
@@ -81,6 +81,10 @@
             }
 
             vnames.each(function() {
+                // Only fill in blanks.
+                if($(this).val() != '')
+                    return;
+
                 match = /^vname_(\d+)_(\w+)$/.exec(this.id)
                 if(!match) {
                     alert("Error: unable to parse vname input id: '" + this.id + "'")
@@ -159,7 +163,7 @@
                                         // vninput.val(inner_lang + ": " + best_eol_vname)
                                         vninput.val(best_eol_vname)
                                         vninput.css('background-color', '{{COLOR_AUTOMATIC_ENTRY}}')
-                                        vninput.next().val(eol_source)
+                                        $("#vname_" + this.index + "_" + this.lang + "_source").val(eol_source)
                                     } else {
                                         // Should we indicate vnames that we could find autovernacular names for?
                                     }
