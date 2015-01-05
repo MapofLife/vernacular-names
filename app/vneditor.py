@@ -350,7 +350,7 @@ class GenerateTaxonomyTranslations(BaseHandler):
             return "|".join(sorted(names)).encode('utf-8')
 
         def add_name(name, higher_taxonomy, vnames_by_lang):
-            row = [name.capitalize(), 
+            row = [name.encode('utf-8').capitalize(), 
                 concat_names(higher_taxonomy['family']),
                 concat_names(higher_taxonomy['order']),
                 concat_names(higher_taxonomy['class'])]
@@ -359,11 +359,17 @@ class GenerateTaxonomyTranslations(BaseHandler):
                 if lang in vnames_by_lang:
                     vname = vnames_by_lang[lang].vernacularname
                     sources = vnames_by_lang[lang].sources
+                    tax_family = vnames_by_lang[lang].tax_family
+
+                    # Use family latin name instead of common name 
+                    # if we don't have one.
+                    if len(tax_family) == 0:
+                        tax_family = higher_taxonomy['family']
 
                     row.extend([
                         vname.encode('utf-8'), 
                         concat_names(sources),
-                        concat_names(vnames_by_lang[lang].tax_family)
+                        concat_names(tax_family)
                     ])
                 else:
                     row.extend([None, None, None])
