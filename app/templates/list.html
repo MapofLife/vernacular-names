@@ -17,6 +17,11 @@
             <input type="submit" value="Edit currently displayed names" />
         </form>
 
+        <form method="POST" action="/import">
+            <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
+            <textarea style="display: none" name="scnames">{{ genera_list|join("\n") }}</textarea>
+            <input type="submit" value="Edit currently displayed genera" />
+        </form>
 
         <form method="GET">
             <input type="hidden" name="offset" value="{{offset}}">

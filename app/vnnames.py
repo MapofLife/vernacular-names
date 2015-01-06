@@ -190,7 +190,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 LOWER(lang) AS lang_lc, 
                 cmname,
                 POSITION(' ' IN scname) = 0 AS flag_uninomial,
-                MIN(higher.family) AS family,
+                MIN(master_list.family) AS family,
                 array_agg(source) AS sources, 
                 array_agg(LOWER(tax_class)) OVER (PARTITION BY scname) AS agg_class, 
                 array_agg(LOWER(tax_order)) OVER (PARTITION BY scname) AS agg_order, 
@@ -203,7 +203,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 ON 
                     LOWER(qname) = LOWER(scname) 
                     %s
-                LEFT JOIN %s higher ON LOWER(SPLIT_PART(scname, ' ', 1)) = LOWER(higher.genus)
+                LEFT JOIN %s master_list ON LOWER(scname) = LOWER(master_list.scientificname)
             GROUP BY 
                 qname, lang_lc, scname, cmname, tax_order, tax_class, tax_family
             ORDER BY
@@ -221,7 +221,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             scientificname_list,
             # If we can't find the name itself, look up the genus name.
             "OR LOWER(SPLIT_PART(qn.qname, ' ', 1)) = LOWER(scname)" if flag_lookup_genera else "",
-            access.HIGHER_LIST 
+            access.MASTER_LIST
         )
 
         # print("Sql = <<" + sql_query + ">>")

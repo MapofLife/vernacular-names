@@ -50,7 +50,7 @@
         </tr></thead>
         <tbody>
         {% for row in genera %}
-            {% set family = row['family'] %}
+            {% set family = row['family']|join(", ") %}
             <tr>
                 <td>{{ loop.index }}</td>
                 <td><em><a href="/?lookup={{row['genus']}}">{{row['genus']|capitalize}}</a></em></td>
