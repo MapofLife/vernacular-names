@@ -14,13 +14,13 @@
         <form method="POST" action="/import">
             <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
             <textarea style="display: none" name="scnames">{{ name_list|join("\n") }}</textarea>
-            <input type="submit" value="Edit currently displayed names" />
+            <input type="submit" value="Edit {{ name_list|count }} currently displayed names" />
         </form>
 
         <form method="POST" action="/import">
             <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
             <textarea style="display: none" name="scnames">{{ genera_list|join("\n") }}</textarea>
-            <input type="submit" value="Edit currently displayed genera" />
+            <input type="submit" value="Edit {{ genera_list|count }} currently displayed genera" />
         </form>
 
         <form method="GET">
