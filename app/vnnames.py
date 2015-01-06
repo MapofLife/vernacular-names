@@ -190,7 +190,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 LOWER(lang) AS lang_lc, 
                 cmname,
                 POSITION(' ' IN scname) = 0 AS flag_uninomial,
-                MIN(master_list.family) AS family,
+                array_agg(master_list.family) AS ml_agg_family,
                 array_agg(source) AS sources, 
                 array_agg(LOWER(tax_class)) OVER (PARTITION BY scname) AS agg_class, 
                 array_agg(LOWER(tax_order)) OVER (PARTITION BY scname) AS agg_order, 
@@ -203,7 +203,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 ON 
                     LOWER(qname) = LOWER(scname) 
                     %s
-                LEFT JOIN %s master_list ON LOWER(scname) = LOWER(master_list.scientificname)
+                LEFT JOIN %s master_list ON LOWER(qname) = LOWER(master_list.scientificname)
             GROUP BY 
                 qname, lang_lc, scname, cmname, tax_order, tax_class, tax_family
             ORDER BY
@@ -272,15 +272,13 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 for result in lang_results:
                     taxonomy['class'].update(clean_agg(result['agg_class']))
                     taxonomy['order'].update(clean_agg(result['agg_order']))
-                    taxonomy['family'].update(clean_agg(result['agg_family']))
+                    taxonomy['family'].update(clean_agg(result['ml_agg_family']))
 
             # Prevent recursion: remove any higher taxonomy
             # that is part of our current query.
             taxonomy['class'] = set(filter(lambda x: x.lower() != scname, taxonomy['class']))
             taxonomy['order'] = set(filter(lambda x: x.lower() != scname, taxonomy['order']))
-            taxonomy['tax_family'] = set(filter(lambda x: x.lower() != scname, taxonomy['family']))
-            families = filter(lambda x: x is not None, map(lambda x: x['family'], results))
-            taxonomy['family'] = [families[0]] if len(families) > 0 else []
+            taxonomy['family'] = set(filter(lambda x: x.lower() != scname, taxonomy['family']))
 
             # For every language we are interested in.
             for lang in languages_list:
