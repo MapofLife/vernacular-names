@@ -332,6 +332,9 @@
                         <span style="color: red"><em>{{ scname|capitalize }}</em></span><br><strong>Warning: not in master list!</strong>
                     {% endif %}
                     <input type="hidden" id="scname_{{scname_index}}" name="scname_{{scname_index}}" value="{{scname}}" />
+                    <a target="resources" href="http://eol.org/{{scname}}">EOL</a>
+                    <a target="resources" href="http://www.gbif.org/species/search?q={{scname}}">GBIF</a>
+                    <a target="resources" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{scname}}">Wikipedia</a>
                 </td>
                 {% for lang in language_names_list %}
                     {% set vname = "" %}
