@@ -26,6 +26,9 @@ import vnnames
 # Display the total count in /list: expensive, but useful.
 FLAG_LIST_DISPLAY_COUNT = True
 
+# How many rows to display in /list by default.
+LISTVIEWHANDLER_DEFAULT_ROWS = 500
+
 # Sources with fewer vname entries than this are considered to be individual imports;
 # greater than this are bulk imports.
 INDIVIDUAL_IMPORT_LIMIT = 100
@@ -1276,7 +1279,7 @@ class ListViewHandler(BaseHandler):
 
         # Get offset and display_count.
         offset = int(use_last_or_default("offset", 0))
-        display_count = int(use_last_or_default("display", 100))
+        display_count = int(use_last_or_default("display", LISTVIEWHANDLER_DEFAULT_ROWS))
 
         # We hand this results object to each filter function, and allow it
         # to modify it as it sees fit based on the request.
@@ -1355,7 +1358,7 @@ class ListViewHandler(BaseHandler):
             results = json.loads(response.content)
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
-        genera_list = set(map(lambda x: x['scientificname'].partition(' ')[0], results['rows']))
+        genera_list = sorted(set(map(lambda x: x['scientificname'].partition(' ')[0], results['rows'])))
         total_count = 0
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
