@@ -755,7 +755,7 @@ class BulkImportHandler(BaseHandler):
         # Retrieve list of sources.
         all_sources = self.request.get('sources')
         manual_change = 'Manual changes on ' + time.strftime("%B %d, %Y", time.gmtime())
-        sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split('\s*[\r\n]+\s*', all_sources))))
+        sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split("\\s*[\r\n]+\\s*", all_sources))))
 
         # Source priority
         source_priority = self.request.get_range('source_priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT)
@@ -885,7 +885,7 @@ class BulkImportHandler(BaseHandler):
         if len(scnames) > 0:
             names_in_nomdb = vnnames.getVernacularNames(scnames,
                 languages.language_names_list,
-                flag_no_higher = True,
+                flag_no_higher = False,
                 flag_no_memoize = False
             )
 
@@ -895,7 +895,7 @@ class BulkImportHandler(BaseHandler):
                 if lang not in vnames[loop_index]:
                     vname = names_in_nomdb[scname][lang]
                     vnames[loop_index][lang] = vname.cmname
-                    source = "; ".join(sorted(vname.sources))
+                    source = "; ".join(sorted(set(vname.sources)))
                     if source not in sources and source != '':
                         sources.append(source)
                     vnames_source[loop_index][lang] = source
@@ -929,7 +929,10 @@ class BulkImportHandler(BaseHandler):
             'sources': sources,
             'vnames': vnames,
             'vnames_in_nomdb': vnames_in_nomdb,
-            'vnames_source': vnames_source
+            'vnames_source': vnames_source,
+
+            # For higher taxonomy.
+            'names_in_nomdb': names_in_nomdb
         })
 
 # GeneraHandler view.

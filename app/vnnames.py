@@ -203,7 +203,10 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 ON 
                     LOWER(qname) = LOWER(scname) 
                     %s
-                LEFT JOIN %s master_list ON LOWER(qname) = LOWER(master_list.scientificname)
+                LEFT JOIN %s master_list 
+                ON 
+                    LOWER(qname) = LOWER(master_list.scientificname)
+                    OR LOWER(qname) = LOWER(SPLIT_PART(master_list.scientificname, ' ', 1))
             GROUP BY 
                 qname, lang_lc, scname, cmname, tax_order, tax_class, tax_family
             ORDER BY

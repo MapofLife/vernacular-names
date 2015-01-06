@@ -58,6 +58,48 @@
             }
         }
 
+        // Fills in the value from '{{prefix}}_{{fieldname}}'.
+        function fillFromField(fieldname, query_lang) {
+            // source
+            field_source = "Derived from " + fieldname
+            if(getSources().indexOf(field_source) == -1) {
+                addToSources(field_source)
+            }
+
+            // Get list of vname input boxes that need querying.
+            var vnames = $('.vname')
+            var sources = $('.source_list')
+
+            if(query_lang) {
+                vnames = $('.vname.lang_' + query_lang)
+                sources = $('.source_list.lang_' + query_lang)
+            }
+
+            vnames.each(function() {
+                // Only fill in blanks.
+                if($(this).val() != '')
+                    return;
+
+                match = /^vname_(\d+)_(\w+)$/.exec(this.id)
+                if(!match) {
+                    alert("Error: unable to parse vname input id: '" + this.id + "'")
+                } else {
+                    // Read the index, language and the corresponding scientific name.
+                    index = match[1]
+                    lang = match[2]
+                    scname = $('#scname_' + index).val()
+
+                    // Look up the value based on the field name.
+                    name = $("#vname_" + index + "_" + lang + "_" + fieldname).val()
+
+                    if(name && (name != '')) {
+                        $(this).val(name)
+                        $("#vname_" + index + "_" + lang + "_source").val(field_source)
+                    }
+                }
+            });
+        }
+
         var monthNames = [  "January", "February", "March", "April", "May", "June", 
                             "July", "August", "September", "October", "November", "December" ];
 
@@ -232,6 +274,7 @@
         <center><p>
             <button onclick="clearAll(); return false;">Clear all</button>
             <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
+            <button onclick="fillFromField('family'); return false;">Fill from family</button>
             <input type="submit" value="Refresh display">
         </p>
         
@@ -271,8 +314,9 @@
                 {% for lang in language_names_list %}
                     <th>{{ language_names[lang]|default(lang) }}<br>
                     <span style="font-size: 90%; font-weight: 100">
-                        <a href="#" onclick="clearAll('{{lang}}')">Clear all</a>, 
-                        <a href="#" onclick="fillFromEOL(['{{lang}}'])">Fill in from EOL</a>
+                        <a href="#" onclick="clearAll('{{lang}}'); return false;">Clear all</a>, 
+                        <a href="#" onclick="fillFromEOL(['{{lang}}']); return false;">Fill in from EOL</a>,
+                        <a href="#" onclick="fillFromField('family', ['{{lang}}']); return false;">Fill family names</a>
                     </span>
                     </th>
                 {% endfor %}
@@ -324,6 +368,12 @@
                                 >{{source}}</option>
                             {% endfor %}
                         </select>
+
+                        <input
+                            id="vname_{{scname_index}}_{{lang}}_family"
+                            type="hidden"
+                            value = "{% if lang in names_in_nomdb[scname] %}{{ names_in_nomdb[scname][lang].tax_family|join(", ") }}{% endif %}"
+                        />
                     </td>
                 {% endfor %} 
                 <td>
