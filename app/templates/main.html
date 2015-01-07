@@ -1,5 +1,5 @@
 {% extends "templates/base.html" %}
-{% block page_title %}Editor{% endblock %}
+{% block page_title %}{% if current_search %}Search{% else %}Welcome{% endif %}{% endblock %}
 {% block javascript %}
 {% endblock %}
 {% block style %}
