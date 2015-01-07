@@ -2,6 +2,7 @@
 
 {% block page_title %}Bulk Import{% endblock %}
 
+{% set COLOR_BLANK = 'rgb(255, 255, 255)' %}
 {% set COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.46)' %}
 {% set COLOR_VNNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)' %}
 {% set COLOR_IDENTICAL_TO_SERVER = 'rgba(0, 255, 0, 0.46)' %}
@@ -41,6 +42,7 @@
             }
 
             vnames.val("")
+            vnames.css('background-color', '{{COLOR_BLANK}}')
             sources.val('{{ sources[0] }}')
         }
 
@@ -59,7 +61,7 @@
         }
 
         // Fills in the value from '{{prefix}}_{{fieldname}}'.
-        function fillFromField(fieldname, query_lang) {
+        function fillFromField(fieldname, query_lang, modify_func) {
             // source
             field_source = "Derived from " + fieldname
             if(getSources().indexOf(field_source) == -1) {
@@ -90,14 +92,46 @@
                     scname = $('#scname_' + index).val()
 
                     // Look up the value based on the field name.
-                    name = $("#vname_" + index + "_" + lang + "_" + fieldname).val()
+                    value = $("#vname_" + index + "_" + lang + "_" + fieldname).val()
 
-                    if(name && (name != '')) {
-                        $(this).val(name)
+                    if(value && (value != '')) {
+                        if(modify_func) {
+                            value = modify_func(value, scname, lang)
+                        }
+
+                        $(this).val(value)
+                        $(this).css('background-color', '{{COLOR_AUTOMATIC_ENTRY}}')
                         $("#vname_" + index + "_" + lang + "_source").val(field_source)
                     }
                 }
             });
+        }
+
+        function change_family_common_name_to_genus_common_name(fcmname, scname, lang) {
+            // console.log("fcmname = " + fcmname + ", scname = " + scname + ", lang = " + lang)
+
+            // Default to family common name.
+            if(fcmname == '' || scname == '' || lang == '') {
+                return fcmname;
+            }
+
+            match = /^(\w+)\s+([\w\-]+)/.exec(scname)
+            if(match) {
+                scname = match[1]
+                console.log("scname fixed to " + scname + ".")
+            }
+
+            // If family common names appear to be plural, correct that to singluar.
+            if(lang == 'en') {
+                fcmname = fcmname.replace(/^(.*)s$/, '$1')
+            }
+
+            // Concatenate the family name with the genus name to create a Frankenname.
+            String.prototype.capitalize = function() {
+                return this.charAt(0).toUpperCase() + this.slice(1);
+            }
+
+            return scname.capitalize() + " " + fcmname.capitalize();
         }
 
         var monthNames = [  "January", "February", "March", "April", "May", "June", 
@@ -271,10 +305,15 @@
             {{ debug_save|safe }}
         {% endif %}
 
+        <p>Listing {{scnames|count}} scientific names to be imported.
+        {% if scnames|count > 300 %}<strong>WARNING: trying to import more than 300 names might fail!</strong>{% endif %}
+        </p>
+
         <center><p>
             <button onclick="clearAll(); return false;">Clear all</button>
             <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
-            <button onclick="fillFromField('family'); return false;">Fill from family</button>
+            <button onclick="fillFromField('family'); return false;">Fill in family name</button>
+            <button onclick="fillFromField('family', null, change_family_common_name_to_genus_common_name); return false;">Fill in family name with genus name</button>
             <input type="submit" value="Refresh display">
         </p>
         
@@ -317,6 +356,7 @@
                         <a href="#" onclick="clearAll('{{lang}}'); return false;">Clear all</a>, 
                         <a href="#" onclick="fillFromEOL(['{{lang}}']); return false;">Fill in from EOL</a>,
                         <a href="#" onclick="fillFromField('family', ['{{lang}}']); return false;">Fill family names</a>
+                        <a href="#" onclick="fillFromField('family', ['{{lang}}'], change_family_common_name_to_genus_common_name); return false;">Fill family names with genus name</a>
                     </span>
                     </th>
                 {% endfor %}
