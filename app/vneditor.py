@@ -68,8 +68,8 @@ class BaseHandler(webapp2.RequestHandler):
         if not user:
             self.redirect(users.create_login_url(self.request.uri))
 
-        # if not users.is_current_user_admin():
-        #    self.redirect('/page/private')
+        if not users.is_current_user_admin():
+            self.redirect('/page/private')
 
         return user
 
