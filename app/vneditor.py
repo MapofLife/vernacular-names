@@ -1017,7 +1017,93 @@ class GeneraHandler(BaseHandler):
             'language_names_list': languages.language_names_list,
             'vneditor_version': version.VNEDITOR_VERSION
         })
-       
+   
+# HemihomonymHandler view: displays and warns about hemihomonyms.
+class HemihomonymHandler(BaseHandler):
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        if user is None:
+            return
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Get list of higher taxonomy, limited to those referred from
+        # scientific names in the master list.
+        hemihomonym_sql = """
+            SELECT 
+                LOWER(genus) AS genus, 
+                array_agg(DISTINCT scientificname) AS scnames, 
+                array_agg(DISTINCT family) AS families,
+                array_agg(DISTINCT dataset) AS datasets
+            FROM %s
+            GROUP BY genus 
+            HAVING COUNT(DISTINCT family) > 1
+            ORDER BY genus ASC NULLS FIRST
+        """ % (
+            access.MASTER_LIST
+        )
+  
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = hemihomonym_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        hemihomonyms = []
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + hemihomonym_sql+ "'), server returned error " + str(response.status_code) + ": " + response.content
+            results = {"rows": []}
+        else:
+            results = json.loads(response.content)
+            hemihomonyms = results['rows']
+
+        scnames = set()
+        for row in hemihomonyms:
+            scnames.update(row['scnames'])
+
+        # http://stackoverflow.com/a/408281/27310
+        def flatten(iter_list):
+            return list(item for iter_ in iter_list for item in iter_)
+
+        # Render recent changes.
+        self.render_template('hemihomonyms.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+
+            'scnames': scnames,
+            'hemihomonyms': vnapi.groupBy(hemihomonyms, 'genus'),
+            'vnames': vnnames.getVernacularNames(
+                scnames,
+                languages.language_names_list, 
+                flag_no_higher = True, 
+                flag_no_memoize = True, 
+                flag_lookup_genera = True, 
+                flag_format_cmnames = True),
+
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+
+            'vneditor_version': version.VNEDITOR_VERSION
+        }) 
 
 # Display higher taxonomy view.
 class HigherTaxonomyHandler(BaseHandler):
@@ -1396,6 +1482,7 @@ application = webapp2.WSGIApplication([
     ('/recent', RecentChangesHandler),
     ('/taxonomy', HigherTaxonomyHandler),
     ('/genera', GeneraHandler),
+    ('/hemihomonyms', HemihomonymHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/import', BulkImportHandler),
