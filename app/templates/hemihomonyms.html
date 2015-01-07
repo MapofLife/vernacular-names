@@ -1,0 +1,82 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Hemihomonyms{% endblock %}
+
+{% block head %}
+    <script src="/static/sorttable.js"></script>
+{% endblock %}
+
+{% block content %}
+
+    <p>NomDB uses genus-level common names where species-level common names are not available.
+    Unfortunately, some genera (and indeed, some species) are valid under multiple nomenclatural codes,
+    which means that multiple genus-level common names might apply to a particular name. Such names
+    are called <em>hemihomonyms</em>, and need to be assigned species-level common names instead of relying
+    on genus-level names.
+    </p>
+
+    <p>The following table shows all cases of a genus being placed in multiple families. In some cases,
+    this is just taxonomic uncertainty (e.g. family Lycaenidae versus family Nymphalidae); in others,
+    this is actual hemihomonymy (e.g. family Moraceae versus family Sulidae).
+    </p>
+
+    <form method="POST" action="/import">
+        <input type="hidden" name="input_dataset" value="Hemihomonyms" />
+        <textarea style="display: none" name="scnames">{{ scnames|join("\n") }}</textarea>
+        <input type="submit" value="Edit {{ scnames|count }} currently displayed species" />
+    </form>
+
+    <form method="POST" action="/import">
+        <input type="hidden" name="input_dataset" value="Hemihomonyms" />
+        <textarea style="display: none" name="scnames">{{ hemihomonyms.keys()|join("\n") }}</textarea>
+        <input type="submit" value="Edit {{ hemihomonyms.keys()|count }} currently displayed genera" />
+    </form>
+
+    <table border="1" class="sortable">
+        <thead><tr>
+            <th>&nbsp;</th>
+            <th>Genus</th>
+            <th>Species</th>
+            {% for lang in language_names_list %}
+                <th>{{language_names[lang]}}</th>
+            {% endfor %}
+        </tr></thead>
+        <tbody>
+        {% for (genus, rows) in hemihomonyms|dictsort %}
+            {% set rowcount = rows[0]['scnames']|count %}
+            <tr>
+                <td rowspan="{{rowcount}}">{{ loop.index }}</td>
+                <td rowspan="{{rowcount}}">
+                    <strong>Genus&nbsp;<em><a href="/?lookup={{genus}}">{{genus|capitalize}}</a></em></strong>
+                    {% for row in rows %}
+                        {% for family in row['families'] %}
+                            <br>Family&nbsp;<a target="_blank" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{family}}">{{family|capitalize}}</a>
+                        {% endfor %}
+                    {% endfor %}
+                    <!-- <br>
+                    Datasets: {% for row in rows %}{{ row['datasets']|join(", ") }}{% endfor %}
+                    -->
+                </td>
+                <!-- There should only be one row here, but just in case! -->
+                {% for row in rows %}
+                    {% for scname in row['scnames'] %}
+                            <td>
+                                <em><a href="/?lookup={{scname}}">{{ scname|capitalize }}</a></em>
+                            </td>
+                            {% for lang in language_names_list %}
+                            <td>
+                                {% if vnames[scname][lang].flag_uninomial %}<em>{% endif %}
+                                {{ vnames[scname][lang].vernacularname }}
+                                {% if vnames[scname][lang].flag_uninomial %}</em>{% endif %}
+                                &nbsp;
+                            </td>
+                            {% endfor %}
+                            </tr>
+                    {% endfor %}
+                    {% if not loop.last %}</td>{% endif %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

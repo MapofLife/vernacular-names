@@ -1,3 +1,8 @@
+0.6: January 7, 2015
+ - Reworked higher taxonomy so that it comes directly from the Master List.
+ - Modified bulk uploader to support inserting either the family common name 
+   or a family common/genus name hybrid.
+ - Added a view for hemihomonyms.
 0.5: December 21, 2014
  - /import now includes names already in NomDB for the entered species.
  - /list and /masterlist now have buttons to send the current list of names to

@@ -2,6 +2,7 @@
 
 {% block page_title %}Bulk Import{% endblock %}
 
+{% set COLOR_BLANK = 'rgb(255, 255, 255)' %}
 {% set COLOR_SCNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.46)' %}
 {% set COLOR_VNNAME_NOT_FOUND = 'rgba(255, 0, 0, 0.23)' %}
 {% set COLOR_IDENTICAL_TO_SERVER = 'rgba(0, 255, 0, 0.46)' %}
@@ -12,7 +13,7 @@
     <script src="/static/sorttable.js"></script>
     <script><!--
         function addToSources(source) { 
-            if(source) { 
+            if(source) {
                 $('.source_list').append('<option>' + source + '</option>'); 
                 $('#sources').val(
                     $('#sources').val().trim()
@@ -41,6 +42,7 @@
             }
 
             vnames.val("")
+            vnames.css('background-color', '{{COLOR_BLANK}}')
             sources.val('{{ sources[0] }}')
         }
 
@@ -56,6 +58,80 @@
                 $('#ajax_in_progress').hide()
                 ajax_in_progress_count = 0
             }
+        }
+
+        // Fills in the value from '{{prefix}}_{{fieldname}}'.
+        function fillFromField(fieldname, query_lang, modify_func) {
+            // source
+            field_source = "Derived from " + fieldname
+            if(getSources().indexOf(field_source) == -1) {
+                addToSources(field_source)
+            }
+
+            // Get list of vname input boxes that need querying.
+            var vnames = $('.vname')
+            var sources = $('.source_list')
+
+            if(query_lang) {
+                vnames = $('.vname.lang_' + query_lang)
+                sources = $('.source_list.lang_' + query_lang)
+            }
+
+            vnames.each(function() {
+                // Only fill in blanks.
+                if($(this).val() != '')
+                    return;
+
+                match = /^vname_(\d+)_(\w+)$/.exec(this.id)
+                if(!match) {
+                    alert("Error: unable to parse vname input id: '" + this.id + "'")
+                } else {
+                    // Read the index, language and the corresponding scientific name.
+                    index = match[1]
+                    lang = match[2]
+                    scname = $('#scname_' + index).val()
+
+                    // Look up the value based on the field name.
+                    value = $("#vname_" + index + "_" + lang + "_" + fieldname).val()
+
+                    if(value && (value != '')) {
+                        if(modify_func) {
+                            value = modify_func(value, scname, lang)
+                        }
+
+                        $(this).val(value)
+                        $(this).css('background-color', '{{COLOR_AUTOMATIC_ENTRY}}')
+                        $("#vname_" + index + "_" + lang + "_source").val(field_source)
+                    }
+                }
+            });
+        }
+
+        function change_family_common_name_to_genus_common_name(fcmname, scname, lang) {
+            // console.log("fcmname = " + fcmname + ", scname = " + scname + ", lang = " + lang)
+
+            // Default to family common name.
+            if(fcmname == '' || scname == '' || lang == '') {
+                return fcmname;
+            }
+
+            match = /^(\w+)\s+([\w\-]+)/.exec(scname)
+            if(match) {
+                scname = match[1]
+                console.log("scname fixed to " + scname + ".")
+            }
+
+            // If family common names appear to be plural, correct that to singluar.
+            if(lang == 'en') {
+                fcmname = fcmname.replace(/^(.*)s$/, '$1')
+            }
+
+            // Concatenate the family name with the genus name to create a Frankenname.
+            String.prototype.capitalize = function() {
+                return this.charAt(0).toUpperCase() + this.slice(1);
+            }
+
+            return scname.capitalize() + " " + fcmname.capitalize();
         }
 
         var monthNames = [  "January", "February", "March", "April", "May", "June", 
@@ -81,6 +157,10 @@
             }
 
             vnames.each(function() {
+                // Only fill in blanks.
+                if($(this).val() != '')
+                    return;
+
                 match = /^vname_(\d+)_(\w+)$/.exec(this.id)
                 if(!match) {
                     alert("Error: unable to parse vname input id: '" + this.id + "'")
@@ -159,7 +239,7 @@
                                         // vninput.val(inner_lang + ": " + best_eol_vname)
                                         vninput.val(best_eol_vname)
                                         vninput.css('background-color', '{{COLOR_AUTOMATIC_ENTRY}}')
-                                        vninput.next().val(eol_source)
+                                        $("#vname_" + this.index + "_" + this.lang + "_source").val(eol_source)
                                     } else {
                                         // Should we indicate vnames that we could find autovernacular names for?
                                     }
@@ -225,9 +305,15 @@
             {{ debug_save|safe }}
         {% endif %}
 
+        <p>Listing {{scnames|count}} scientific names to be imported.
+        {% if scnames|count > 300 %}<strong>WARNING: trying to import more than 300 names might fail!</strong>{% endif %}
+        </p>
+
         <center><p>
             <button onclick="clearAll(); return false;">Clear all</button>
             <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
+            <button onclick="fillFromField('family'); return false;">Fill in family name</button>
+            <button onclick="fillFromField('family', null, change_family_common_name_to_genus_common_name); return false;">Fill in family name with genus name</button>
             <input type="submit" value="Refresh display">
         </p>
         
@@ -267,8 +353,10 @@
                 {% for lang in language_names_list %}
                     <th>{{ language_names[lang]|default(lang) }}<br>
                     <span style="font-size: 90%; font-weight: 100">
-                        <a href="#" onclick="clearAll('{{lang}}')">Clear all</a>, 
-                        <a href="#" onclick="fillFromEOL(['{{lang}}'])">Fill in from EOL</a>
+                        <a href="#" onclick="clearAll('{{lang}}'); return false;">Clear all</a>, 
+                        <a href="#" onclick="fillFromEOL(['{{lang}}']); return false;">Fill in from EOL</a>,
+                        <a href="#" onclick="fillFromField('family', ['{{lang}}']); return false;">Fill family names</a>
+                        <a href="#" onclick="fillFromField('family', ['{{lang}}'], change_family_common_name_to_genus_common_name); return false;">Fill family names with genus name</a>
                     </span>
                     </th>
                 {% endfor %}
@@ -284,6 +372,9 @@
                         <span style="color: red"><em>{{ scname|capitalize }}</em></span><br><strong>Warning: not in master list!</strong>
                     {% endif %}
                     <input type="hidden" id="scname_{{scname_index}}" name="scname_{{scname_index}}" value="{{scname}}" />
+                    <a target="resources" href="http://eol.org/{{scname}}">EOL</a>
+                    <a target="resources" href="http://www.gbif.org/species/search?q={{scname}}">GBIF</a>
+                    <a target="resources" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{scname}}">Wikipedia</a>
                 </td>
                 {% for lang in language_names_list %}
                     {% set vname = "" %}
@@ -320,6 +411,12 @@
                                 >{{source}}</option>
                             {% endfor %}
                         </select>
+
+                        <input
+                            id="vname_{{scname_index}}_{{lang}}_family"
+                            type="hidden"
+                            value = "{% if lang in names_in_nomdb[scname] %}{{ names_in_nomdb[scname][lang].tax_family|join(", ") }}{% endif %}"
+                        />
                     </td>
                 {% endfor %} 
                 <td>

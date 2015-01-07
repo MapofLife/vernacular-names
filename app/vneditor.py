@@ -26,6 +26,9 @@ import vnnames
 # Display the total count in /list: expensive, but useful.
 FLAG_LIST_DISPLAY_COUNT = True
 
+# How many rows to display in /list by default.
+LISTVIEWHANDLER_DEFAULT_ROWS = 500
+
 # Sources with fewer vname entries than this are considered to be individual imports;
 # greater than this are bulk imports.
 INDIVIDUAL_IMPORT_LIMIT = 100
@@ -100,6 +103,9 @@ class MainPage(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Load the current search term.
         current_search = self.request.get('search')
@@ -190,6 +196,9 @@ class DeleteByCDBIDHandler(BaseHandler):
         # Fail without login.
         current_user = self.check_user()
 
+        if current_user is None:
+            return
+
         # Retrieve cartodb_id to delete.
         cartodb_id = self.request.get_range('cartodb_id')
 
@@ -223,6 +232,9 @@ class AddNameHandler(BaseHandler):
     def post(self):
         # Fail without login.
         current_user = self.check_user()
+
+        if current_user is None:
+            return
 
         # Retrieve state. We only use this for the final redirect.
         search = self.request.get('search')
@@ -314,7 +326,10 @@ class GenerateTaxonomyTranslations(BaseHandler):
         # We have no parameters. We just generate.
 
         # Fail without login.
-        current_user = self.check_user()
+        #current_user = self.check_user()
+
+        #if current_user is None:
+        #    return
 
         # Create file in memory and make it gzipped.
         fgz = cStringIO.StringIO()
@@ -338,20 +353,26 @@ class GenerateTaxonomyTranslations(BaseHandler):
             return "|".join(sorted(names)).encode('utf-8')
 
         def add_name(name, higher_taxonomy, vnames_by_lang):
-            row = [name.capitalize(), 
-                "|".join(sorted(higher_taxonomy['family'])),
-                "|".join(sorted(higher_taxonomy['order'])),
-                "|".join(sorted(higher_taxonomy['class']))]
+            row = [name.encode('utf-8').capitalize(), 
+                concat_names(higher_taxonomy['family']),
+                concat_names(higher_taxonomy['order']),
+                concat_names(higher_taxonomy['class'])]
 
             for lang in languages.language_names_list:
                 if lang in vnames_by_lang:
                     vname = vnames_by_lang[lang].vernacularname
                     sources = vnames_by_lang[lang].sources
+                    tax_family = vnames_by_lang[lang].tax_family
+
+                    # Use family latin name instead of common name 
+                    # if we don't have one.
+                    if len(tax_family) == 0:
+                        tax_family = map(lambda x: x.capitalize(), higher_taxonomy['family'])
 
                     row.extend([
                         vname.encode('utf-8'), 
-                        "|".join(sorted(sources)).encode('utf-8'),
-                        concat_names(vnames_by_lang[lang].tax_family)
+                        concat_names(sources),
+                        concat_names(tax_family)
                     ])
                 else:
                     row.extend([None, None, None])
@@ -387,6 +408,9 @@ class CoverageViewHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Pagination
         offset = int(self.request.get('offset', 0))
@@ -432,6 +456,9 @@ class SourcesHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Set up error msg.
         msg = ""
@@ -479,6 +506,9 @@ class SourcesHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
@@ -576,6 +606,9 @@ class MasterListHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Any message?
         message = self.request.get('message')
@@ -693,6 +726,9 @@ class BulkImportHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        if user is None:
+            return
+
         # Any input dataset name?
         input_dataset = self.request.get('input_dataset')
         if not input_dataset:
@@ -719,7 +755,7 @@ class BulkImportHandler(BaseHandler):
         # Retrieve list of sources.
         all_sources = self.request.get('sources')
         manual_change = 'Manual changes on ' + time.strftime("%B %d, %Y", time.gmtime())
-        sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split('\s*[\r\n]+\s*', all_sources))))
+        sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split("\\s*[\r\n]+\\s*", all_sources))))
 
         # Source priority
         source_priority = self.request.get_range('source_priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT)
@@ -849,7 +885,7 @@ class BulkImportHandler(BaseHandler):
         if len(scnames) > 0:
             names_in_nomdb = vnnames.getVernacularNames(scnames,
                 languages.language_names_list,
-                flag_no_higher = True,
+                flag_no_higher = False,
                 flag_no_memoize = False
             )
 
@@ -859,7 +895,7 @@ class BulkImportHandler(BaseHandler):
                 if lang not in vnames[loop_index]:
                     vname = names_in_nomdb[scname][lang]
                     vnames[loop_index][lang] = vname.cmname
-                    source = "; ".join(sorted(vname.sources))
+                    source = "; ".join(sorted(set(vname.sources)))
                     if source not in sources and source != '':
                         sources.append(source)
                     vnames_source[loop_index][lang] = source
@@ -893,7 +929,10 @@ class BulkImportHandler(BaseHandler):
             'sources': sources,
             'vnames': vnames,
             'vnames_in_nomdb': vnames_in_nomdb,
-            'vnames_source': vnames_source
+            'vnames_source': vnames_source,
+
+            # For higher taxonomy.
+            'names_in_nomdb': names_in_nomdb
         })
 
 # GeneraHandler view.
@@ -906,6 +945,9 @@ class GeneraHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        if user is None:
+            return
+
         # Is there a message?
         message = self.request.get('msg')
         if not message:
@@ -916,15 +958,13 @@ class GeneraHandler(BaseHandler):
         genera_sql = """
             SELECT 
                 LOWER(split_part(scientificname, ' ', 1)) AS genus,
-                family,
+                ARRAY_AGG(DISTINCT family) AS family,
                 COUNT(DISTINCT LOWER(scientificname)) AS count_species,
-                ARRAY_AGG(DISTINCT master.dataset ORDER BY master.dataset ASC) AS datasets
-            FROM %s AS higher RIGHT JOIN %s AS master
-                ON LOWER(genus) = LOWER(split_part(scientificname, ' ', 1)) 
+                ARRAY_AGG(DISTINCT dataset ORDER BY dataset ASC) AS datasets
+            FROM %s AS master
             GROUP BY LOWER(split_part(scientificname, ' ', 1)), family
             ORDER BY genus ASC, family ASC NULLS FIRST
         """ % (
-            access.HIGHER_LIST,
             access.MASTER_LIST
         )
   
@@ -948,6 +988,10 @@ class GeneraHandler(BaseHandler):
             results = json.loads(response.content)
             all_species = results['rows']
 
+        # http://stackoverflow.com/a/408281/27310
+        def flatten(iter_list):
+            return list(item for iter_ in iter_list for item in iter_)
+
         missing_genera = filter(lambda x: x['family'] is None, all_species)
         genera = filter(lambda x: x['family'] is not None, all_species)
         all_names = filter(lambda x: x is not None, map(lambda x: x['family'], all_species))
@@ -963,7 +1007,7 @@ class GeneraHandler(BaseHandler):
             'missing_genera': missing_genera,
             'genera': genera,
             'vnames': vnnames.getVernacularNames(
-                all_names, 
+                flatten(all_names), 
                 languages.language_names_list, 
                 flag_no_higher = True, 
                 flag_no_memoize = True, 
@@ -973,7 +1017,93 @@ class GeneraHandler(BaseHandler):
             'language_names_list': languages.language_names_list,
             'vneditor_version': version.VNEDITOR_VERSION
         })
-       
+   
+# HemihomonymHandler view: displays and warns about hemihomonyms.
+class HemihomonymHandler(BaseHandler):
+    def get(self):
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        if user is None:
+            return
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Get list of higher taxonomy, limited to those referred from
+        # scientific names in the master list.
+        hemihomonym_sql = """
+            SELECT 
+                LOWER(genus) AS genus, 
+                array_agg(DISTINCT scientificname) AS scnames, 
+                array_agg(DISTINCT family) AS families,
+                array_agg(DISTINCT dataset) AS datasets
+            FROM %s
+            GROUP BY genus 
+            HAVING COUNT(DISTINCT family) > 1
+            ORDER BY genus ASC NULLS FIRST
+        """ % (
+            access.MASTER_LIST
+        )
+  
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL,
+            payload=urllib.urlencode(
+                dict(
+                    q = hemihomonym_sql
+                )),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=vnapi.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        hemihomonyms = []
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + hemihomonym_sql+ "'), server returned error " + str(response.status_code) + ": " + response.content
+            results = {"rows": []}
+        else:
+            results = json.loads(response.content)
+            hemihomonyms = results['rows']
+
+        scnames = set()
+        for row in hemihomonyms:
+            scnames.update(row['scnames'])
+
+        # http://stackoverflow.com/a/408281/27310
+        def flatten(iter_list):
+            return list(item for iter_ in iter_list for item in iter_)
+
+        # Render recent changes.
+        self.render_template('hemihomonyms.html', {
+            'message': message,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'datasets_data': vnapi.getDatasets(),
+
+            'scnames': scnames,
+            'hemihomonyms': vnapi.groupBy(hemihomonyms, 'genus'),
+            'vnames': vnnames.getVernacularNames(
+                scnames,
+                languages.language_names_list, 
+                flag_no_higher = True, 
+                flag_no_memoize = True, 
+                flag_lookup_genera = True, 
+                flag_format_cmnames = True),
+
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+
+            'vneditor_version': version.VNEDITOR_VERSION
+        }) 
 
 # Display higher taxonomy view.
 class HigherTaxonomyHandler(BaseHandler):
@@ -984,6 +1114,9 @@ class HigherTaxonomyHandler(BaseHandler):
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
+
+        if user is None:
+            return
 
         # Is there a message?
         message = self.request.get('msg')
@@ -1095,6 +1228,9 @@ class RecentChangesHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        if user is None:
+            return
+
         # Is there a message?
         message = self.request.get('msg')
         if not message:
@@ -1202,6 +1338,9 @@ class ListViewHandler(BaseHandler):
         user_name = user.email() if user else "no user logged in"
         user_url = users.create_login_url('/')
 
+        if user is None:
+            return
+
         # Message?
         message = self.request.get('msg')
 
@@ -1229,7 +1368,7 @@ class ListViewHandler(BaseHandler):
 
         # Get offset and display_count.
         offset = int(use_last_or_default("offset", 0))
-        display_count = int(use_last_or_default("display", 100))
+        display_count = int(use_last_or_default("display", LISTVIEWHANDLER_DEFAULT_ROWS))
 
         # We hand this results object to each filter function, and allow it
         # to modify it as it sees fit based on the request.
@@ -1308,6 +1447,7 @@ class ListViewHandler(BaseHandler):
             results = json.loads(response.content)
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
+        genera_list = sorted(set(map(lambda x: x['scientificname'].partition(' ')[0], results['rows'])))
         total_count = 0
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
@@ -1325,6 +1465,7 @@ class ListViewHandler(BaseHandler):
             'message': message,
             'search_criteria': search_criteria,
             'name_list': name_list,
+            'genera_list': genera_list,
             'vnames': vnames,
             'offset': offset,
             'display_count': display_count,
@@ -1341,6 +1482,7 @@ application = webapp2.WSGIApplication([
     ('/recent', RecentChangesHandler),
     ('/taxonomy', HigherTaxonomyHandler),
     ('/genera', GeneraHandler),
+    ('/hemihomonyms', HemihomonymHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/import', BulkImportHandler),
