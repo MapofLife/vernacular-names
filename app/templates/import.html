@@ -274,19 +274,21 @@
         <p>Please enter the scientific names to add to the Map of Life app.</p>
 
             <p>
-                Input dataset: <input size="100" name="input_dataset" />
+                Input dataset: <br /><input size="100" name="input_dataset" />
             </p>
             <textarea name="scnames" rows="25" cols="80">Please enter scientific names here.</textarea>
+            <br />
             <input class="btn btn-primary" type="submit" value="Upload names">
     {% else %}
         <input type="hidden" name="scnames" value="{{ scnames|join('\n') }}" />
 
         <h2>Dataset: <em>{{ input_dataset }}</em></h2>
 
-        <p>Change input dataset name: <input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
+        <p>Change input dataset name: <br /><input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
         <p>Sources: <textarea id="sources" name="sources" cols="80" rows="5" readonly="1"
             >{% for source in sources %}{{source}}
 {% endfor %}</textarea>
+            <br />
             <button class="btn btn-default" onclick="promptAndAddSource(); return false;">Add new source</button></p>
         </p>
 
