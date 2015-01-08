@@ -24,7 +24,7 @@
 
         <form method="POST">
             <input type="hidden" name="search" value="{{ dataset_filter }}">
-            <textarea name="diff_names" rows=20 cols=40></textarea>
+            <textarea name="diff_names" rows=20 cols=40></textarea> <br />
             <input class="btn btn-primary" type="submit" value="Compare">
         </form>
     </div>
@@ -41,7 +41,7 @@
 
         <form action="/import" method="POST">
             <input type="hidden" name="input_dataset" value="{{dataset_filter}}" />
-            <textarea style="display: none" name="scnames">{{species_sorted|join("\n")}}</textarea>
+            <textarea style="display: none" name="scnames">{{species_sorted|join("\n")}}</textarea> <br />
             <input class="btn btn-primary btn-sm" type="submit" value="Display dataset in bulk import">
         </form>
 

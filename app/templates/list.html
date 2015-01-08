@@ -12,7 +12,7 @@
         <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
         <div class="well well-sm">
-            <form method="POST" action="/import">
+            <form class="pull-left" style="padding-right: 10px;" method="POST" action="/import">
                 <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
                 <textarea style="display: none" name="scnames">{{ name_list|join("\n") }}</textarea>
                 <input class="btn btn-primary" type="submit" value="Edit {{ name_list|count }} currently displayed names" />
@@ -31,13 +31,13 @@
 
     <div id="list_content" style="width: 100%; margins: auto; text-align: center">
     <p>
-        <button class="btn btn-default btn-sm" type="submit" name="offset" value="0"
-            {% if offset == 0 %}disabled=1{% endif %}
-        >|&lt</button>                    
+        <button class="btn btn-default btn-xs" type="submit" name="offset" value="0"
+            {% if offset == 0 %}disabled="disabled"{% endif %}
+        ><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span></button>
 
-        <button class="btn btn-default btn-sm" type="submit" name="offset" value="{{offset - display_count}}"
-            {% if offset - display_count < 0 %}disabled=1{% endif %}
-        >&lt;&lt;</button>
+        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{offset - display_count}}"
+            {% if offset - display_count < 0 %}disabled="disabled"{% endif %}
+        ><span class="glyphicon glyphicon-backward" aria-hidden="true"></span></button>
 
         |
         <select name="display" onchange="this.form.submit()">
@@ -55,13 +55,13 @@
         </select>
         |
 
-        <button class="btn btn-default btn-sm" type="submit" name="offset" value="{{offset + display_count}}"
-            {% if total_count != 0 and offset + display_count >= total_count %}disabled=1{% endif %}
-        >&gt;&gt;</button> 
+        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{offset + display_count}}"
+            {% if total_count != 0 and offset + display_count >= total_count %}disabled="disabled"{% endif %}
+        ><span class="glyphicon glyphicon-forward" aria-hidden="true"></span></button>
 
-        <button class="btn btn-default btn-sm" type="submit" name="offset" value="{{total_count - display_count}}"
-            {% if total_count == 0 or offset >= total_count - display_count %}disabled=1{% endif %}
-        >&gt;|</button>
+        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{total_count - display_count}}"
+            {% if total_count == 0 or offset >= total_count - display_count %}disabled="disabled"{% endif %}
+        ><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>
 
         <br />
         <div class="well well-sm checkbox_group">
