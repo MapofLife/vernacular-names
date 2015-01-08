@@ -24,7 +24,7 @@
 <body>
 
 <div>{% include 'templates/header.html' %}</div>
-<div class="container">
+<div class="container-fluid">
 
     {% if user_name %}
     <div class="well well-sm">
@@ -44,7 +44,7 @@
     <h1>Vernacular Name Editor: {{ self.page_title() }}</h1>
 
     {% if message %}
-        <div class="well-sm bg-info">
+        <div class="alert alert-info">
             {{ message }}
         </div>
     {% endif %}
@@ -54,9 +54,10 @@
         <a href="https://github.com/mapoflife/vernacular-names/issues">as a bug</a>.
     {% endblock %}
 
-    <div>Please report any <a href="https://github.com/mapoflife/vernacular-names/issues">any issues</a> and <a
-            href="https://github.com/mapoflife/vernacular-names">fork our code</a>. This is
-        version {{ vneditor_version }}.
+    <div class="app-info well well-sm text-center">
+        Please report any <a href="https://github.com/mapoflife/vernacular-names/issues">any issues</a> and
+        <a href="https://github.com/mapoflife/vernacular-names">fork our code</a>.
+        This is version {{ vneditor_version }}.
     </div>
 
 </div>
