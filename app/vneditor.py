@@ -23,6 +23,9 @@ import vnnames
 
 # Configuration
 
+# Display DEBUG information?
+FLAG_DEBUG = False
+
 # Display the total count in /list: expensive, but useful.
 FLAG_LIST_DISPLAY_COUNT = True
 
@@ -1312,7 +1315,8 @@ class ListViewHandler(BaseHandler):
 
         sql_having = []
         for lang in blank_langs:
-            sql_having.append("NOT " + vnapi.encode_b64_for_psql(lang.lower()) + " = ANY(array_agg(LOWER(lang)))")
+            # sql_having.append("NOT " + vnapi.encode_b64_for_psql(lang.lower()) + " = ANY(array_agg(LOWER(lang)))")
+            sql_having.append("NOT array_agg(DISTINCT LOWER(lang)) = ARRAY[" + vnapi.encode_b64_for_psql(lang.lower()) + "]")
             results['search_criteria'].append("filter by language '" + lang + "' being blank")
 
         if len(sql_having) > 0:
@@ -1432,7 +1436,8 @@ class ListViewHandler(BaseHandler):
             message += "\n<p><strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content + "</p>"
             results = {"rows": []}
         else:
-            message += "\n<p>DEBUG: '" + list_sql + "'</p>"
+            if FLAG_DEBUG:
+                message += "\n<p>DEBUG: '" + list_sql + "'</p>"
             results = json.loads(response.content)
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
@@ -1449,6 +1454,7 @@ class ListViewHandler(BaseHandler):
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
+            'datasets_data': vnapi.getDatasets(),
             'selected_datasets': set(self.request.get_all('dataset')),
             'selected_blank_langs': set(self.request.get_all('blank_lang')),
             'message': message,
