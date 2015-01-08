@@ -1457,6 +1457,7 @@ class ListViewHandler(BaseHandler):
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
             'user_url': user_url,
+            'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
             'datasets_data': vnapi.getDatasets(),
