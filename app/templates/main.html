@@ -100,7 +100,7 @@ table.search_results tr:nth-child(even) {
 
                         <div id="tax_source_add" style="display:none">
                             <em>Higher taxonomy source</em>: <input name="source" size=50>
-                            <input name="add_to_current_lookup_in_{{language}}" 
+                            <input class="btn btn-primary" name="add_to_current_lookup_in_{{language}}"
                                 value="Add" type="submit">
                         </div> 
 
@@ -153,9 +153,9 @@ table.search_results tr:nth-child(even) {
                                             <input type="hidden" name="search" value="{{current_search}}">
                                             <input type="hidden" name="lookup" value="{{lookup_search}}">
                                             <input type="hidden" name="lang" value="{{language}}">
-                                            <input name="add_to_current_lookup_in_{{language}}" 
+                                            <input class="btn btn-primary btn-sm" name="add_to_current_lookup_in_{{language}}"
                                                 value="Add" type="submit">
-                                            <input value="Cancel" type="reset" onclick="$('#edit_name_{{language}}_{{loop.index}}').hide(); $('#display_name_{{language}}_{{loop.index}}').show();">
+                                            <input class="btn btn-danger btn-sm" value="Cancel" type="reset" onclick="$('#edit_name_{{language}}_{{loop.index}}').hide(); $('#display_name_{{language}}_{{loop.index}}').show();">
                                         </form>
                                     </div>
                                 </li>
@@ -165,7 +165,7 @@ table.search_results tr:nth-child(even) {
                                     <form method="post" action="/add/name">
                                         <input name="name_to_add" id="name_to_add_{{language}}">
                                         <input name="source" size=50 value="Source">
-                                        <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                                        <input class="btn btn-primary" name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
                                         <input type="hidden" name="dataset" value="{{dataset_filter}}">
                                         <input type="hidden" name="search" value="{{current_search}}">
                                         <input type="hidden" name="lookup" value="{{lookup_search}}">

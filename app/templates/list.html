@@ -11,17 +11,19 @@
 
         <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
-        <form method="POST" action="/import">
-            <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
-            <textarea style="display: none" name="scnames">{{ name_list|join("\n") }}</textarea>
-            <input type="submit" value="Edit {{ name_list|count }} currently displayed names" />
-        </form>
+        <div class="well well-sm">
+            <form method="POST" action="/import">
+                <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
+                <textarea style="display: none" name="scnames">{{ name_list|join("\n") }}</textarea>
+                <input class="btn btn-primary" type="submit" value="Edit {{ name_list|count }} currently displayed names" />
+            </form>
 
-        <form method="POST" action="/import">
-            <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
-            <textarea style="display: none" name="scnames">{{ genera_list|join("\n") }}</textarea>
-            <input type="submit" value="Edit {{ genera_list|count }} currently displayed genera" />
-        </form>
+            <form method="POST" action="/import">
+                <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
+                <textarea style="display: none" name="scnames">{{ genera_list|join("\n") }}</textarea>
+                <input class="btn btn-primary" type="submit" value="Edit {{ genera_list|count }} currently displayed genera" />
+            </form>
+        </div>
 
         <form method="GET">
             <input type="hidden" name="offset" value="{{offset}}">
@@ -29,11 +31,11 @@
 
     <div id="list_content" style="width: 100%; margins: auto; text-align: center">
     <p>
-        <button type="submit" name="offset" value="0"  
+        <button class="btn btn-default btn-sm" type="submit" name="offset" value="0"
             {% if offset == 0 %}disabled=1{% endif %}
         >|&lt</button>                    
 
-        <button type="submit" name="offset" value="{{offset - display_count}}"
+        <button class="btn btn-default btn-sm" type="submit" name="offset" value="{{offset - display_count}}"
             {% if offset - display_count < 0 %}disabled=1{% endif %}
         >&lt;&lt;</button>
 
@@ -53,16 +55,16 @@
         </select>
         |
 
-        <button type="submit" name="offset" value="{{offset + display_count}}"
+        <button class="btn btn-default btn-sm" type="submit" name="offset" value="{{offset + display_count}}"
             {% if total_count != 0 and offset + display_count >= total_count %}disabled=1{% endif %}
         >&gt;&gt;</button> 
 
-        <button type="submit" name="offset" value="{{total_count - display_count}}"
+        <button class="btn btn-default btn-sm" type="submit" name="offset" value="{{total_count - display_count}}"
             {% if total_count == 0 or offset >= total_count - display_count %}disabled=1{% endif %}
         >&gt;|</button>
 
         <br>
-        Datasets (<button type="submit" name="dataset" value="all">Clear</button>): 
+        Datasets (<button class="btn btn-danger btn-xs" type="submit" name="dataset" value="all">Clear</button>):
 
         {% for dataset in datasets_data %}
             <input type="checkbox" name="dataset" onclick="this.form.submit()"  value="{{ dataset['dataset'] }}"
@@ -73,7 +75,7 @@
             >{{dataset['dataset']}} ({{dataset['count']}} species)</input>
         {% endfor %}
         <br>
-        Find blanks in (<button type="submit" name="blank_lang" value="none">Clear</button>): 
+        Find blanks in (<button class="btn btn-danger btn-xs" type="submit" name="blank_lang" value="none">Clear</button>):
 
         {% for lang in language_names_list %}
             <input type="checkbox" name="blank_lang" onclick="this.form.submit()" value="{{lang}}"

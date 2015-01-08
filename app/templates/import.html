@@ -277,7 +277,7 @@
                 Input dataset: <input size="100" name="input_dataset" />
             </p>
             <textarea name="scnames" rows="25" cols="80">Please enter scientific names here.</textarea>
-            <input type="submit" value="Upload names">
+            <input class="btn btn-primary" type="submit" value="Upload names">
     {% else %}
         <input type="hidden" name="scnames" value="{{ scnames|join('\n') }}" />
 
@@ -287,7 +287,7 @@
         <p>Sources: <textarea id="sources" name="sources" cols="80" rows="5" readonly="1"
             >{% for source in sources %}{{source}}
 {% endfor %}</textarea>
-            <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
+            <button class="btn btn-default" onclick="promptAndAddSource(); return false;">Add new source</button></p>
         </p>
 
         <p>Source priority for entire dataset: <input name="source_priority" value="{{source_priority|default(0)}}" /></p>
@@ -310,11 +310,11 @@
         </p>
 
         <center><p>
-            <button onclick="clearAll(); return false;">Clear all</button>
-            <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
-            <button onclick="fillFromField('family'); return false;">Fill in family name</button>
-            <button onclick="fillFromField('family', null, change_family_common_name_to_genus_common_name); return false;">Fill in family name with genus name</button>
-            <input type="submit" value="Refresh display">
+            <button class="btn btn-default" onclick="clearAll(); return false;">Clear all</button>
+            <button class="btn btn-default" onclick="fillFromEOL(); return false;">Fill from EOL</button>
+            <button class="btn btn-default" onclick="fillFromField('family'); return false;">Fill in family name</button>
+            <button class="btn btn-default" onclick="fillFromField('family', null, change_family_common_name_to_genus_common_name); return false;">Fill in family name with genus name</button>
+            <input class="btn btn-primary" type="submit" value="Refresh display">
         </p>
         
         <table border="1">
@@ -420,15 +420,15 @@
                     </td>
                 {% endfor %} 
                 <td>
-                    <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
+                    <button class="btn btn-default" onclick="promptAndAddSource(); return false;">Add new source</button></p>
                 </td>
             </tr>
             {% endfor %}
         </table>
         
         <center><p>
-            <input type="submit" value="Refresh display">
-            <input type="submit" name="save" value="Upload names">
+            <input class="btn btn-primary" type="submit" value="Refresh display">
+            <input class="btn btn-primary" type="submit" name="save" value="Upload names">
         </p></center>
     {% endif %}
     </form>

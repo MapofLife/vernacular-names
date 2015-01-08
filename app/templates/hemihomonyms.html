@@ -23,13 +23,13 @@
     <form method="POST" action="/import">
         <input type="hidden" name="input_dataset" value="Hemihomonyms" />
         <textarea style="display: none" name="scnames">{{ scnames|join("\n") }}</textarea>
-        <input type="submit" value="Edit {{ scnames|count }} currently displayed species" />
+        <input class="btn btn-primary" type="submit" value="Edit {{ scnames|count }} currently displayed species" />
     </form>
 
     <form method="POST" action="/import">
         <input type="hidden" name="input_dataset" value="Hemihomonyms" />
         <textarea style="display: none" name="scnames">{{ hemihomonyms.keys()|join("\n") }}</textarea>
-        <input type="submit" value="Edit {{ hemihomonyms.keys()|count }} currently displayed genera" />
+        <input class="btn btn-primary" type="submit" value="Edit {{ hemihomonyms.keys()|count }} currently displayed genera" />
     </form>
 
     <table border="1" class="sortable">
