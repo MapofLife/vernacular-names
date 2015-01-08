@@ -9,9 +9,12 @@
 {% block content %}
 
     <p>The Master List is the list of species names that are exported. Each species is present in one or more datasets.
+    {% if not diff_names_count %}
+        You can <a href="#" onclick="$('#comparison').show(); return false;">compare species to a master list</a>.
+    {% endif %}
     </p>
 
-    <div style="margin-left: 4em">
+    <div id="comparison" class="well well-sm" style="{% if not diff_names_count %}display: none;{% endif %} margin-left: 4em;">
         {% if diff_names_count %}
             <p>Compared {{diff_names_count}} names: found {{ diff_names_added|count }} additions and {{ diff_names_deleted|count }} deletions.</p>
 
@@ -24,7 +27,7 @@
 
         <form method="POST">
             <input type="hidden" name="search" value="{{ dataset_filter }}">
-            <textarea name="diff_names" rows=20 cols=40></textarea>
+            <textarea name="diff_names" rows=10 cols=30></textarea>
             <input class="btn btn-primary" type="submit" value="Compare">
         </form>
     </div>
