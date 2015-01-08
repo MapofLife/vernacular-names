@@ -1316,7 +1316,7 @@ class ListViewHandler(BaseHandler):
         sql_having = []
         for lang in blank_langs:
             # sql_having.append("NOT " + vnapi.encode_b64_for_psql(lang.lower()) + " = ANY(array_agg(LOWER(lang)))")
-            sql_having.append("NOT array_agg(DISTINCT LOWER(lang)) = ARRAY[" + vnapi.encode_b64_for_psql(lang.lower()) + "]")
+            sql_having.append("NOT array_agg(DISTINCT LOWER(lang)) @> ARRAY[" + vnapi.encode_b64_for_psql(lang.lower()) + "]")
             results['search_criteria'].append("filter by language '" + lang + "' being blank")
 
         if len(sql_having) > 0:
