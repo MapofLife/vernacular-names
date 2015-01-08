@@ -63,28 +63,38 @@
             {% if total_count == 0 or offset >= total_count - display_count %}disabled=1{% endif %}
         >&gt;|</button>
 
-        <br>
-        Datasets (<button class="btn btn-danger btn-xs" type="submit" name="dataset" value="all">Clear</button>):
+        <br />
+        <div class="well well-sm checkbox_group">
+            Datasets (<button class="btn btn-danger btn-xs" type="submit" name="dataset" value="all">Clear</button>):
+            <br />
 
-        {% for dataset in datasets_data %}
-            <input type="checkbox" name="dataset" onclick="this.form.submit()"  value="{{ dataset['dataset'] }}"
-                {% if 'all' in selected_datasets %}
-                {% elif dataset['dataset'] in selected_datasets %}
-                    checked=1
-                {% endif %}
-            >{{dataset['dataset']}} ({{dataset['count']}} species)</input>
-        {% endfor %}
-        <br>
-        Find blanks in (<button class="btn btn-danger btn-xs" type="submit" name="blank_lang" value="none">Clear</button>):
+            {% for dataset in datasets_data %}
+                <label>
+                <input type="checkbox" name="dataset" onclick="this.form.submit()"  value="{{ dataset['dataset'] }}"
+                    {% if 'all' in selected_datasets %}
+                    {% elif dataset['dataset'] in selected_datasets %}
+                        checked=1
+                    {% endif %}
+                >{{dataset['dataset']}} ({{dataset['count']}} species)</input>
+                </label>
+            {% endfor %}
+        </div>
+        <br />
+        <div class="well well-sm checkbox_group">
+            Find blanks in (<button class="btn btn-danger btn-xs" type="submit" name="blank_lang" value="none">Clear</button>):
+            <br />
 
-        {% for lang in language_names_list %}
-            <input type="checkbox" name="blank_lang" onclick="this.form.submit()" value="{{lang}}"
-                {% if 'none' in selected_blank_langs %}
-                {% elif lang in selected_blank_langs %}
-                    checked=1
-                {% endif %}
-            >{{language_names[lang]}}</input>
-        {% endfor %}
+            {% for lang in language_names_list %}
+                <label>
+                <input type="checkbox" name="blank_lang" onclick="this.form.submit()" value="{{lang}}"
+                    {% if 'none' in selected_blank_langs %}
+                    {% elif lang in selected_blank_langs %}
+                        checked=1
+                    {% endif %}
+                >{{language_names[lang]}}</input>
+                </label>
+            {% endfor %}
+        </div>
     </p>
 
     <p>(Genus common names are italicized)</p>

@@ -30,6 +30,20 @@ table.search_results tr:nth-child(even) {
         {% if not search_results %}
             {% if current_search or dataset_filter %}
                 <p><strong>No results found.</strong></p>
+            {% else %}
+            <p>
+                Welcome to Map of Life Vernacular Name Editor. Please select from the following options or search for a species
+            </p>
+                <ul>
+                    <li><a href="/coverage">{{ datasets_data|length }} datasets</a></li>
+                    <li><a href="/masterlist">Master List</a></li>
+                    <li><a href="/list">List names</a></li>
+                    <li><a href="/genera">Genera</a></li>
+                    <li><a href="/hemihomonyms">Hemihomonyms</a></li>
+                    <li><a href="/sources">Sources</a></li>
+                    <li><a href="/recent">Recent changes</a></li>
+                    <li><a href="/import">Bulk import</a></li>
+                </ul>
             {% endif %}
 
         {% else %}
@@ -63,7 +77,7 @@ table.search_results tr:nth-child(even) {
         {% if not lookup_results %}
         {% else %}
             <td valign="top" width="80%">
-                <div id="external_links" style="float: right; width=30%; border: 1px solid black; background: #ddd; padding: 0.5em">
+                <div id="external_links" style="float: right; width=30%; border: 1px solid #555; background: #eee; padding: 0.5em">
                     <strong>External links</strong>
                     <br>
                     <br>
@@ -155,7 +169,7 @@ table.search_results tr:nth-child(even) {
                                             <input type="hidden" name="lang" value="{{language}}">
                                             <input class="btn btn-primary btn-sm" name="add_to_current_lookup_in_{{language}}"
                                                 value="Add" type="submit">
-                                            <input class="btn btn-danger btn-sm" value="Cancel" type="reset" onclick="$('#edit_name_{{language}}_{{loop.index}}').hide(); $('#display_name_{{language}}_{{loop.index}}').show();">
+                                            <input class="btn btn-default btn-sm" value="Cancel" type="reset" onclick="$('#edit_name_{{language}}_{{loop.index}}').hide(); $('#display_name_{{language}}_{{loop.index}}').show();">
                                         </form>
                                     </div>
                                 </li>

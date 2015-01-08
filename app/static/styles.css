@@ -1,0 +1,66 @@
+.navigation {
+    font-size: 0.75em;
+}
+
+@media (min-width: 915px) {
+    .navigation {
+        font-size: 0.8em;
+    }
+}
+
+@media (min-width: 1058px) {
+    .navigation {
+        font-size: 1em;
+    }
+}
+
+@media (max-width: 877px) {
+    .navigation {
+        font-size: 0.8em;
+    }
+
+    .navigation .navbar {
+        width: 100%;
+    }
+
+    .navbar-header {
+        float: none;
+    }
+
+    .navbar-toggle {
+        display: block;
+    }
+
+    .navbar-collapse {
+        border-top: 1px solid transparent;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .navbar-collapse.collapse {
+        display: none !important;
+    }
+
+    .navbar-collapse.collapse.in {
+        display: block !important;
+    }
+
+    .navbar-nav {
+        float: none !important;
+        margin: 7.5px -15px;
+    }
+
+    .navbar-nav > li {
+        float: none;
+    }
+
+    .navbar-nav > li > a {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+}
+
+.checkbox_group{text-align: left;}
+.checkbox_group label {
+    padding: 3px;
+    font-weight: 400;
+}
