@@ -26,8 +26,9 @@
 <div>{% include 'templates/header.html' %}</div>
 <div class="container">
 
+    {% if user_name %}
     <div class="well well-sm">
-        <div style="float:right">
+        <div class="pull-right">
             <a href="{{ user_url }}">{{ user_name }}</a> | <a href="{{ logout_url }}">Logout</a>
         </div>
 
@@ -38,6 +39,7 @@
             <input name="dataset" type="hidden" value="{{ dataset_filter }}">
         </form>
     </div>
+    {% endif %}
 
     <h1>Vernacular Name Editor: {{ self.page_title() }}</h1>
 

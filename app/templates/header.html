@@ -49,6 +49,7 @@
                 <!-- Collect the nav links, forms, and other content for toggling -->
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1" collapse="isCollapsed">
                     <ul class="nav navbar-nav">
+                        {% if user_name %}
                         <li><a href="/coverage">{{ datasets_data|length }} datasets</a></li>
                         <li><a href="/masterlist">Master List</a></li>
                         <li><a href="/list">List names</a></li>
@@ -57,6 +58,9 @@
                         <li><a href="/sources">Sources</a></li>
                         <li><a href="/recent">Recent changes</a></li>
                         <li><a href="/import">Bulk import</a></li>
+                        {% else %}
+                        <li><a href="{{ login_url }}">Login</a></li>
+                        {% endif %}
                     </ul>
                     <ul class="nav navbar-nav visible-xxxs">
                         <li>
