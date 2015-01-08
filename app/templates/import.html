@@ -123,6 +123,8 @@
 
             // If family common names appear to be plural, correct that to singluar.
             if(lang == 'en') {
+                // Exceptions: words that look like they are plural but they are not.
+                fcmname = fcmname.replace(/^(.*)flies$/, '$1fly')
                 fcmname = fcmname.replace(/^(.*)s$/, '$1')
             }
 
@@ -355,9 +357,9 @@
                 {% for lang in language_names_list %}
                     <th>{{ language_names[lang]|default(lang) }}<br>
                     <span style="font-size: 90%; font-weight: 100">
-                        <a href="#" onclick="clearAll('{{lang}}'); return false;">Clear all</a>, 
+                        <a href="#" onclick="clearAll('{{lang}}'); return false;">Clear all</a>,
                         <a href="#" onclick="fillFromEOL(['{{lang}}']); return false;">Fill in from EOL</a>,
-                        <a href="#" onclick="fillFromField('family', ['{{lang}}']); return false;">Fill family names</a>
+                        <a href="#" onclick="fillFromField('family', ['{{lang}}']); return false;">Fill family names</a>,
                         <a href="#" onclick="fillFromField('family', ['{{lang}}'], change_family_common_name_to_genus_common_name); return false;">Fill family names with genus name</a>
                     </span>
                     </th>
