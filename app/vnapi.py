@@ -3,7 +3,7 @@
 # vnapi.py
 # An API for communicating with the Vernacular Name system on CartoDB.
 
-from google.appengine.api import urlfetch
+import urlfetch
 
 import base64
 import json
@@ -26,6 +26,9 @@ PRIORITY_DEFAULT_APP = 80
 # Helper functions.
 def url_get(url):
     return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
+
+def url_post(url, data):
+    return urlfetch.post(url, data = data)
 
 # Encode a Unicode string as base64, then set it up to be decoded on the server.
 def encode_b64_for_psql(text):
