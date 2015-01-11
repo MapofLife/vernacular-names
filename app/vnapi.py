@@ -27,8 +27,12 @@ PRIORITY_DEFAULT_APP = 80
 # Tricky: try to load google.appengine.api.urlfetch;
 # if so, use that instead of urlfetch.
 import importlib
-gae_urlfetch = importlib.import_module('google.appengine.api.urlfetch')
-gae_urlfetch.set_default_fetch_deadline(DEADLINE_FETCH)
+gae_urlfetch = None
+try:
+    gae_urlfetch = importlib.import_module('google.appengine.api.urlfetch')
+    gae_urlfetch.set_default_fetch_deadline(DEADLINE_FETCH)
+except ImportError:
+    pass
 
 def url_get(url):
     if gae_urlfetch:
