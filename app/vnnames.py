@@ -3,7 +3,6 @@
 # vnnames.py
 # Functions for working with vernacular names 
 
-import urlfetch
 from titlecase import titlecase
 
 import logging
