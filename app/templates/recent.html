@@ -12,9 +12,15 @@
     {% else %}
         <p>Displaying {{ recent_changes|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
-        <p>{% if offset > 0 %}<a href="?offset=0">Start</a> <a href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>{% endif %}
-        {% if offset + display_count < total_count %}<a href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>{% endif %}
-        </p>
+        <div class="well well-sm">
+            {% if offset > 0 %}
+            <a class="btn btn-default" href="?offset=0">Start</a>
+            <a class="btn btn-default" href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            {% endif %}
+            {% if offset + display_count < total_count %}
+            <a class="btn btn-default" href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            {% endif %}
+        </div>
 
         <table border="1" class="sortable">
             <thead><tr>
@@ -49,9 +55,15 @@
             </tbody>
         </table>
 
-        <p>{% if offset > 0 %}<a href="?offset=0">Start</a> <a href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>{% endif %}
-        {% if offset + display_count < total_count %}<a href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>{% endif %}
-        </p>
+        <div class="well well-sm">
+            {% if offset > 0 %}
+            <a class="btn btn-default" href="?offset=0">Start</a>
+            <a class="btn btn-default" href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            {% endif %}
+            {% if offset + display_count < total_count %}
+            <a class="btn btn-default" href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            {% endif %}
+        </div>
 
 
     {% endif %}

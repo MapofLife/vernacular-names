@@ -2,19 +2,19 @@
     font-size: 0.75em;
 }
 
-@media (min-width: 915px) {
+@media (min-width: 995px) {
     .navigation {
         font-size: 0.8em;
     }
 }
 
-@media (min-width: 1058px) {
+@media (min-width: 1160px) {
     .navigation {
         font-size: 1em;
     }
 }
 
-@media (max-width: 877px) {
+@media (max-width: 954px) {
     .navigation {
         font-size: 0.8em;
     }
@@ -66,3 +66,5 @@
 }
 
 td {padding: 5px;}
+
+.app-info{margin-top: 15px;}
