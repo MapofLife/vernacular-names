@@ -117,8 +117,11 @@
 
             match = /^(\w+)\s+([\w\-]+)/.exec(scname)
             if(match) {
-                scname = match[1]
-                console.log("scname fixed to " + scname + ".")
+                genus = match[1]
+                epithet = match[2]
+                console.log("scname fixed to " + genus + ".")
+            } else {
+                genus = scname
             }
 
             // If family common names appear to be plural, correct that to singluar.
@@ -133,7 +136,9 @@
                 return this.charAt(0).toUpperCase() + this.slice(1);
             }
 
-            return scname.capitalize() + " " + fcmname.capitalize();
+            // Default: smoosh genus name and family common name and hope for
+            // the best.
+            return genus.capitalize() + " " + fcmname.capitalize();
         }
 
         var monthNames = [  "January", "February", "March", "April", "May", "June", 
