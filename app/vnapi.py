@@ -3,7 +3,7 @@
 # vnapi.py
 # An API for communicating with the Vernacular Name system on CartoDB.
 
-from google.appengine.api import urlfetch
+import urlfetch
 
 import base64
 import json
@@ -24,8 +24,36 @@ PRIORITY_DEFAULT = 0
 PRIORITY_DEFAULT_APP = 80
 
 # Helper functions.
+# Tricky: try to load google.appengine.api.urlfetch;
+# if so, use that instead of urlfetch.
+import importlib
+gae_urlfetch = None
+try:
+    gae_urlfetch = importlib.import_module('google.appengine.api.urlfetch')
+    gae_urlfetch.set_default_fetch_deadline(DEADLINE_FETCH)
+except ImportError:
+    pass
+
 def url_get(url):
-    return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
+    if gae_urlfetch:
+        logging.info("url_get(" + url + ") with GAE")
+        return gae_urlfetch.fetch(url)
+    else:
+        logging.info("url_get(" + url + ") with urlfetch")
+        return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
+
+def url_post(url, data):
+    if gae_urlfetch:
+        logging.info("url_post(" + url + ") with GAE")
+        return gae_urlfetch.fetch(url, 
+            payload=urllib.urlencode(data),
+            method=gae_urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=DEADLINE_FETCH
+        )
+    else:
+        logging.info("url_post(" + url + ") with urlfetch")
+        return urlfetch.post(url, data = data)
 
 # Encode a Unicode string as base64, then set it up to be decoded on the server.
 def encode_b64_for_psql(text):
@@ -57,7 +85,7 @@ def groupBy(rows, colName):
 # Return a list of every dataset in the master list.
 def getDatasets():
     sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
-    response = url_get(access.CDB_URL % urllib.urlencode(
+    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql % (access.MASTER_LIST))
     ))
 
@@ -79,7 +107,7 @@ def getMasterList():
 def getDatasetNames(dataset):
     sql = "SELECT scientificname FROM %s WHERE dataset=%s"
     sql_query = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset))
-    response = url_get(access.CDB_URL % urllib.urlencode(
+    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql_query)
     ))
 
@@ -114,15 +142,7 @@ def getDatasetCoverage(datasets, langs):
         ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
     )
 
-    response = urlfetch.fetch(access.CDB_URL,
-        payload=urllib.urlencode(dict(
-            q = sql_query
-        )),
-        method=urlfetch.POST,
-        headers={'Content-type': 'application/x-www-form-urlencoded'},
-        deadline=DEADLINE_FETCH
-    )
-
+    response = url_post(access.CDB_URL, dict(q = sql_query))
     if response.status_code != 200:
         raise RuntimeError("Could not read server response: " + response.content)
 
@@ -149,15 +169,7 @@ def getDatasetCoverage(datasets, langs):
         ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
     )
 
-    response = urlfetch.fetch(access.CDB_URL,
-        payload=urllib.urlencode(dict(
-            q = sql_query
-        )),
-        method=urlfetch.POST,
-        headers={'Content-type': 'application/x-www-form-urlencoded'},
-        deadline=DEADLINE_FETCH
-    )
-
+    response = url_post(access.CDB_URL, dict(q = sql_query))
     if response.status_code != 200:
         raise RuntimeError("Could not read server response: " + response.content)
 
@@ -263,7 +275,7 @@ def searchForName(name):
     search_pattern = name.replace("_", "__").replace("%", "%%")             
 
     sql = "SELECT DISTINCT scname, cmname FROM %s INNER JOIN %s ON (LOWER(scname)=LOWER(scientificname)) WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
-    response = url_get(access.CDB_URL % urllib.urlencode(
+    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql % (
             access.MASTER_LIST, access.ALL_NAMES_TABLE, 
             encode_b64_for_psql("%" + name.lower() + "%"), 

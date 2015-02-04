@@ -3,7 +3,6 @@
 # vnnames.py
 # Functions for working with vernacular names 
 
-from google.appengine.api import urlfetch
 from titlecase import titlecase
 
 import logging
@@ -230,13 +229,10 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
         # print("Sql = <<" + sql_query + ">>")
         # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
 
-        urlresponse = urlfetch.fetch(access.CDB_URL,
-            payload=urllib.urlencode(dict(
+        urlresponse = vnapi.url_post(access.CDB_URL,
+            data=dict(
                 q = sql_query
-            )),
-            method=urlfetch.POST,
-            headers={'Content-Type': 'application/x-www-form-urlencoded'},
-            deadline = vnapi.DEADLINE_FETCH
+            )
         )
 
         if urlresponse.status_code != 200:

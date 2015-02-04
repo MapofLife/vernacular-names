@@ -291,7 +291,7 @@ class AddNameHandler(BaseHandler):
             )
 
             # Make it so.
-            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+            response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
                 dict(
                     q = sql_query,
                     api_key = access.CARTODB_API_KEY
