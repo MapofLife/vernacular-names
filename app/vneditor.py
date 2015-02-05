@@ -611,7 +611,7 @@ class MasterListHandler(BaseHandler):
 
         # Retrieve master list.
         dataset_filter = self.request.get('dataset')
-        datasets_data = vnapi.getDatasets()
+        datasets_data = vnapi.getDatasetCounts()
         if dataset_filter == '':
             datasets = map(lambda x: x['dataset'], datasets_data)
         else:
@@ -1454,7 +1454,7 @@ class ListViewHandler(BaseHandler):
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'datasets_data': vnapi.getDatasets(),
+            'datasets_data': vnapi.getDatasetCounts(),
             'selected_datasets': set(self.request.get_all('dataset')),
             'selected_blank_langs': set(self.request.get_all('blank_lang')),
             'message': message,

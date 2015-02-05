@@ -84,6 +84,19 @@ def groupBy(rows, colName):
 
 # Return a list of every dataset in the master list.
 def getDatasets():
+    sql = "SELECT DISTINCT dataset FROM %s ORDER BY dataset DESC"
+    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
+        dict(q = sql % (access.MASTER_LIST))
+    ))
+
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
+
+    results = json.loads(response.content)
+    return results['rows']
+
+# Return a list of every dataset in the master list.
+def getDatasetCounts():
     sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
     response = url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql % (access.MASTER_LIST))
