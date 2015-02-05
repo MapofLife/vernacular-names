@@ -931,8 +931,8 @@ class BulkImportHandler(BaseHandler):
             'names_in_nomdb': names_in_nomdb
         })
 
-# GeneraHandler view.
-class GeneraHandler(BaseHandler):
+# FamilyHandler view.
+class FamilyHandler(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
 
@@ -993,7 +993,7 @@ class GeneraHandler(BaseHandler):
         all_names = filter(lambda x: x is not None, map(lambda x: x['family'], all_species))
 
         # Render recent changes.
-        self.render_template('genera.html', {
+        self.render_template('family.html', {
             'message': message,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
@@ -1476,7 +1476,7 @@ application = webapp2.WSGIApplication([
     ('/delete/cartodb_id', DeleteByCDBIDHandler),
     ('/recent', RecentChangesHandler),
     ('/taxonomy', HigherTaxonomyHandler),
-    ('/genera', GeneraHandler),
+    ('/family', FamilyHandler),
     ('/hemihomonyms', HemihomonymHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
