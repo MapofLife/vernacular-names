@@ -1,6 +1,8 @@
 A vernacular names framework for Map of Life
 ============================================
 
+[![Stories in Ready](https://badge.waffle.io/MapofLife/vernacular-names.png?label=ready&title=Ready)](http://waffle.io/MapofLife/vernacular-names)
+
 We need one place to put all the common names in a way that is easy 
 to manipulate. We’re going to put it all into a single table with 
 the following structure.
