@@ -1,0 +1,76 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Family Names{% endblock %}
+
+{% block head %}
+    <script src="/static/sorttable.js"></script>
+{% endblock %}
+
+{% block content %}
+
+    <p>This list is generated from a master list of higher taxonomy.
+    You may want to look at <a href="/taxonomy">higher taxonomy stored
+    with nomenclatural names</a> instead.
+    </p>
+
+    {% if missing_genera|length > 0 %}
+        <p><strong>Warning</strong>: the following species are missing higher
+        taxonomy. Please fill them in on <a href="https://docs.google.com/spreadsheets/d/1m4gr3pT7ttgLdztVOZYVQCMA7jJokSvkVKWaFpxyWO4/edit?usp=sharing">this Google Doc</a> or e-mail them to <a href="mailto:gaurav@ggvaidya.com">Gaurav Vaidya</a>.</p>
+
+        <table border="1" class="sortable" style="margin-left: 2em">
+            <thead><tr>
+                <th>&nbsp;</th>
+                <th>Genus</th>
+                <th>Dataset</th>
+            </tr></thead>
+            {% for missing in missing_genera %}
+                <tr>
+                    <td>{{loop.index}}</td>
+                    <td><em><a href="/?lookup={{missing['genus']}}">{{missing['genus']|capitalize}}</a></em></td>
+                    <td>{% for dataset in missing['datasets'] %}
+                        <a href="/list?dataset={{dataset}}">{{dataset}}</a> 
+                    {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+
+        <p>The following genera have family information.</p>
+    {% endif %}
+
+    <table border="1" class="sortable">
+        <thead><tr>
+            <th>&nbsp;</th>
+            <th>Genus</th>
+            <th>Family</th>
+            <th>Dataset</th>
+            {% for lang in language_names_list %}
+                <th>{{language_names[lang]}}</th>
+            {% endfor %}
+        </tr></thead>
+        <tbody>
+        {% for row in genera %}
+            {% set family = row['family']|join(", ") %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><em><a href="/?lookup={{row['genus']}}">{{row['genus']|capitalize}}</a></em></td>
+                <td>{% if family is none %}None{% else %}
+                    <a href="/?lookup={{family}}">{{ family|capitalize }}</a>
+                {% endif %}
+                </td>
+                <td>{% for dataset in row['datasets'] %}
+                    <a href="/list?dataset={{dataset}}">{{dataset}}</a> 
+                {% endfor %}
+                </td>
+                {% for lang in language_names_list %}
+                    {% if family is none or family == '' or vnames[family][lang].vernacularname == '' %}
+                        <td>&nbsp;</td>
+                    {% else %}
+                        <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacularname}}</a></td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

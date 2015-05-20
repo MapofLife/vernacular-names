@@ -9,9 +9,12 @@
 {% block content %}
 
     <p>The Master List is the list of species names that are exported. Each species is present in one or more datasets.
+    {% if not diff_names_count %}
+        You can <a href="#" onclick="$('#comparison').show(); return false;">compare species to a master list</a>.
+    {% endif %}
     </p>
 
-    <div style="margin-left: 4em">
+    <div id="comparison" class="well well-sm" style="{% if not diff_names_count %}display: none;{% endif %} margin-left: 4em;">
         {% if diff_names_count %}
             <p>Compared {{diff_names_count}} names: found {{ diff_names_added|count }} additions and {{ diff_names_deleted|count }} deletions.</p>
 
@@ -24,8 +27,8 @@
 
         <form method="POST">
             <input type="hidden" name="search" value="{{ dataset_filter }}">
-            <textarea name="diff_names" rows=20 cols=40></textarea>
-            <input type="submit" value="Compare">
+            <textarea name="diff_names" rows=20 cols=40></textarea> <br />
+            <input class="btn btn-primary" type="submit" value="Compare">
         </form>
     </div>
     
@@ -41,8 +44,8 @@
 
         <form action="/import" method="POST">
             <input type="hidden" name="input_dataset" value="{{dataset_filter}}" />
-            <textarea style="display: none" name="scnames">{{species_sorted|join("\n")}}</textarea>
-            <input type="submit" value="Display dataset in bulk import">
+            <textarea style="display: none" name="scnames">{{species_sorted|join("\n")}}</textarea> <br />
+            <input class="btn btn-primary btn-sm" type="submit" value="Display dataset in bulk import">
         </form>
 
         </p>

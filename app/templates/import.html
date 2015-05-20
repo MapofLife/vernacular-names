@@ -117,12 +117,17 @@
 
             match = /^(\w+)\s+([\w\-]+)/.exec(scname)
             if(match) {
-                scname = match[1]
-                console.log("scname fixed to " + scname + ".")
+                genus = match[1]
+                epithet = match[2]
+                console.log("scname fixed to " + genus + ".")
+            } else {
+                genus = scname
             }
 
             // If family common names appear to be plural, correct that to singluar.
             if(lang == 'en') {
+                // Exceptions: words that look like they are plural but they are not.
+                fcmname = fcmname.replace(/^(.*)flies$/, '$1fly')
                 fcmname = fcmname.replace(/^(.*)s$/, '$1')
             }
 
@@ -131,7 +136,9 @@
                 return this.charAt(0).toUpperCase() + this.slice(1);
             }
 
-            return scname.capitalize() + " " + fcmname.capitalize();
+            // Default: smoosh genus name and family common name and hope for
+            // the best.
+            return genus.capitalize() + " " + fcmname.capitalize();
         }
 
         var monthNames = [  "January", "February", "March", "April", "May", "June", 
@@ -274,20 +281,22 @@
         <p>Please enter the scientific names to add to the Map of Life app.</p>
 
             <p>
-                Input dataset: <input size="100" name="input_dataset" />
+                Input dataset: <br /><input size="100" name="input_dataset" />
             </p>
             <textarea name="scnames" rows="25" cols="80">Please enter scientific names here.</textarea>
-            <input type="submit" value="Upload names">
+            <br />
+            <input class="btn btn-primary" type="submit" value="Upload names">
     {% else %}
         <input type="hidden" name="scnames" value="{{ scnames|join('\n') }}" />
 
         <h2>Dataset: <em>{{ input_dataset }}</em></h2>
 
-        <p>Change input dataset name: <input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
+        <p>Change input dataset name: <br /><input size="100" name="input_dataset" value="{{ input_dataset }}" /></p>
         <p>Sources: <textarea id="sources" name="sources" cols="80" rows="5" readonly="1"
             >{% for source in sources %}{{source}}
 {% endfor %}</textarea>
-            <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
+            <br />
+            <button class="btn btn-default" onclick="promptAndAddSource(); return false;">Add new source</button></p>
         </p>
 
         <p>Source priority for entire dataset: <input name="source_priority" value="{{source_priority|default(0)}}" /></p>
@@ -310,11 +319,11 @@
         </p>
 
         <center><p>
-            <button onclick="clearAll(); return false;">Clear all</button>
-            <button onclick="fillFromEOL(); return false;">Fill from EOL</button>
-            <button onclick="fillFromField('family'); return false;">Fill in family name</button>
-            <button onclick="fillFromField('family', null, change_family_common_name_to_genus_common_name); return false;">Fill in family name with genus name</button>
-            <input type="submit" value="Refresh display">
+            <button class="btn btn-default" onclick="clearAll(); return false;">Clear all</button>
+            <button class="btn btn-default" onclick="fillFromEOL(); return false;">Fill from EOL</button>
+            <button class="btn btn-default" onclick="fillFromField('family'); return false;">Fill in family name</button>
+            <button class="btn btn-default" onclick="fillFromField('family', null, change_family_common_name_to_genus_common_name); return false;">Fill in family name with genus name</button>
+            <input class="btn btn-primary" type="submit" value="Refresh display">
         </p>
         
         <table border="1">
@@ -353,9 +362,9 @@
                 {% for lang in language_names_list %}
                     <th>{{ language_names[lang]|default(lang) }}<br>
                     <span style="font-size: 90%; font-weight: 100">
-                        <a href="#" onclick="clearAll('{{lang}}'); return false;">Clear all</a>, 
+                        <a href="#" onclick="clearAll('{{lang}}'); return false;">Clear all</a>,
                         <a href="#" onclick="fillFromEOL(['{{lang}}']); return false;">Fill in from EOL</a>,
-                        <a href="#" onclick="fillFromField('family', ['{{lang}}']); return false;">Fill family names</a>
+                        <a href="#" onclick="fillFromField('family', ['{{lang}}']); return false;">Fill family names</a>,
                         <a href="#" onclick="fillFromField('family', ['{{lang}}'], change_family_common_name_to_genus_common_name); return false;">Fill family names with genus name</a>
                     </span>
                     </th>
@@ -420,15 +429,15 @@
                     </td>
                 {% endfor %} 
                 <td>
-                    <button onclick="promptAndAddSource(); return false;">Add new source</button></p>
+                    <button class="btn btn-default" onclick="promptAndAddSource(); return false;">Add new source</button></p>
                 </td>
             </tr>
             {% endfor %}
         </table>
         
         <center><p>
-            <input type="submit" value="Refresh display">
-            <input type="submit" name="save" value="Upload names">
+            <input class="btn btn-primary" type="submit" value="Refresh display">
+            <input class="btn btn-primary" type="submit" name="save" value="Upload names">
         </p></center>
     {% endif %}
     </form>

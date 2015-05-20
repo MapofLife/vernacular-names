@@ -1,5 +1,5 @@
 {% extends "templates/base.html" %}
-{% block page_title %}Editor{% endblock %}
+{% block page_title %}{% if current_search %}Search{% else %}Welcome{% endif %}{% endblock %}
 {% block javascript %}
 {% endblock %}
 {% block style %}
@@ -30,6 +30,20 @@ table.search_results tr:nth-child(even) {
         {% if not search_results %}
             {% if current_search or dataset_filter %}
                 <p><strong>No results found.</strong></p>
+            {% else %}
+            <p>
+                Welcome to Map of Life Vernacular Name Editor. Please select from the following options or search for a species
+            </p>
+                <ul>
+                    <li><a href="/coverage">Coverage</a></li>
+                    <li><a href="/masterlist">Master List</a></li>
+                    <li><a href="/list">List names</a></li>
+                    <li><a href="/family">Family Names</a></li>
+                    <li><a href="/hemihomonyms">Hemihomonyms</a></li>
+                    <li><a href="/sources">Sources</a></li>
+                    <li><a href="/recent">Recent changes</a></li>
+                    <li><a href="/import">Bulk import</a></li>
+                </ul>
             {% endif %}
 
         {% else %}
@@ -63,7 +77,7 @@ table.search_results tr:nth-child(even) {
         {% if not lookup_results %}
         {% else %}
             <td valign="top" width="80%">
-                <div id="external_links" style="float: right; width=30%; border: 1px solid black; background: #ddd; padding: 0.5em">
+                <div id="external_links" style="float: right; width=30%; border: 1px solid #555; background: #eee; padding: 0.5em">
                     <strong>External links</strong>
                     <br>
                     <br>
@@ -85,22 +99,22 @@ table.search_results tr:nth-child(even) {
                         <input type="hidden" name="lookup" value="{{lookup_search}}">
 
                         Class: {% for class in tax_class %}<a href="?lookup={{class}}">{{class|capitalize}}</a> {%endfor%}
-                        <a href="#" onclick="$('#tax_class_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <a class="btn btn-info btn-xs" role="button" href="#" onclick="$('#tax_class_add').show(); $('#tax_source_add').show(); return false">Add</a>
                         <input id="tax_class_add" name="tax_class" style="display:none">
                         <br>
                         Order: {% for order in tax_order %}<a href="?lookup={{order}}">{{order|capitalize}}</a> {%endfor%}
-                        <a href="#" onclick="$('#tax_order_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <a class="btn btn-info btn-xs" role="button" href="#" onclick="$('#tax_order_add').show(); $('#tax_source_add').show(); return false">Add</a>
                         <input id="tax_order_add" name="tax_order" style="display:none">
                         <br>
                         Family: {% for family in tax_family %}<a href="?lookup={{family}}">{{family|capitalize}}</a> {%endfor%}
-                        <a href="#" onclick="$('#tax_family_add').show(); $('#tax_source_add').show(); return false">Add</a>
+                        <a class="btn btn-info btn-xs" role="button" href="#" onclick="$('#tax_family_add').show(); $('#tax_source_add').show(); return false">Add</a>
                         <input id="tax_family_add" name="tax_family" style="display:none">
                         <br>
                         Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em><br>
 
                         <div id="tax_source_add" style="display:none">
                             <em>Higher taxonomy source</em>: <input name="source" size=50>
-                            <input name="add_to_current_lookup_in_{{language}}" 
+                            <input class="btn btn-success btn-sm" name="add_to_current_lookup_in_{{language}}"
                                 value="Add" type="submit">
                         </div> 
 
@@ -153,19 +167,19 @@ table.search_results tr:nth-child(even) {
                                             <input type="hidden" name="search" value="{{current_search}}">
                                             <input type="hidden" name="lookup" value="{{lookup_search}}">
                                             <input type="hidden" name="lang" value="{{language}}">
-                                            <input name="add_to_current_lookup_in_{{language}}" 
+                                            <input class="btn btn-success btn-sm" name="add_to_current_lookup_in_{{language}}"
                                                 value="Add" type="submit">
-                                            <input value="Cancel" type="reset" onclick="$('#edit_name_{{language}}_{{loop.index}}').hide(); $('#display_name_{{language}}_{{loop.index}}').show();">
+                                            <input class="btn btn-default btn-sm" value="Cancel" type="reset" onclick="$('#edit_name_{{language}}_{{loop.index}}').hide(); $('#display_name_{{language}}_{{loop.index}}').show();">
                                         </form>
                                     </div>
                                 </li>
                             {% endfor %}
-                            <li><a class="nohistory" href="#" onclick="$('#add_new_{{language}}').toggle(); $('#name_to_add_{{language}}').focus(); return false"><em>Add another</em></a>
+                            <li><a class="btn btn-info btn-xs nohistory" role="button" href="#" onclick="$('#add_new_{{language}}').toggle(); $('#name_to_add_{{language}}').focus(); return false"><em>Add another</em></a>
                                 <div id='add_new_{{language}}' style="display:none">
                                     <form method="post" action="/add/name">
                                         <input name="name_to_add" id="name_to_add_{{language}}">
                                         <input name="source" size=50 value="Source">
-                                        <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                                        <input class="btn btn-success btn-sm" name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
                                         <input type="hidden" name="dataset" value="{{dataset_filter}}">
                                         <input type="hidden" name="search" value="{{current_search}}">
                                         <input type="hidden" name="lookup" value="{{lookup_search}}">

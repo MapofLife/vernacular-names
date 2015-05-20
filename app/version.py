@@ -1,2 +1,2 @@
 # Stores the current version
-VNEDITOR_VERSION = "0.6"
+VNEDITOR_VERSION = "0.7"

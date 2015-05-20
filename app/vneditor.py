@@ -23,6 +23,9 @@ import vnnames
 
 # Configuration
 
+# Display DEBUG information?
+FLAG_DEBUG = False
+
 # Display the total count in /list: expensive, but useful.
 FLAG_LIST_DISPLAY_COUNT = True
 
@@ -89,7 +92,8 @@ class StaticPages(BaseHandler):
         if path in self.template_mappings:
             self.render_template(self.template_mappings[path], {
                 'login_url': users.create_login_url('/'),
-                'logout_url': users.create_logout_url('/')
+                'logout_url': users.create_logout_url('/'),
+                'vneditor_version': version.VNEDITOR_VERSION
             })
         else:
             self.response.status = 404
@@ -165,13 +169,9 @@ class MainPage(BaseHandler):
             tax_order = lookup_results[lookup_search]['tax_order']
             tax_class = lookup_results[lookup_search]['tax_class']
 
-        # Get list of datasets
-        datasets = vnapi.getDatasets()
-
         # Render the main template.
         self.render_template('main.html', {
             'message': self.request.get('msg'),
-            'datasets_data': datasets,
             'dataset_filter': dataset_filter,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
@@ -291,7 +291,7 @@ class AddNameHandler(BaseHandler):
             )
 
             # Make it so.
-            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+            response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
                 dict(
                     q = sql_query,
                     api_key = access.CARTODB_API_KEY
@@ -419,10 +419,8 @@ class CoverageViewHandler(BaseHandler):
 
         langs = languages.language_names_list
 
-        # Stats are per-dataset, per-language.
-        all_datasets = vnapi.getDatasets()
-
         # Display 'display', offset by offset.
+        all_datasets = vnapi.getDatasets()
         datasets = all_datasets[offset:offset+display]
 
         dataset_names = map(lambda x: x['dataset'], all_datasets)
@@ -440,7 +438,6 @@ class CoverageViewHandler(BaseHandler):
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'datasets_data': all_datasets,
             'datasets': datasets,
             'datasets_count': datasets_count,
             'datasets_coverage': datasets_coverage,
@@ -580,7 +577,6 @@ class SourcesHandler(BaseHandler):
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
             'user_name': user_name,
-            'datasets_data': vnapi.getDatasets(),
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
 
@@ -615,8 +611,9 @@ class MasterListHandler(BaseHandler):
 
         # Retrieve master list.
         dataset_filter = self.request.get('dataset')
+        datasets_data = vnapi.getDatasetCounts()
         if dataset_filter == '':
-            datasets = map(lambda x: x['dataset'], vnapi.getDatasets())
+            datasets = map(lambda x: x['dataset'], datasets_data)
         else:
             datasets = set([dataset_filter])
 
@@ -688,10 +685,10 @@ class MasterListHandler(BaseHandler):
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
             'vneditor_version': version.VNEDITOR_VERSION,
-            'datasets_data': vnapi.getDatasets(),
 
             'message': message,
 
+            'datasets_data': datasets_data,
             'dataset_filter': dataset_filter,
             'species': species,
             'species_sorted': scnames,
@@ -913,7 +910,6 @@ class BulkImportHandler(BaseHandler):
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
             'vneditor_version': version.VNEDITOR_VERSION,
-            'datasets_data': vnapi.getDatasets(),
 
             'debug_save': debug_save,
 
@@ -935,8 +931,8 @@ class BulkImportHandler(BaseHandler):
             'names_in_nomdb': names_in_nomdb
         })
 
-# GeneraHandler view.
-class GeneraHandler(BaseHandler):
+# FamilyHandler view.
+class FamilyHandler(BaseHandler):
     def get(self):
         self.response.headers['Content-type'] = 'text/html'
 
@@ -997,13 +993,12 @@ class GeneraHandler(BaseHandler):
         all_names = filter(lambda x: x is not None, map(lambda x: x['family'], all_species))
 
         # Render recent changes.
-        self.render_template('genera.html', {
+        self.render_template('family.html', {
             'message': message,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
             'user_name': user_name,
-            'datasets_data': vnapi.getDatasets(),
             'missing_genera': missing_genera,
             'genera': genera,
             'vnames': vnnames.getVernacularNames(
@@ -1087,7 +1082,6 @@ class HemihomonymHandler(BaseHandler):
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
             'user_name': user_name,
-            'datasets_data': vnapi.getDatasets(),
 
             'scnames': scnames,
             'hemihomonyms': vnapi.groupBy(hemihomonyms, 'genus'),
@@ -1203,7 +1197,6 @@ class HigherTaxonomyHandler(BaseHandler):
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
             'user_name': user_name,
-            'datasets_data': vnapi.getDatasets(),
             'vnames': vnnames.getVernacularNames(all_names, languages.language_names_list, flag_no_higher = True, flag_no_memoize = False, flag_lookup_genera = False, flag_format_cmnames = True),
             'tax_class': tax_class,
             'tax_order': tax_order,
@@ -1283,7 +1276,6 @@ class RecentChangesHandler(BaseHandler):
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
             'user_name': user_name,
-            'datasets_data': vnapi.getDatasets(),
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
             'offset': offset,
@@ -1323,7 +1315,8 @@ class ListViewHandler(BaseHandler):
 
         sql_having = []
         for lang in blank_langs:
-            sql_having.append("NOT " + vnapi.encode_b64_for_psql(lang.lower()) + " = ANY(array_agg(LOWER(lang)))")
+            # sql_having.append("NOT " + vnapi.encode_b64_for_psql(lang.lower()) + " = ANY(array_agg(LOWER(lang)))")
+            sql_having.append("NOT array_agg(DISTINCT LOWER(lang)) @> ARRAY[" + vnapi.encode_b64_for_psql(lang.lower()) + "]")
             results['search_criteria'].append("filter by language '" + lang + "' being blank")
 
         if len(sql_having) > 0:
@@ -1443,7 +1436,8 @@ class ListViewHandler(BaseHandler):
             message += "\n<p><strong>Error</strong>: query ('" + list_sql + "'), server returned error " + str(response.status_code) + ": " + response.content + "</p>"
             results = {"rows": []}
         else:
-            message += "\n<p>DEBUG: '" + list_sql + "'</p>"
+            if FLAG_DEBUG:
+                message += "\n<p>DEBUG: '" + list_sql + "'</p>"
             results = json.loads(response.content)
 
         name_list = map(lambda x: x['scientificname'], results['rows'])
@@ -1457,9 +1451,10 @@ class ListViewHandler(BaseHandler):
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,
             'user_url': user_url,
+            'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'datasets_data': vnapi.getDatasets(),
+            'datasets_data': vnapi.getDatasetCounts(),
             'selected_datasets': set(self.request.get_all('dataset')),
             'selected_blank_langs': set(self.request.get_all('blank_lang')),
             'message': message,
@@ -1481,7 +1476,7 @@ application = webapp2.WSGIApplication([
     ('/delete/cartodb_id', DeleteByCDBIDHandler),
     ('/recent', RecentChangesHandler),
     ('/taxonomy', HigherTaxonomyHandler),
-    ('/genera', GeneraHandler),
+    ('/family', FamilyHandler),
     ('/hemihomonyms', HemihomonymHandler),
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),

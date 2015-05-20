@@ -42,7 +42,9 @@
                                 <!-- TODO: Add URL encoding here -->
                                 <a href="/list?dataset={{dataset['dataset']|trim}}">{{ dataset['dataset']|trim }}</a>
                                 <br>
-                                {{ datasets_count[cdataset] }} names/{{ dataset['count'] }} names
+                                <!-- Not sure where this count comes from, but it used to be the reliable one: 
+                                {{ datasets_count[cdataset] }} names/ -->
+                                {{ dataset['count'] }} names
                             </td>
                             {% for lang in language_names_list %}
                                 {% if lang in datasets_coverage[cdataset] %}

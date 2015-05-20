@@ -1,3 +1,6 @@
 [submodule "app/lib/python-titlecase"]
 	path = app/lib/python-titlecase
 	url = git@github.com:ppannuto/python-titlecase.git
+[submodule "app/lib/urlfetch"]
+	path = app/lib/urlfetch
+	url = https://github.com/ifduyue/urlfetch.git

@@ -20,17 +20,19 @@
     this is actual hemihomonymy (e.g. family Moraceae versus family Sulidae).
     </p>
 
-    <form method="POST" action="/import">
-        <input type="hidden" name="input_dataset" value="Hemihomonyms" />
-        <textarea style="display: none" name="scnames">{{ scnames|join("\n") }}</textarea>
-        <input type="submit" value="Edit {{ scnames|count }} currently displayed species" />
-    </form>
+    <div class="well well-sm">
+        <form class="pull-left" style="padding-right: 10px;" method="POST" action="/import">
+            <input type="hidden" name="input_dataset" value="Hemihomonyms" />
+            <textarea style="display: none" name="scnames">{{ scnames|join("\n") }}</textarea>
+            <input class="btn btn-primary" type="submit" value="Edit {{ scnames|count }} currently displayed species" />
+        </form>
 
-    <form method="POST" action="/import">
-        <input type="hidden" name="input_dataset" value="Hemihomonyms" />
-        <textarea style="display: none" name="scnames">{{ hemihomonyms.keys()|join("\n") }}</textarea>
-        <input type="submit" value="Edit {{ hemihomonyms.keys()|count }} currently displayed genera" />
-    </form>
+        <form method="POST" action="/import">
+            <input type="hidden" name="input_dataset" value="Hemihomonyms" />
+            <textarea style="display: none" name="scnames">{{ hemihomonyms.keys()|join("\n") }}</textarea>
+            <input class="btn btn-primary" type="submit" value="Edit {{ hemihomonyms.keys()|count }} currently displayed genera" />
+        </form>
+    </div>
 
     <table border="1" class="sortable">
         <thead><tr>
