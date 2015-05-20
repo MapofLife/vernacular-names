@@ -1,3 +1,8 @@
+0.7: May 20, 2015
+ - Ajay's style improvements.
+ - Switched to use GAE's urlfetch if available, but fallback to the standard
+   urlfetch package otherwise, which makes it easier to run it locally.
+ - Renamed /genera to /family
 0.6: January 7, 2015
  - Reworked higher taxonomy so that it comes directly from the Master List.
  - Modified bulk uploader to support inserting either the family common name 
