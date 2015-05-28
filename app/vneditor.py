@@ -310,95 +310,6 @@ class AddNameHandler(BaseHandler):
             lookup = lookup
         )) + "#lang-" + lang)
 
-# This handler generates the taxonomy_translations table. Eventually, we'd
-# like to use something similar to export names from /list (https://github.com/gaurav/vernacular-names/issues/45),
-# but I don't know how closely that's going to align with this.
-class GenerateTaxonomyTranslations(BaseHandler):
-    # Activates the taxonomy_translations taskqueue task.
-    def get(self):
-        task = taskqueue.add(url='/generate/taxonomy_translations', queue_name='generate-taxonomy-translations', method='POST')
-
-        self.response.set_status(200)
-        self.response.out.write("OK queued (" + task.name + ")")
-
-    # Task! Should be run on the 'generate-taxonomy-translations'
-    def post(self): 
-        # We have no parameters. We just generate.
-
-        # Fail without login.
-        #current_user = self.check_user()
-
-        #if current_user is None:
-        #    return
-
-        # Create file in memory and make it gzipped.
-        fgz = cStringIO.StringIO()
-        csv_filename = "taxonomy_translations_" + time.strftime("%Y_%B_%d_%H%MZ", time.gmtime())  + ".csv"
-        gzfile = gzip.GzipFile(filename=csv_filename, mode='wb', fileobj=fgz)
-        
-        # Prepare csv writer.
-        csvfile = csv.writer(gzfile)
-
-        # Get a list of every name in the master list.
-        all_names = vnapi.getMasterList()
-        
-        # Prepare to write out CSV.
-        header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
-        for lang in languages.language_names_list:
-            header.extend([lang + '_name', lang + '_source', lang + '_family'])
-        header.extend(['empty'])
-        csvfile.writerow(header)
-
-        def concat_names(names):
-            return "|".join(sorted(names)).encode('utf-8')
-
-        def add_name(name, higher_taxonomy, vnames_by_lang):
-            row = [name.encode('utf-8').capitalize(), 
-                concat_names(higher_taxonomy['family']),
-                concat_names(higher_taxonomy['order']),
-                concat_names(higher_taxonomy['class'])]
-
-            for lang in languages.language_names_list:
-                if lang in vnames_by_lang:
-                    vname = vnames_by_lang[lang].vernacularname
-                    sources = vnames_by_lang[lang].sources
-                    tax_family = vnames_by_lang[lang].tax_family
-
-                    # Use family latin name instead of common name 
-                    # if we don't have one.
-                    if len(tax_family) == 0:
-                        tax_family = map(lambda x: x.capitalize(), higher_taxonomy['family'])
-
-                    row.extend([
-                        vname.encode('utf-8'), 
-                        concat_names(sources),
-                        concat_names(tax_family)
-                    ])
-                else:
-                    row.extend([None, None, None])
-
-            csvfile.writerow(row)
-        
-        # searchVernacularNames doesn't use the cache, but it calls 
-        # getVernacularNames for higher taxonomy, which does.
-        vnnames.clearVernacularNamesCache()
-        vnnames.searchVernacularNames(add_name, all_names, languages.language_names_list, flag_format_cmnames=True)
-
-        # File completed!
-        gzfile.close()
-
-        # E-mail the response to me.
-        settings = " with genera lookups turned on"
-
-        email = EmailMessage(sender = access.EMAIL_ADDRESS, to = access.EMAIL_ADDRESS,
-            subject = 'Taxonomy translations download',
-            body = 'This taxonomy_translations file was prepared at ' + time.strftime("%x %X %Z", time.gmtime()) + settings + '.',
-            attachments = (csv_filename + ".gzip", fgz.getvalue()))
-        email.send()
-
-        self.response.set_status(200)
-        self.response.out.write("OK")
-
 # Display a summary of the coverage by dataset and language.
 class CoverageViewHandler(BaseHandler):
     # Display
@@ -1481,6 +1392,5 @@ application = webapp2.WSGIApplication([
     ('/sources', SourcesHandler),
     ('/coverage', CoverageViewHandler),
     ('/import', BulkImportHandler),
-    ('/masterlist', MasterListHandler),
-    ('/generate/taxonomy_translations', GenerateTaxonomyTranslations)
+    ('/masterlist', MasterListHandler)
 ], debug=not PROD)
