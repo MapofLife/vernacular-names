@@ -1,5 +1,12 @@
 # vim: set fileencoding=utf-8 :
 
+#
+# generate_tt.py: Generate taxonomy_translations table.
+# This file is now defunct: we use Luis' script at
+# https://github.com/MapofLife/database/blob/master/scripts_autopopulate/taxonomy_translations.py
+#
+
+
 import urllib
 import re
 import logging
@@ -15,16 +22,17 @@ import sys
 
 sys.path.append('config')
 sys.path.append('lib/urlfetch')
+
 import access
 import version
 import languages
 import vnapi
 import vnnames
 
-# Configuration
+# Configuration settings.
 OUTPUT_PATH = 'results/'
 
-# Time.
+# Measure time taken for extract.
 time_started = time.time()
 
 # Create file
