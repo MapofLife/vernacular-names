@@ -17,6 +17,7 @@ import languages
 from nomdb import masterlist
 import vnnames
 
+
 # Configuration
 
 # Display DEBUG information?

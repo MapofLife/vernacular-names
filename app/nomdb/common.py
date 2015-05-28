@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8 :
 
-# common.py: Common functions and constants used by NomDB.
+"""common.py: Common functions and constants used by NomDB."""
 
 import base64
 import logging
@@ -65,12 +65,10 @@ def encode_b64_for_psql(text):
     You probably need to use this."""
     return decode_b64_on_psql(base64.b64encode(text.encode('UTF-8')))
 
-
+# TODO This is something PostgreSQL should be able to handle, so we should refactor this out and delete it entirely.
 def group_by(rows, colname):
     """Given a list of rows, divide them until into groups of rows by the values
     in the column provided in 'colName'. Return this as a dict.
-
-    TODO This is something PostgreSQL should be able to handle, so we should refactor this out and delete it entirely.
     """
     result_table = dict()
 

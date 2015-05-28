@@ -1,7 +1,7 @@
 # vim: set fileencoding=utf-8 : 
 
-# masterlist.py
-# Manages communications with the Master List
+"""masterlist.py: Manages the Master List, which tells us which dataset a name belongs to."""
+
 import json
 import urllib
 import logging
