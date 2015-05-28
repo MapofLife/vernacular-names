@@ -1,24 +1,20 @@
 # vim: set fileencoding=utf-8 :
 
-from google.appengine.api import users, urlfetch, taskqueue
-from google.appengine.api.mail import EmailMessage
-
-import webapp2
-import jinja2
 import urllib
 import re
-import logging
-import cStringIO
-import gzip
-import csv
 import time
 import os
 import json
 
+from google.appengine.api import users, urlfetch
+import webapp2
+import jinja2
 import access
+import config
+import nomdb.common
 import version
 import languages
-import vnapi
+from nomdb import masterlist
 import vnnames
 
 # Configuration
@@ -131,7 +127,7 @@ class MainPage(BaseHandler):
         search_results = dict()
         search_results_scnames = []
         if current_search != '':
-            search_results = vnapi.searchForName(current_search)
+            search_results = masterlist.searchForName(current_search)
             search_results_scnames = sorted(search_results.keys())
 
         # Check for dataset_filter
@@ -140,12 +136,12 @@ class MainPage(BaseHandler):
             if current_search != '':
                 # If there is a search, filter it using dataset_filter.
                 search_results_scnames = filter(
-                    lambda scname: vnapi.datasetContainsName(dataset_filter, scname),
+                    lambda scname: masterlist.datasetContainsName(dataset_filter, scname),
                     search_results_scnames
                 )
             else:
                 # If not, search by dataset.
-                search_results_scnames = vnapi.getNamesInDataset(dataset_filter)
+                search_results_scnames = masterlist.getNamesInDataset(dataset_filter)
 
                 search_results = dict()
                 for scname in search_results_scnames:
@@ -245,7 +241,8 @@ class AddNameHandler(BaseHandler):
         cmname = self.request.get('name_to_add')
         lang = self.request.get('lang').lower()
         source = self.request.get('source')
-        source_priority = self.request.get_range('priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT_APP)
+        source_priority = self.request.get_range('priority', config.PRIORITY_MIN, config.PRIORITY_MAX,
+                                                 config.PRIORITY_DEFAULT_APP)
 
         tax_class = self.request.get('tax_class')
         tax_order = self.request.get('tax_order')
@@ -265,15 +262,15 @@ class AddNameHandler(BaseHandler):
             added_by = current_user.nickname()
 
             # Base64 anything we don't absolutely trust
-            added_by_b64 = vnapi.encode_b64_for_psql(added_by)
-            scname_b64 = vnapi.encode_b64_for_psql(scname)
-            cmname_b64 = vnapi.encode_b64_for_psql(cmname)
-            lang_b64 = vnapi.encode_b64_for_psql(lang)
-            source_b64 = vnapi.encode_b64_for_psql(source)
+            added_by_b64 = nomdb.common.encode_b64_for_psql(added_by)
+            scname_b64 = nomdb.common.encode_b64_for_psql(scname)
+            cmname_b64 = nomdb.common.encode_b64_for_psql(cmname)
+            lang_b64 = nomdb.common.encode_b64_for_psql(lang)
+            source_b64 = nomdb.common.encode_b64_for_psql(source)
 
-            tax_class_b64 = vnapi.encode_b64_for_psql(tax_class.strip().lower())
-            tax_order_b64 = vnapi.encode_b64_for_psql(tax_order.strip().lower())
-            tax_family_b64 = vnapi.encode_b64_for_psql(tax_family.strip().lower())
+            tax_class_b64 = nomdb.common.encode_b64_for_psql(tax_class.strip().lower())
+            tax_order_b64 = nomdb.common.encode_b64_for_psql(tax_order.strip().lower())
+            tax_family_b64 = nomdb.common.encode_b64_for_psql(tax_family.strip().lower())
 
             # Synthesize SQL
             sql = "INSERT INTO %s (added_by, scname, lang, cmname, url, source, source_url, source_priority, tax_class, tax_order, tax_family) VALUES (%s, %s, %s, %s, NULL, %s, '" + SOURCE_URL + "', %d, %s, %s, %s);"
@@ -331,11 +328,11 @@ class CoverageViewHandler(BaseHandler):
         langs = languages.language_names_list
 
         # Display 'display', offset by offset.
-        all_datasets = vnapi.getDatasets()
+        all_datasets = masterlist.getDatasets()
         datasets = all_datasets[offset:offset+display]
 
         dataset_names = map(lambda x: x['dataset'], all_datasets)
-        coverage = vnapi.getDatasetCoverage(dataset_names, langs)
+        coverage = masterlist.getDatasetCoverage(dataset_names, langs)
         datasets_count = coverage['num_species']
         datasets_coverage = coverage['coverage']
 
@@ -384,7 +381,7 @@ class SourcesHandler(BaseHandler):
             sql_query = sql % (
                 access.ALL_NAMES_TABLE,
                 source_priority,
-                vnapi.encode_b64_for_psql(source)
+                nomdb.common.encode_b64_for_psql(source)
             )
 
             # Make it so.
@@ -460,7 +457,7 @@ class SourcesHandler(BaseHandler):
                 )),
             method=urlfetch.POST,
             headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=vnapi.DEADLINE_FETCH
+            deadline=config.DEADLINE_FETCH
         )
 
         # Retrieve results. Store the total count if there is one.
@@ -522,7 +519,7 @@ class MasterListHandler(BaseHandler):
 
         # Retrieve master list.
         dataset_filter = self.request.get('dataset')
-        datasets_data = vnapi.getDatasetCounts()
+        datasets_data = masterlist.getDatasetCounts()
         if dataset_filter == '':
             datasets = map(lambda x: x['dataset'], datasets_data)
         else:
@@ -530,7 +527,7 @@ class MasterListHandler(BaseHandler):
 
         species = dict()
         for dataset in datasets:
-            scnames = vnapi.getDatasetNames(dataset)
+            scnames = masterlist.getDatasetNames(dataset)
 
             for scname in scnames:
                 scname = scname.lower()
@@ -568,8 +565,8 @@ class MasterListHandler(BaseHandler):
             )
             for name in names_added:
                 sql_statements += "\t(%s, %s),\n" % (
-                    vnapi.encode_b64_for_psql(dataset_filter),
-                    vnapi.encode_b64_for_psql(name.capitalize()),
+                    nomdb.common.encode_b64_for_psql(dataset_filter),
+                    nomdb.common.encode_b64_for_psql(name.capitalize()),
                 )
 
             sql_statements = sql_statements.rstrip(",\n")
@@ -581,8 +578,8 @@ class MasterListHandler(BaseHandler):
             )
             for name in names_deleted:
                 sql_statements += "\t(dataset = %s AND LOWER(scientificname) = %s) OR\n" % (
-                    vnapi.encode_b64_for_psql(dataset_filter),
-                    vnapi.encode_b64_for_psql(name.lower()),
+                    nomdb.common.encode_b64_for_psql(dataset_filter),
+                    nomdb.common.encode_b64_for_psql(name.lower()),
                 )
 
             sql_statements += "\tFALSE\n\n"
@@ -652,7 +649,7 @@ class BulkImportHandler(BaseHandler):
         message = self.request.get('message')
 
         # Check for presence in master list.
-        master_list = vnapi.getMasterList()
+        master_list = masterlist.getMasterList()
         master_list_lc = set(map(lambda x: x.lower(), master_list))
         
         scnames_not_in_master_list = filter(lambda x: (x.lower() not in master_list_lc), scnames)
@@ -666,7 +663,8 @@ class BulkImportHandler(BaseHandler):
         sources = list(set(filter(lambda x: x != '' and x != manual_change, re.split("\\s*[\r\n]+\\s*", all_sources))))
 
         # Source priority
-        source_priority = self.request.get_range('source_priority', vnapi.PRIORITY_MIN, vnapi.PRIORITY_MAX, vnapi.PRIORITY_DEFAULT)
+        source_priority = self.request.get_range('source_priority', config.PRIORITY_MIN,
+                                                 config.PRIORITY_MAX, config.PRIORITY_DEFAULT)
 
         # This needs to go on top as it should be the default.
         sources.insert(0, manual_change) 
@@ -733,13 +731,13 @@ class BulkImportHandler(BaseHandler):
                     debug_save += "<tr><td>" + scnames[loop_index - 1] + "</td><td>" + lang + "</td><td>" + vnames[loop_index][lang] + "</td><td>" + source + "</td></tr>\n"
 
                     entries.append("(" + 
-                        vnapi.encode_b64_for_psql(added_by) + ", " + 
-                        vnapi.encode_b64_for_psql(scnames[loop_index - 1]) + ", " +
+                        nomdb.common.encode_b64_for_psql(added_by) + ", " +
+                        nomdb.common.encode_b64_for_psql(scnames[loop_index - 1]) + ", " +
                             # loop_index - 1, since loop_index is 1-based (as it comes from the template)
                             # but the index on scnames is 0-based.
-                        vnapi.encode_b64_for_psql(lang) + ", " + 
-                        vnapi.encode_b64_for_psql(vnames[loop_index][lang]) + ", " +
-                        vnapi.encode_b64_for_psql(source) + ", " + 
+                        nomdb.common.encode_b64_for_psql(lang) + ", " +
+                        nomdb.common.encode_b64_for_psql(vnames[loop_index][lang]) + ", " +
+                        nomdb.common.encode_b64_for_psql(source) + ", " +
                         "'" + SOURCE_URL + "', " + str(source_priority) +
                         ")")
 
@@ -769,7 +767,7 @@ class BulkImportHandler(BaseHandler):
                         )),
                     method=urlfetch.POST,
                     headers={'Content-type': 'application/x-www-form-urlencoded'},
-                    deadline=vnapi.DEADLINE_FETCH
+                    deadline=config.DEADLINE_FETCH
                 )
 
                 if response.status_code != 200:
@@ -883,7 +881,7 @@ class FamilyHandler(BaseHandler):
                 )),
             method=urlfetch.POST,
             headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=vnapi.DEADLINE_FETCH
+            deadline=config.DEADLINE_FETCH
         )
 
         # Retrieve results. Store the total count if there is one.
@@ -966,7 +964,7 @@ class HemihomonymHandler(BaseHandler):
                 )),
             method=urlfetch.POST,
             headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=vnapi.DEADLINE_FETCH
+            deadline=config.DEADLINE_FETCH
         )
 
         # Retrieve results. Store the total count if there is one.
@@ -995,7 +993,7 @@ class HemihomonymHandler(BaseHandler):
             'user_name': user_name,
 
             'scnames': scnames,
-            'hemihomonyms': vnapi.groupBy(hemihomonyms, 'genus'),
+            'hemihomonyms': nomdb.common.group_by(hemihomonyms, 'genus'),
             'vnames': vnnames.getVernacularNames(
                 scnames,
                 languages.language_names_list, 
@@ -1065,7 +1063,7 @@ class HigherTaxonomyHandler(BaseHandler):
                 )),
             method=urlfetch.POST,
             headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=vnapi.DEADLINE_FETCH
+            deadline=config.DEADLINE_FETCH
         )
 
         # Retrieve results. Store the total count if there is one.
@@ -1082,11 +1080,11 @@ class HigherTaxonomyHandler(BaseHandler):
 
         higher_taxonomy_tree = {}
 
-        classes = vnapi.groupBy(higher_taxonomy, 'tax_class_lc')
+        classes = nomdb.common.group_by(higher_taxonomy, 'tax_class_lc')
         for tax_class in classes:
-            orders = vnapi.groupBy(classes[tax_class], 'tax_order_lc')
+            orders = nomdb.common.group_by(classes[tax_class], 'tax_order_lc')
             for tax_order in orders:
-                families = vnapi.groupBy(orders[tax_order], 'tax_family_lc')
+                families = nomdb.common.group_by(orders[tax_order], 'tax_family_lc')
                 for tax_family in families:
                     if not tax_class in higher_taxonomy_tree:
                         higher_taxonomy_tree[tax_class] = {}
@@ -1165,7 +1163,7 @@ class RecentChangesHandler(BaseHandler):
                 )),
             method=urlfetch.POST,
             headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=vnapi.DEADLINE_FETCH
+            deadline=config.DEADLINE_FETCH
         )
 
         # Retrieve results. Store the total count if there is one.
@@ -1209,7 +1207,7 @@ class ListViewHandler(BaseHandler):
 
         sql_having = []
         for dataset in datasets: 
-            sql_having.append(vnapi.encode_b64_for_psql(dataset.lower()) + " = ANY(array_agg(LOWER(dataset)))")
+            sql_having.append(nomdb.common.encode_b64_for_psql(dataset.lower()) + " = ANY(array_agg(LOWER(dataset)))")
             results['search_criteria'].append("filter by dataset '" + dataset + "'")
 
         if len(sql_having) > 0:
@@ -1227,7 +1225,7 @@ class ListViewHandler(BaseHandler):
         sql_having = []
         for lang in blank_langs:
             # sql_having.append("NOT " + vnapi.encode_b64_for_psql(lang.lower()) + " = ANY(array_agg(LOWER(lang)))")
-            sql_having.append("NOT array_agg(DISTINCT LOWER(lang)) @> ARRAY[" + vnapi.encode_b64_for_psql(lang.lower()) + "]")
+            sql_having.append("NOT array_agg(DISTINCT LOWER(lang)) @> ARRAY[" + nomdb.common.encode_b64_for_psql(lang.lower()) + "]")
             results['search_criteria'].append("filter by language '" + lang + "' being blank")
 
         if len(sql_having) > 0:
@@ -1339,7 +1337,7 @@ class ListViewHandler(BaseHandler):
                 )),
             method=urlfetch.POST,
             headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=vnapi.DEADLINE_FETCH
+            deadline=config.DEADLINE_FETCH
         )
 
         # Process error message or results.
@@ -1365,7 +1363,7 @@ class ListViewHandler(BaseHandler):
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'datasets_data': vnapi.getDatasetCounts(),
+            'datasets_data': masterlist.getDatasetCounts(),
             'selected_datasets': set(self.request.get_all('dataset')),
             'selected_blank_langs': set(self.request.get_all('blank_lang')),
             'message': message,

@@ -7,26 +7,18 @@
 #
 
 
-import urllib
-import re
-import logging
-import cStringIO
 import gzip
 import csv
-import time
 import os
 import os.path
-import json
 import time
 import sys
 
 sys.path.append('config')
 sys.path.append('lib/urlfetch')
 
-import access
-import version
 import languages
-import vnapi
+from nomdb import masterlist
 import vnnames
 
 # Configuration settings.
@@ -48,7 +40,7 @@ gzfile = gzip.GzipFile(filename=OUTPUT_PATH + csv_filename, mode='wb')
 csvfile = csv.writer(gzfile)
 
 # Get a list of every name in the master list.
-all_names = vnapi.getMasterList()
+all_names = masterlist.getMasterList()
 
 # Prepare to write out CSV.
 header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']

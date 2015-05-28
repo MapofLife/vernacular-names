@@ -1,86 +1,13 @@
 # vim: set fileencoding=utf-8 : 
 
-# vnapi.py
-# An API for communicating with the Vernacular Name system on CartoDB.
-
-import urlfetch
-
-import base64
+# masterlist.py
+# Manages communications with the Master List
 import json
 import urllib
-import re
 import logging
 
+from nomdb.common import url_get, url_post, encode_b64_for_psql, group_by
 import access
-import vnnames
-
-# Configuration.
-DEADLINE_FETCH = 60 # seconds to wait during URL fetch (max: 60)
-
-# Min, max and default values for source_priority
-PRIORITY_MIN = 0
-PRIORITY_MAX = 100
-PRIORITY_DEFAULT = 0
-PRIORITY_DEFAULT_APP = 80
-
-# Helper functions.
-# Tricky: try to load google.appengine.api.urlfetch;
-# if so, use that instead of urlfetch.
-import importlib
-gae_urlfetch = None
-try:
-    gae_urlfetch = importlib.import_module('google.appengine.api.urlfetch')
-    gae_urlfetch.set_default_fetch_deadline(DEADLINE_FETCH)
-except ImportError:
-    pass
-
-def url_get(url):
-    if gae_urlfetch:
-        logging.info("url_get(" + url + ") with GAE")
-        return gae_urlfetch.fetch(url)
-    else:
-        logging.info("url_get(" + url + ") with urlfetch")
-        return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
-
-def url_post(url, data):
-    if gae_urlfetch:
-        logging.info("url_post(" + url + ") with GAE")
-        return gae_urlfetch.fetch(url, 
-            payload=urllib.urlencode(data),
-            method=gae_urlfetch.POST,
-            headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=DEADLINE_FETCH
-        )
-    else:
-        logging.info("url_post(" + url + ") with urlfetch")
-        return urlfetch.post(url, data = data)
-
-# Encode a Unicode string as base64, then set it up to be decoded on the server.
-def encode_b64_for_psql(text):
-    return decode_b64_on_psql(base64.b64encode(text.encode('UTF-8')))
-
-# Prepare a bit of code for PostgreSQL to decode a string on the server side.
-def decode_b64_on_psql(text):
-    base64_only = re.compile(r"^[a-zA-Z0-9+/=]*$")
-    if not base64_only.match(text):
-        raise RuntimeError("Error: '" + text + "' sent to decode_b64_on_psql is not base64!")
-
-    return "convert_from(decode('" + text + "', 'base64'), 'utf-8')"
-
-# Given a list of rows, divide them until into groups of rows by the values
-# in the column provided in 'colName'. Return this as a dict.
-def groupBy(rows, colName):
-    result_table = dict()
-
-    for row in rows:
-        val = row[colName]
-
-        if not val in result_table:
-            result_table[val] = []
-
-        result_table[val].append(row)
-
-    return result_table
 
 # Return a list of every dataset in the master list.
 def getDatasets():
@@ -191,8 +118,8 @@ def getDatasetCoverage(datasets, langs):
     logging.info(" - genus lookups complete")
 
     # Group by dataset, so we can go through the data dataset by dataset.
-    species_by_dataset = groupBy(species_lookups, 'dataset')
-    genus_by_dataset = groupBy(genus_lookups_by_row, 'dataset')
+    species_by_dataset = group_by(species_lookups, 'dataset')
+    genus_by_dataset = group_by(genus_lookups_by_row, 'dataset')
     
     logging.info(" - grouping by dataset complete")
 
@@ -206,7 +133,7 @@ def getDatasetCoverage(datasets, langs):
         species_rows = species_by_dataset[dataset]
         genus_by_scname = dict()
         if dataset in genus_by_dataset:
-            genus_by_scname = groupBy(genus_by_dataset[dataset], 'scname')
+            genus_by_scname = group_by(genus_by_dataset[dataset], 'scname')
 
         # For each scname, figure out if it has a genus name and species name in each language.
         num_species = 0

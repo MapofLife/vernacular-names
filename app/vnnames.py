@@ -3,16 +3,13 @@
 # vnnames.py
 # Functions for working with vernacular names 
 
-from titlecase import titlecase
-
 import logging
-
-import vnapi
-import urllib
 import json
-import re
 import os
+import nomdb.common
 
+from titlecase import titlecase
+from nomdb import masterlist
 import access
 
 # Constants
@@ -178,7 +175,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
         # Get higher taxonomy, language, common name.
         # TODO: fallback to trinomial names (where we have Panthera tigris tigris but not Panthera tigris.
         scientificname_list = ", ".join(
-            map(lambda name: "(" + vnapi.encode_b64_for_psql(name) + ")", chunk_names)
+            map(lambda name: "(" + nomdb.common.encode_b64_for_psql(name) + ")", chunk_names)
         )
 
         # qn, qname: query name
@@ -229,7 +226,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
         # print("Sql = <<" + sql_query + ">>")
         # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
 
-        urlresponse = vnapi.url_post(access.CDB_URL,
+        urlresponse = nomdb.common.url_post(access.CDB_URL,
             data=dict(
                 q = sql_query
             )
@@ -239,7 +236,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             raise IOError("Could not read from CartoDB: " + str(urlresponse.status_code) + ": " + str(urlresponse.content))
             
         results = json.loads(urlresponse.content)
-        rows_by_scname = vnapi.groupBy(results['rows'], 'qname')
+        rows_by_scname = nomdb.common.group_by(results['rows'], 'qname')
 
         def clean_agg(list):
             return set(filter(lambda x: x is not None and x != '', list))
@@ -255,7 +252,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             if scname in rows_by_scname:
                 results = rows_by_scname[scname]
 
-            results_by_lang = vnapi.groupBy(results, 'lang_lc')
+            results_by_lang = nomdb.common.group_by(results, 'lang_lc')
 
             best_names = dict()
             taxonomy = {
