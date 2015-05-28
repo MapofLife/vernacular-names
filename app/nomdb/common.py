@@ -8,6 +8,7 @@ import re
 import urllib
 
 from config import DEADLINE_FETCH
+from titlecase import titlecase
 import urlfetch
 
 __author__ = 'Gaurav Vaidya'
@@ -81,3 +82,10 @@ def group_by(rows, colname):
         result_table[val].append(row)
 
     return result_table
+
+
+def format_name(name):
+    """Utility function: format a common name.
+    This slows us by about 50% (44 mins for a full genus generation)
+    """
+    return titlecase(name)

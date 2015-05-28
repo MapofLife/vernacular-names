@@ -14,9 +14,8 @@ import config
 import nomdb.common
 import version
 import languages
-from nomdb import masterlist
-import vnnames
-
+from nomdb import masterlist, names
+import nomdb.names
 
 # Configuration
 
@@ -159,7 +158,7 @@ class MainPage(BaseHandler):
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
-            lookup_results = vnnames.getVernacularNames([lookup_search], languages.language_names_list, flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
+            lookup_results = names.getVernacularNames([lookup_search], languages.language_names_list, flag_all_results=True, flag_no_memoize=True, flag_lookup_genera=False)
 
             # Summarize higher taxonomy.
             tax_family = lookup_results[lookup_search]['tax_family']
@@ -790,7 +789,7 @@ class BulkImportHandler(BaseHandler):
         names_in_nomdb = dict()
         vnames_in_nomdb = [dict() for i in range(1, len(scnames) + 2)]
         if len(scnames) > 0:
-            names_in_nomdb = vnnames.getVernacularNames(scnames,
+            names_in_nomdb = names.getVernacularNames(scnames,
                 languages.language_names_list,
                 flag_no_higher = False,
                 flag_no_memoize = False
@@ -911,7 +910,7 @@ class FamilyHandler(BaseHandler):
             'user_name': user_name,
             'missing_genera': missing_genera,
             'genera': genera,
-            'vnames': vnnames.getVernacularNames(
+            'vnames': names.getVernacularNames(
                 flatten(all_names), 
                 languages.language_names_list, 
                 flag_no_higher = True, 
@@ -995,7 +994,7 @@ class HemihomonymHandler(BaseHandler):
 
             'scnames': scnames,
             'hemihomonyms': nomdb.common.group_by(hemihomonyms, 'genus'),
-            'vnames': vnnames.getVernacularNames(
+            'vnames': names.getVernacularNames(
                 scnames,
                 languages.language_names_list, 
                 flag_no_higher = True, 
@@ -1107,7 +1106,7 @@ class HigherTaxonomyHandler(BaseHandler):
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
             'user_name': user_name,
-            'vnames': vnnames.getVernacularNames(all_names, languages.language_names_list, flag_no_higher = True, flag_no_memoize = False, flag_lookup_genera = False, flag_format_cmnames = True),
+            'vnames': names.getVernacularNames(all_names, languages.language_names_list, flag_no_higher = True, flag_no_memoize = False, flag_lookup_genera = False, flag_format_cmnames = True),
             'tax_class': tax_class,
             'tax_order': tax_order,
             'tax_family': tax_family,
@@ -1356,7 +1355,7 @@ class ListViewHandler(BaseHandler):
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
 
-        vnames = vnnames.getVernacularNames(name_list, languages.language_names_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=True)
+        vnames = names.getVernacularNames(name_list, languages.language_names_list, flag_no_higher=True, flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True, flag_format_cmnames=True)
 
         self.render_template('list.html', {
             'vneditor_version': version.VNEDITOR_VERSION,

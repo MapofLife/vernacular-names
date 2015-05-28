@@ -1,29 +1,14 @@
 # vim: set fileencoding=utf-8 : 
 
-# vnnames.py
-# Functions for working with vernacular names 
+"""names.py: Functions for working with vernacular names."""
 
 import logging
 import json
-import os
+
+import config
 import nomdb.common
-
-from titlecase import titlecase
-from nomdb import masterlist
+from nomdb.common import format_name
 import access
-
-# Constants
-SEARCH_CHUNK_SIZE = 1000        # Number of names to query at once.
-
-# Check whether we're in production (PROD = True) or not.
-PROD = True
-if 'SERVER_SOFTWARE' in os.environ:
-    PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')
-
-# Utility function: format a common name.
-def format_name(name):
-    # This slows us by about 50% (44 mins for a full genus generation)
-    return titlecase(name)
 
 # Datatypes
 class VernacularName:
@@ -165,7 +150,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
 
     # Query through all names in chunks.
     row = 0
-    for chunk_names in chunks(query_names_sorted, SEARCH_CHUNK_SIZE):
+    for chunk_names in chunks(query_names_sorted, config.SEARCH_CHUNK_SIZE):
         row += len(chunk_names)
 
         # Only display progress on the main task.
@@ -341,7 +326,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                             vname.scientificname,
                             vname.flag_uninomial,
                             vname.lang,
-                            vname.vernacularname if not flag_format_cmnames else format_name(vnname.venacularname),
+                            vname.vernacularname if not flag_format_cmnames else format_name(vname.venacularname),
                             vname.max_source_priority,
                             vname.sources,
                             vn_tax_class,

@@ -18,8 +18,7 @@ sys.path.append('config')
 sys.path.append('lib/urlfetch')
 
 import languages
-from nomdb import masterlist
-import vnnames
+from nomdb import masterlist, names
 
 # Configuration settings.
 OUTPUT_PATH = 'results/'
@@ -88,8 +87,8 @@ def add_name(name, higher_taxonomy, vnames_by_lang):
 
 # searchVernacularNames doesn't use the cache, but it calls 
 # getVernacularNames for higher taxonomy, which does.
-vnnames.clearVernacularNamesCache()
-vnnames.searchVernacularNames(add_name, all_names, languages.language_names_list, flag_format_cmnames=True)
+names.clearVernacularNamesCache()
+names.searchVernacularNames(add_name, all_names, languages.language_names_list, flag_format_cmnames=True)
 
 # File completed!
 gzfile.close()
