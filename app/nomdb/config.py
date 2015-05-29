@@ -14,11 +14,3 @@ PRIORITY_MAX = 100
 PRIORITY_DEFAULT = 0
 PRIORITY_DEFAULT_APP = 80
 SEARCH_CHUNK_SIZE = 1000        # Number of names to query at once.
-
-
-# Check whether we're in production (PROD = True) or not.
-import os
-
-PROD = True
-if 'SERVER_SOFTWARE' in os.environ:
-    PROD = not os.environ['SERVER_SOFTWARE'].startswith('Development')

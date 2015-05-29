@@ -17,8 +17,7 @@ import sys
 sys.path.append('config')
 sys.path.append('lib/urlfetch')
 
-import languages
-from nomdb import masterlist, names
+from nomdb import masterlist, names, languages
 
 # Configuration settings.
 OUTPUT_PATH = 'results/'

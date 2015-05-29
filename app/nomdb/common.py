@@ -7,7 +7,7 @@ import logging
 import re
 import urllib
 
-from config import DEADLINE_FETCH
+from nomdb.config import DEADLINE_FETCH
 from titlecase import titlecase
 import urlfetch
 

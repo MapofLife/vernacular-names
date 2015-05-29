@@ -196,7 +196,7 @@ def getDatasetCoverage(datasets, langs):
 def datasetContainsName(dataset, scname):
     if dataset not in datasetContainsName.cache:
         datasetContainsName.cache[dataset] = dict()
-        for scname in getNamesInDataset(dataset):
+        for scname in getDatasetNames(dataset):
             datasetContainsName.cache[dataset][scname.lower()] = 1
 
     result = (scname.lower() in datasetContainsName.cache[dataset])
@@ -208,11 +208,17 @@ datasetContainsName.cache = dict()
 
 # Note: only searches names in the master list.
 def searchForName(name):
-    # TODO: sanitize input                                                  
+    """
 
-    # Escape any characters that might be used in a LIKE pattern            
+    :rtype : dict
+    """
+
+    # TODO: sanitize input
+
+    # Escape any characters that might be used in a LIKE pattern
     # From http://www.postgresql.org/docs/9.1/static/functions-matching.html
-    search_pattern = name.replace("_", "__").replace("%", "%%")             
+
+    search_pattern = name.replace("_", "__").replace("%", "%%")
 
     sql = "SELECT DISTINCT scname, cmname FROM %s INNER JOIN %s ON (LOWER(scname)=LOWER(scientificname)) WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
     response = url_get(access.CDB_URL + "?" + urllib.urlencode(

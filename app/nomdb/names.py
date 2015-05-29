@@ -5,10 +5,11 @@
 import logging
 import json
 
-import config
+from nomdb import config
 import nomdb.common
 from nomdb.common import format_name
 import access
+
 
 # Datatypes
 class VernacularName:
