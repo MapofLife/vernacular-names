@@ -11,9 +11,9 @@ import webapp2
 from google.appengine.api import users, urlfetch
 import jinja2
 import access
-import version
-import nomdb.languages
-from nomdb import masterlist, names, config, common, languages
+import nomdb.version
+from nomdb import masterlist, names, config, common, languages, version
+
 
 # User interface configuration
 
@@ -103,7 +103,7 @@ class StaticPages(BaseHandler):
             self.render_template(self.template_mappings[path], {
                 'login_url': users.create_login_url('/'),
                 'logout_url': users.create_logout_url('/'),
-                'vneditor_version': version.VNEDITOR_VERSION
+                'vneditor_version': version.NOMDB_VERSION
             })
         else:
             self.response.status = 404
@@ -210,7 +210,7 @@ class MainPage(BaseHandler):
             'lookup_results': lookup_results,
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
-            'vneditor_version': version.VNEDITOR_VERSION
+            'vneditor_version': version.NOMDB_VERSION
         })
 
 
@@ -386,7 +386,7 @@ class CoverageViewHandler(BaseHandler):
 
         # Render coverage template.
         self.render_template('coverage.html', {
-            'vneditor_version': version.VNEDITOR_VERSION,
+            'vneditor_version': version.NOMDB_VERSION,
             'user_url': user_url,
             'login_url': users.create_login_url('/'),
             'logout_url': users.create_logout_url('/'),
@@ -551,7 +551,7 @@ class SourcesHandler(BaseHandler):
             'individual_imports': individual_imports,
             'bulk_imports': bulk_imports,
 
-            'vneditor_version': version.VNEDITOR_VERSION
+            'vneditor_version': version.NOMDB_VERSION
         })
 
 #
@@ -657,7 +657,7 @@ class MasterListHandler(BaseHandler):
             'user_name': user_name,
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
-            'vneditor_version': version.VNEDITOR_VERSION,
+            'vneditor_version': version.NOMDB_VERSION,
 
             'message': message,
 
@@ -890,7 +890,7 @@ class BulkImportHandler(BaseHandler):
             'user_name': user_name,
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
-            'vneditor_version': version.VNEDITOR_VERSION,
+            'vneditor_version': version.NOMDB_VERSION,
 
             'debug_save': debug_save,
 
@@ -916,7 +916,7 @@ class BulkImportHandler(BaseHandler):
 # FAMILY HANDLER: /family
 #
 class FamilyHandler(BaseHandler):
-    @property
+
     def get(self):
         """ Display list of family names. """
         self.response.headers['Content-type'] = 'text/html'
@@ -994,7 +994,7 @@ class FamilyHandler(BaseHandler):
                 flag_format_cmnames=True),
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
-            'vneditor_version': version.VNEDITOR_VERSION
+            'vneditor_version': version.NOMDB_VERSION
         })
 
 #
@@ -1003,7 +1003,6 @@ class FamilyHandler(BaseHandler):
 class HemihomonymHandler(BaseHandler):
     """HemihomonymHandler view: displays and warns about hemihomonyms."""
 
-    @property
     def get(self):
         """List hemihomonyms."""
         self.response.headers['Content-type'] = 'text/html'
@@ -1087,7 +1086,7 @@ class HemihomonymHandler(BaseHandler):
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
 
-            'vneditor_version': version.VNEDITOR_VERSION
+            'vneditor_version': version.NOMDB_VERSION
         })
 
 #
@@ -1206,7 +1205,7 @@ class HigherTaxonomyHandler(BaseHandler):
             'total_count': total_count,
             'higher_taxonomy': higher_taxonomy,
             'higher_taxonomy_tree': higher_taxonomy_tree,
-            'vneditor_version': version.VNEDITOR_VERSION
+            'vneditor_version': version.NOMDB_VERSION
         })
 
 #
@@ -1284,7 +1283,7 @@ class RecentChangesHandler(BaseHandler):
             'display_count': display_count,
             'total_count': total_count,
             'recent_changes': recent_changes,
-            'vneditor_version': version.VNEDITOR_VERSION
+            'vneditor_version': version.NOMDB_VERSION
         })
 
 #
@@ -1338,7 +1337,6 @@ class ListViewHandler(BaseHandler):
         if len(sql_having) > 0:
             results['having'].append("(" + " AND ".join(sql_having) + ")")
 
-    @property
     def get(self):
         """ Display a filtered list of species names and their vernacular names. """
         self.response.headers['Content-type'] = 'text/html'
@@ -1468,7 +1466,7 @@ class ListViewHandler(BaseHandler):
             flag_format_cmnames=True)
 
         self.render_template('list.html', {
-            'vneditor_version': version.VNEDITOR_VERSION,
+            'vneditor_version': version.NOMDB_VERSION,
             'user_url': user_url,
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
