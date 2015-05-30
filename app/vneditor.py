@@ -488,10 +488,7 @@ class SourcesHandler(BaseHandler):
             COUNT(DISTINCT LOWER(scname)) AS scname_count, 
             array_agg(DISTINCT source_priority) AS agg_source_priority,
             MAX(source_priority) AS max_source_priority,
-            array_agg(DISTINCT LOWER(lang)) AS agg_lang,
-            array_agg(DISTINCT LOWER(tax_family)) AS agg_family,
-            array_agg(DISTINCT LOWER(tax_order)) AS agg_order,
-            array_agg(DISTINCT LOWER(tax_class)) AS agg_class
+            array_agg(DISTINCT LOWER(lang)) AS agg_lang
             FROM %s 
             GROUP BY source 
             ORDER BY 
@@ -985,13 +982,7 @@ class FamilyHandler(BaseHandler):
             'user_name': user_name,
             'missing_genera': missing_genera,
             'genera': genera,
-            'vnames': names.getVernacularNames(
-                flatten(all_names),
-                languages.language_names_list,
-                flag_no_higher=True,
-                flag_no_memoize=True,
-                flag_lookup_genera=False,
-                flag_format_cmnames=True),
+            'vnames': names.get_vnames(flatten(all_names)),
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
             'vneditor_version': version.NOMDB_VERSION
@@ -1075,14 +1066,7 @@ class HemihomonymHandler(BaseHandler):
 
             'scnames': scnames,
             'hemihomonyms': nomdb.common.group_by(hemihomonyms, 'genus'),
-            'vnames': names.getVernacularNames(
-                scnames,
-                languages.language_names_list,
-                flag_no_higher=True,
-                flag_no_memoize=True,
-                flag_lookup_genera=True,
-                flag_format_cmnames=True),
-
+            'vnames': names.get_vnames(scnames),
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
 
@@ -1460,10 +1444,7 @@ class ListViewHandler(BaseHandler):
         if FLAG_LIST_DISPLAY_COUNT and len(results['rows']) > 0:
             total_count = results['rows'][0]['total_count']
 
-        vnames = names.getVernacularNames(
-            name_list, languages.language_names_list, flag_no_higher=True,
-            flag_no_memoize=True, flag_all_results=False, flag_lookup_genera=True,
-            flag_format_cmnames=True)
+        vnames = names.get_vnames(name_list)
 
         self.render_template('list.html', {
             'vneditor_version': version.NOMDB_VERSION,

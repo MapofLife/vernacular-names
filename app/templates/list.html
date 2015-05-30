@@ -127,11 +127,11 @@
                     {% set genus = name.split()[0] %}
                     <td><em><a href="/?lookup={{genus}}">{{genus | capitalize}}</a></em></td>
                     {% for lang in language_names_list %}
-                        {% if lang in vnames[name] and vnames[name][lang].vernacularname != '' %}
+                    {% if lang in vnames[name] and vnames[name][lang].vernacular_name_formatted != '' %}
                             <td>
-                            {% if vnames[name][lang].flag_uninomial %}<em>{% endif %}
-                            <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a>
-                            {% if vnames[name][lang].flag_uninomial %}</em>{% endif %}
+                            {% if vnames[name][lang].flag_genus_match %}<em>{% endif %}
+                            <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
+                            {% if vnames[name][lang].flag_genus_match %}</em>{% endif %}
                             </td>
                         {% else %}
                             <td>&nbsp;<!-- <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><center><em>None</em></center></a> --></td>

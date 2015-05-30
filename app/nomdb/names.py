@@ -5,67 +5,236 @@
 import logging
 import json
 
-from nomdb import config
-import nomdb.common
-from nomdb.common import format_name
+from nomdb import config, common, languages
 import access
 
+# There are only two use-cases for vernacular name retrieval:
+# 1. /edit, which needs every possible name in every possible language with higher taxonomy.
+#   get_detailed_vname(scname, ...) -> dict[vnames]
+# 2. The currently accepted name in the standard languages for a set of names.
+#   get_vname(scnames, ...) -> dict[vnames]
+# and hey, because polymorphism is great, right
+#   get_vname(scname, ...) -> vname
+#
+# In theory, we could make things faster by looking up scientific names within a dataset directly,
+# but in practice we don't do that often. Maybe if I write it, they will come?
 
-# Datatypes
+def get_vname(scname):
+    return get_detailed_vname(scname)
+
+def get_vnames(list_scnames):
+    """
+
+    :param scnames: list[str]
+    :return: dict
+    """
+
+    # Set up results and names to query.
+    final_results = dict()
+    scnames = list(set(list_scnames))
+
+    # Prepare a list of languages to use.
+    languages_str = ", ".join(map(lambda lang: "'" + lang.lower() + "'", languages.language_names_list))
+
+    # We go through names in chunks, so we don't overwhelm CartoDB on long queries.
+    for i in xrange(0, len(scnames), config.SEARCH_CHUNK_SIZE):
+        chunk_scnames = scnames[i:i+config.SEARCH_CHUNK_SIZE]
+
+        # Turn them into a search string.
+        set_scnames = set(chunk_scnames)
+
+        # We might also want to search for genus names.
+        for name in chunk_scnames:
+            pieces = name.split()
+            if len(pieces) > 1:
+                set_scnames.add(pieces[0].lower())
+
+        # print("DEBUG: vnames = " + ', '.join(set_scnames))
+
+        scnames_str = ", ".join(set(
+            map(lambda name: "(" + common.encode_b64_for_psql(name.lower()) + ")", set_scnames)
+        ))
+
+        sql = """
+            SELECT DISTINCT
+                qname,
+                LOWER(scname) AS scname_lc,
+                LOWER(lang) AS lang_lc,
+                FIRST_VALUE(cmname) OVER best_match AS cmname,
+                FIRST_VALUE(source) OVER best_match AS source,
+                FIRST_VALUE(source_priority) OVER best_match AS source_priority,
+                FIRST_VALUE(url) OVER best_match AS url,
+                FIRST_VALUE(source_url) OVER best_match AS source_url,
+                FIRST_VALUE(updated_at) OVER best_match AS updated_at
+            FROM %s vnames
+                RIGHT JOIN (SELECT NULL AS qname UNION VALUES %s) qn
+                    ON LOWER(scname) = qname
+            WHERE
+                qname IS NOT NULL AND (
+                    cmname IS NULL OR
+                    LOWER(lang) IN (%s)
+                )
+            WINDOW best_match AS (
+                PARTITION BY LOWER(scname), lang ORDER BY
+                    source_priority DESC,
+                    updated_at DESC
+            )
+            ORDER BY
+                qname ASC,
+                scname_lc ASC,
+                cmname ASC
+        """
+        sql_query = sql.strip() % (
+            access.ALL_NAMES_TABLE,
+            scnames_str,
+            languages_str
+        )
+
+        # print("Sql = <<" + sql_query + ">>")
+        # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
+
+        urlresponse = common.url_post(access.CDB_URL, {'q': sql_query})
+
+        if urlresponse.status_code != 200:
+            raise IOError("Could not read from CartoDB: " + str(urlresponse.status_code) + ": " + str(urlresponse.content))
+
+        results = json.loads(urlresponse.content)
+        rows_by_scname = common.group_by(results['rows'], 'qname')
+
+        # Map qnames back to scnames
+        for scname in chunk_scnames:
+            final_results[scname] = dict()
+
+            try:
+                rows_by_lang = common.group_by(rows_by_scname[scname.lower()], 'lang_lc')
+            except KeyError:
+                # This only gets triggered if we have a vname for 'scname', but
+                # not as one of the requested languages.
+                for lang in languages.language_names_list:
+                    final_results[scname][lang] = None
+
+                continue
+
+            for lang in languages.language_names_list:
+                if lang not in rows_by_lang:
+                    final_results[scname][lang] = None
+                    continue
+
+                rows = rows_by_lang[lang]
+
+                # There should only be one row!
+                if len(rows) != 1:
+                    raise RuntimeError(
+                        "SQL query should only return one row per scientific name, but we have %d of '%s'@%s" % (
+                            len(rows),
+                            scname,
+                            lang
+                        )
+                    )
+
+                # ... but it might be blank.
+                result = rows[0]
+
+                if result['cmname'] is None:
+                    # Maybe we have a genus match?
+                    pieces = scname.split()
+                    if len(pieces) > 1 and len(rows_by_scname[pieces[0].lower()]) == 1:
+                        result = rows_by_scname[pieces[0].lower()][0]
+                    else:
+                        final_results[scname][lang] = None
+                        continue
+
+                final_results[scname][lang] = VernacularName(
+                    scname,
+                    result['qname'],
+                    result['lang_lc'],
+                    result['cmname'],
+                    result['source'],
+                    result['source_priority'] if result['source_priority'] is not None else config.PRIORITY_DEFAULT,
+                    result['url'],
+                    result['source_url'],
+                    result['updated_at']
+                )
+
+    return final_results
+
+def get_detailed_vname(scname):
+    raise RuntimeError("Not implemented")
+
+#
+# CLASS VernacularName
+#
 class VernacularName:
-    def __init__(self, scientificName, flag_uninomial, lang, vernacularName, max_source_priority, sources, tax_class, tax_order, tax_family):
-        self.scname = scientificName
-        self.flag_uninomial = bool(flag_uninomial)
+    """ Stores a single vernacular name in a particular language. """
+    def __init__(self, scientific_name, matched_name, lang, vernacular_name, source, source_priority, url, source_url, updated_at):
+        """ Create a VernacularName
+        
+        :param scientific_name: The scientific name that was queried (not necessarily the one that was matched!)
+        :param matched_name: The name the vernacular_name corresponds to.
+        :param lang: The language code ('en', 'zh-Hans', etc.)
+        :param vernacular_name: The vernacular name retrieved.
+        :param source_priority: The source priority of the match.
+        :param source: The source that was matched.
+        :return:
+        """
+        self.scname = scientific_name
+        self.matched_name = matched_name
         self.lang = lang
-        self.cmname = vernacularName
-        self.max_source_priority = int(max_source_priority)
-        self.sources = sources
-        self.tax_class = tax_class
-        self.tax_order = tax_order
-        self.tax_family = tax_family
+        self.cmname = vernacular_name
+        self.source = source
+        self.source_priority = int(source_priority)
+        if not(config.PRIORITY_MIN <= self.source_priority <= config.PRIORITY_MAX):
+            self.source_priority = config.PRIORITY_DEFAULT
+        self.url = url
+        self.source_url = source_url
+        self.updated_at = updated_at
 
     def __repr__(self):
-        return "<'%s'@%s [%d sources]>" % (
+        """For debugging and the like."""
+        return "<'%s'@%s>" % (
             self.cmname,
-            self.lang,
-            len(self.sources)
+            self.lang
         )
 
     @property
-    def scientificname(self):
+    def scientific_name(self):
         return self.scname
 
     @property
-    def flag_uninomial(self):
-        return self.flag_uninomial
+    def matched_name(self):
+        return self.matched_name
 
     @property
     def lang(self):
         return self.lang
 
     @property
-    def vernacularname(self):
+    def vernacular_name(self):
         return self.cmname
 
     @property
-    def max_source_priority(self):
-        return self.max_source_priority 
+    def vernacular_name_formatted(self):
+        return common.format_name(self.cmname) if self.cmname is not None else None
 
     @property
-    def sources(self):
-        return set(self.sources)
+    def source_priority(self):
+        return self.source_priority
 
     @property
-    def tax_class(self):
-        return self.tax_class
+    def source(self):
+        return self.source
 
     @property
-    def tax_order(self):
-        return self.tax_order
+    def url(self):
+        return self.url
 
     @property
-    def tax_family(self):
-        return self.tax_family
+    def source_url(self):
+        return self.source_url
+
+    @property
+    def updated_at(self):
+        return self.updated_at
 
 # A cache for vernacular names. Used by getVernacularNames but NOT by
 # searchVernacularNames.
@@ -161,7 +330,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
         # Get higher taxonomy, language, common name.
         # TODO: fallback to trinomial names (where we have Panthera tigris tigris but not Panthera tigris.
         scientificname_list = ", ".join(
-            map(lambda name: "(" + nomdb.common.encode_b64_for_psql(name) + ")", chunk_names)
+            map(lambda name: "(" + common.encode_b64_for_psql(name) + ")", chunk_names)
         )
 
         # qn, qname: query name
@@ -173,14 +342,14 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 cmname,
                 POSITION(' ' IN scname) = 0 AS flag_uninomial,
                 array_agg(master_list.family) AS ml_agg_family,
-                array_agg(source) AS sources, 
-                array_agg(LOWER(tax_class)) OVER (PARTITION BY scname) AS agg_class, 
-                array_agg(LOWER(tax_order)) OVER (PARTITION BY scname) AS agg_order, 
-                array_agg(LOWER(tax_family)) OVER (PARTITION BY scname) AS agg_family, 
+                array_agg(source) AS sources,
+                array_agg(LOWER(tax_class)) OVER (PARTITION BY scname) AS agg_class,
+                array_agg(LOWER(tax_order)) OVER (PARTITION BY scname) AS agg_order,
+                array_agg(LOWER(tax_family)) OVER (PARTITION BY scname) AS agg_family,
                 COUNT(DISTINCT LOWER(source)) AS count_sources,
-                array_agg(url) AS urls, 
-                MAX(vnames.updated_at) AS max_updated_at, 
-                MAX(source_priority) AS max_source_priority 
+                array_agg(url) AS urls,
+                MAX(vnames.updated_at) AS max_updated_at,
+                MAX(source_priority) AS max_source_priority
             FROM %s vnames RIGHT JOIN (SELECT '' AS qname UNION VALUES %s) qn
                 ON 
                     LOWER(qname) = LOWER(scname) 
@@ -212,7 +381,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
         # print("Sql = <<" + sql_query + ">>")
         # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
 
-        urlresponse = nomdb.common.url_post(access.CDB_URL,
+        urlresponse = common.url_post(access.CDB_URL,
             data=dict(
                 q = sql_query
             )
@@ -222,7 +391,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             raise IOError("Could not read from CartoDB: " + str(urlresponse.status_code) + ": " + str(urlresponse.content))
             
         results = json.loads(urlresponse.content)
-        rows_by_scname = nomdb.common.group_by(results['rows'], 'qname')
+        rows_by_scname = common.group_by(results['rows'], 'qname')
 
         def clean_agg(list):
             return set(filter(lambda x: x is not None and x != '', list))
@@ -238,7 +407,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
             if scname in rows_by_scname:
                 results = rows_by_scname[scname]
 
-            results_by_lang = nomdb.common.group_by(results, 'lang_lc')
+            results_by_lang = common.group_by(results, 'lang_lc')
 
             best_names = dict()
             taxonomy = {
@@ -275,7 +444,7 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                         if not lang in vnresults[simplify_name]:
                             continue
 
-                        vname = vnresults[simplify_name][lang].vernacularname
+                        vname = vnresults[simplify_name][lang].vernacular_name
 
                         if flag_format_cmnames:
                             vnames.add(format_name(vname))
@@ -302,17 +471,9 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
 
                     if flag_all_results:
                         for result in lang_results:
-                            vn_all_entries.append(VernacularName(
-                                scname, 
-                                result['flag_uninomial'],
-                                lang,
-                                result['cmname'] if not flag_format_cmnames else format_name(result['cmname']),
-                                result['max_source_priority'],
-                                result['sources'],
-                                vn_tax_class,
-                                vn_tax_order,
-                                vn_tax_family
-                            ))
+                            vn_all_entries.append(VernacularName(scname, result['flag_uninomial'], lang, result[
+                                'cmname'] if not flag_format_cmnames else format_name(result['cmname']),
+                                                                 result['sources'], result['max_source_priority']))
                     else:
                         vn_vernacularname = lang_results[0]['cmname']
                         vn_sources = lang_results[0]['sources']
@@ -323,29 +484,14 @@ def searchVernacularNames(fn_callback, query_names, languages_list, flag_no_high
                 if flag_all_results:
                     best_names[lang] = []
                     for vname in vn_all_entries:
-                        best_names[lang].append(VernacularName(
-                            vname.scientificname,
-                            vname.flag_uninomial,
-                            vname.lang,
-                            vname.vernacularname if not flag_format_cmnames else format_name(vname.venacularname),
-                            vname.max_source_priority,
-                            vname.sources,
-                            vn_tax_class,
-                            vn_tax_order,
-                            vn_tax_family
-                        ))
+                        best_names[lang].append(VernacularName(vname.scientific_name, vname.flag_genus_match, vname.lang,
+                                                               vname.vernacular_name if not flag_format_cmnames else format_name(
+                                                                   vname.venacularname), vname.sources,
+                                                               vname.max_source_priority))
                 else:
-                    best_names[lang] = VernacularName(
-                        scname,
-                        vn_flag_uninomial,
-                        lang,
-                        vn_vernacularname if not flag_format_cmnames else format_name(vn_vernacularname),
-                        vn_max_source_priority,
-                        vn_sources,
-                        vn_tax_class,
-                        vn_tax_order,
-                        vn_tax_family
-                    )
+                    best_names[lang] = VernacularName(scname, vn_flag_uninomial, lang,
+                                                      vn_vernacularname if not flag_format_cmnames else format_name(
+                                                          vn_vernacularname), vn_sources, vn_max_source_priority)
 
             fn_callback(query_scname, taxonomy, best_names)
 

@@ -65,7 +65,7 @@ def add_name(name, higher_taxonomy, vnames_by_lang):
 
     for lang in languages.language_names_list:
         if lang in vnames_by_lang:
-            vname = vnames_by_lang[lang].vernacularname
+            vname = vnames_by_lang[lang].vernacular_name
             sources = vnames_by_lang[lang].sources
             tax_family = vnames_by_lang[lang].tax_family
 

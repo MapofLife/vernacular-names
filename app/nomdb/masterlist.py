@@ -157,12 +157,7 @@ def getDatasetCoverage(datasets, langs):
 
             for lang in langs:
                 if lang not in coverage:
-                    coverage[lang] = dict(
-                        count = 0,
-                        as_species = 0,
-                        as_genus = 0,
-                        as_unmatched = 0
-                    )
+                    coverage[lang] = {'count': 0, 'as_species': 0, 'as_genus': 0, 'as_unmatched': 0}
 
                 coverage[lang]['count'] += 1
 
