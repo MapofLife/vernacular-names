@@ -1,5 +1,6 @@
 Development
- - Code cleanup.
+ - Reorganized code into an nomdb package.
+ - Rewrote vnnames.py with a MUCH simpler, faster interface.
 
 0.7: May 20, 2015
  - Ajay's style improvements.
