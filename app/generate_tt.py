@@ -87,7 +87,9 @@ def add_name(name, higher_taxonomy, vnames_by_lang):
 # searchVernacularNames doesn't use the cache, but it calls 
 # getVernacularNames for higher taxonomy, which does.
 names.clearVernacularNamesCache()
-names.searchVernacularNames(add_name, all_names, languages.language_names_list, flag_format_cmnames=True)
+vnames = names.get_vnames(all_names)
+
+# TODO: recode to make this work again.
 
 # File completed!
 gzfile.close()

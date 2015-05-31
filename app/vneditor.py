@@ -183,9 +183,7 @@ class MainPage(BaseHandler):
         lookup_results_languages = []
         lookup_results_lang_names = dict()
         if lookup_search != '':
-            lookup_results = names.getVernacularNames([lookup_search], languages.language_names_list,
-                                                      flag_all_results=True, flag_no_memoize=True,
-                                                      flag_lookup_genera=False)
+            lookup_results = names.get_detailed_vname(lookup_search)
 
             # Summarize higher taxonomy.
             tax_family = lookup_results[lookup_search]['tax_family']
@@ -857,26 +855,22 @@ class BulkImportHandler(BaseHandler):
         names_in_nomdb = dict()
         vnames_in_nomdb = [dict() for i in range(1, len(scnames) + 2)]
         if len(scnames) > 0:
-            names_in_nomdb = names.getVernacularNames(
-                scnames,
-                languages.language_names_list,
-                flag_no_higher=False,
-                flag_no_memoize=False
-            )
+            names_in_nomdb = names.get_vnames(scnames)
 
         for loop_index in range(1, len(scnames) + 1):
             scname = scnames[loop_index - 1]
             for lang in languages.language_names_list:
                 if lang not in vnames[loop_index]:
                     vname = names_in_nomdb[scname][lang]
-                    vnames[loop_index][lang] = vname.cmname
-                    source = "; ".join(sorted(set(vname.sources)))
-                    if source not in sources and source != '':
-                        sources.append(source)
-                    vnames_source[loop_index][lang] = source
+                    if vname is not None:
+                        vnames[loop_index][lang] = vname.vernacular_name
+                        source = vname.source
+                        if source not in sources and source != '':
+                            sources.append(source)
+                        vnames_source[loop_index][lang] = source
 
-                    # Store in vnames_in_nomdb so we know if they've been edited.
-                    vnames_in_nomdb[loop_index][lang] = vname.cmname
+                        # Store in vnames_in_nomdb so we know if they've been edited.
+                        vnames_in_nomdb[loop_index][lang] = vname.cmname
 
         # If this is a get request, we can only be in display-first-page mode.
         # So display first page and quit.
@@ -1178,9 +1172,7 @@ class HigherTaxonomyHandler(BaseHandler):
             'logout_url': users.create_logout_url('/'),
             'user_url': user_url,
             'user_name': user_name,
-            'vnames': names.getVernacularNames(all_names, languages.language_names_list, flag_no_higher=True,
-                                               flag_no_memoize=False, flag_lookup_genera=False,
-                                               flag_format_cmnames=True),
+            'vnames': names.get_vnames(all_names),
             'tax_class': tax_class,
             'tax_order': tax_order,
             'tax_family': tax_family,
