@@ -110,9 +110,134 @@ class StaticPages(BaseHandler):
 
 
 #
-# MAIN/SEARCH/EDIT PAGE HANDLER: /
+# MAIN PAGE HANDLER: /
 #
 class MainPage(BaseHandler):
+    def get(self):
+        """ Display a welcome screen.
+        """
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Set up user details.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Allow not-logged-in code to run.
+        if user is None:
+            return
+
+        # Render the main template.
+        self.render_template('main.html', {
+            'message': self.request.get('msg'),
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'vneditor_version': version.NOMDB_VERSION
+        })
+
+#
+# SEARCH PAGE HANDLER: /search
+#
+class SearchPage(BaseHandler):
+    def get(self):
+        """ Display the search results.
+        """
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Set up user details.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url('/')
+
+        # Allow not-logged-in code to run.
+        if user is None:
+            return
+
+        # Load the current search term.
+        current_search = self.request.get('search')
+        if self.request.get('clear') != '':
+            current_search = ''
+        current_search = current_search.strip()
+
+        # Load the scientific name being looked up. If no search is
+        # currently in progress, look up the common name instead.
+        lookup_search = self.request.get('lookup')
+        lookup_results = {}
+
+        # If the current search is blank, but lookup is not, search
+        # for that instead.
+        if current_search == '' and lookup_search != '':
+            current_search = lookup_search
+
+        # Do the search.
+        search_results = dict()
+        search_results_scnames = []
+        if current_search != '':
+            search_results = masterlist.searchForName(current_search)
+            search_results_scnames = sorted(search_results.keys())
+
+        # Check for dataset_filter
+        dataset_filter = self.request.get('dataset')
+        if dataset_filter != '':
+            if current_search != '':
+                # If there is a search, filter it using dataset_filter.
+                search_results_scnames = filter(
+                    lambda scname: masterlist.datasetContainsName(dataset_filter, scname),
+                    search_results_scnames
+                )
+            else:
+                # If not, search by dataset.
+                search_results_scnames = masterlist.getDatasetNames(dataset_filter)
+
+                search_results = dict()
+                for scname in search_results_scnames:
+                    search_results[scname] = []
+
+        # During the initial search, automatically pick identical matches.
+        if lookup_search == '' and current_search != '':
+            lookup_search = current_search
+
+        # Find all names for all species in the languages of interest.
+        tax_family = set()
+        tax_order = set()
+        tax_class = set()
+        lookup_results_languages = []
+        lookup_results_lang_names = dict()
+        if lookup_search != '':
+            lookup_results = names.get_detailed_vname(lookup_search)
+
+            # Summarize higher taxonomy.
+            tax_family = lookup_results['tax_family']
+            tax_order = lookup_results['tax_order']
+            tax_class = lookup_results['tax_class']
+
+        # Render the main template.
+        self.render_template('search.html', {
+            'message': self.request.get('msg'),
+            'dataset_filter': dataset_filter,
+            'login_url': users.create_login_url('/'),
+            'logout_url': users.create_logout_url('/'),
+            'user_url': user_url,
+            'user_name': user_name,
+            'current_search': current_search,
+            'search_results': search_results,
+            'search_results_scnames': search_results_scnames,
+            'tax_family': tax_family,
+            'tax_order': tax_order,
+            'tax_class': tax_class,
+            'lookup_search': lookup_search,
+            'lookup_results': lookup_results,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'vneditor_version': version.NOMDB_VERSION
+        })
+
+#
+# EDIT PAGE HANDLER: /edit
+#
+class EditPage(BaseHandler):
     """ The edit page currently served three separate functions:
         (1) display the main menu,
         (2) display the results of a search, and
@@ -210,7 +335,6 @@ class MainPage(BaseHandler):
             'language_names_list': languages.language_names_list,
             'vneditor_version': version.NOMDB_VERSION
         })
-
 
 #
 # DELETE NAME BY CartoDBID HANDLER: /delete/cartodb_id
@@ -1462,6 +1586,8 @@ class ListViewHandler(BaseHandler):
 #
 application = webapp2.WSGIApplication([
     ('/', MainPage),
+    ('/search', SearchPage),
+    ('/edit', EditPage),
     ('/index.html', MainPage),
     ('/add/name', AddNameHandler),
     ('/page/private', StaticPages),

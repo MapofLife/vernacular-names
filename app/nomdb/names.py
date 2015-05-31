@@ -22,11 +22,13 @@ import access
 def get_vname(scname):
     return get_detailed_vname(scname)
 
+
 def get_vnames(list_scnames):
     """
+    Download vernacular names for a set of scientific names at any taxonomic rank.
 
-    :param scnames: list[str]
-    :return: dict
+    :param list_scnames: List of scientific names to query.
+    :return: Dictionary of queried names: final_results['scname']['lang'] = VernacularName object.
     """
 
     # Set up results and names to query.
@@ -38,7 +40,7 @@ def get_vnames(list_scnames):
 
     # We go through names in chunks, so we don't overwhelm CartoDB on long queries.
     for i in xrange(0, len(scnames), config.SEARCH_CHUNK_SIZE):
-        chunk_scnames = scnames[i:i+config.SEARCH_CHUNK_SIZE]
+        chunk_scnames = scnames[i:i + config.SEARCH_CHUNK_SIZE]
 
         # Turn them into a search string.
         set_scnames = set(chunk_scnames)
@@ -96,7 +98,8 @@ def get_vnames(list_scnames):
         urlresponse = common.url_post(access.CDB_URL, {'q': sql_query})
 
         if urlresponse.status_code != 200:
-            raise IOError("Could not read from CartoDB: " + str(urlresponse.status_code) + ": " + str(urlresponse.content))
+            raise IOError(
+                "Could not read from CartoDB: " + str(urlresponse.status_code) + ": " + str(urlresponse.content))
 
         results = json.loads(urlresponse.content)
         rows_by_scname = common.group_by(results['rows'], 'qname')
@@ -158,15 +161,111 @@ def get_vnames(list_scnames):
 
     return final_results
 
+
 def get_detailed_vname(scname):
-    raise RuntimeError("Not implemented")
+    """
+    Return detailed vernacular name information about a scientific name.
+
+    :param scname: The scientific name to query.
+    :return: A dict: final_results['scname']['lang'] = list(VernacularName)
+    """
+
+    # Search for genus name too.
+    genus_name = ''
+    pieces = scname.split()
+    if len(pieces) > 1:
+        genus_name = pieces[0].lower()
+
+    sql = """
+        SELECT
+            scname,
+            LOWER(scname) AS scname_lc,
+            coalesce(tax_class, '') AS tax_class,
+            coalesce(tax_order, '') AS tax_order,
+            coalesce(tax_family, '') AS tax_family,
+            LOWER(lang) AS lang_lc,
+            cmname,
+            url,
+            source,
+            source_url,
+            source_priority,
+            updated_at
+        FROM %s
+        WHERE
+            LOWER(scname) = %s
+            %s
+        ORDER BY
+            source_priority DESC,
+            updated_at DESC
+    """
+    sql_query = sql.strip() % (
+        access.ALL_NAMES_TABLE,
+        common.encode_b64_for_psql(scname.lower()),
+        ("OR LOWER(scname) = " + common.encode_b64_for_psql(genus_name)) if genus_name != '' else ''
+    )
+
+    # print("Sql = <<" + sql_query + ">>")
+    # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
+
+
+    # Make and parse the response.
+    urlresponse = common.url_post(access.CDB_URL, {'q': sql_query})
+
+    if urlresponse.status_code != 200:
+        raise IOError(
+            "Could not read from CartoDB: " + str(urlresponse.status_code) + ": " + str(urlresponse.content)
+        )
+
+    results = json.loads(urlresponse.content)
+    rows_by_lang = common.group_by(results['rows'], 'lang_lc')
+
+    # Prepare to reply.
+    final_results = dict()
+
+    tax_class = set()
+    tax_order = set()
+    tax_family = set()
+
+    for lang in rows_by_lang:
+        rows = rows_by_lang[lang]
+
+        list_vnames = []
+
+        for row in rows:
+            list_vnames.append(VernacularName(
+                scname,
+                row['scname'],
+                row['lang_lc'],
+                row['cmname'],
+                row['source'],
+                row['source_priority'],
+                row['url'],
+                row['source_url'],
+                row['updated_at']
+            ))
+
+            tax_order.add(row['tax_order'].lower())
+            tax_class.add(row['tax_class'].lower())
+            tax_family.add(row['tax_family'].lower())
+
+        # TODO: eliminate all genus matches if any non-genus matches exist.
+
+        final_results[lang] = list_vnames
+
+    final_results['tax_class'] = tax_class
+    final_results['tax_order'] = tax_order
+    final_results['tax_family'] = tax_family
+
+    return final_results
 
 #
 # CLASS VernacularName
 #
 class VernacularName:
     """ Stores a single vernacular name in a particular language. """
-    def __init__(self, scientific_name, matched_name, lang, vernacular_name, source, source_priority, url, source_url, updated_at):
+
+    def __init__(self, scientific_name, matched_name, lang, vernacular_name, source, source_priority, url, source_url,
+                 updated_at):
         """ Create a VernacularName
         
         :param scientific_name: The scientific name that was queried (not necessarily the one that was matched!)
@@ -183,7 +282,7 @@ class VernacularName:
         self.cmname = vernacular_name
         self.source = source
         self.source_priority = int(source_priority)
-        if not(config.PRIORITY_MIN <= self.source_priority <= config.PRIORITY_MAX):
+        if not (config.PRIORITY_MIN <= self.source_priority <= config.PRIORITY_MAX):
             self.source_priority = config.PRIORITY_DEFAULT
         self.url = url
         self.source_url = source_url
