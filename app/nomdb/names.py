@@ -51,7 +51,7 @@ def get_vnames(list_scnames):
             if len(pieces) > 1:
                 set_scnames.add(pieces[0].lower())
 
-        print("DEBUG: vnames = " + ', '.join(set_scnames))
+        # print("DEBUG: vnames = " + ', '.join(set_scnames))
 
         scnames_str = ", ".join(set(
             map(lambda name: "(" + common.encode_b64_for_psql(name.lower()) + ")", set_scnames)
@@ -78,6 +78,7 @@ def get_vnames(list_scnames):
                 )
             WINDOW best_match AS (
                 PARTITION BY LOWER(scname), LOWER(lang) ORDER BY
+                    LOWER(lang) DESC,
                     source_priority DESC,
                     updated_at DESC
             )
