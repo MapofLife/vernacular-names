@@ -67,7 +67,7 @@ def get_vnames(list_scnames):
                 FIRST_VALUE(source_priority) OVER best_match AS source_priority,
                 FIRST_VALUE(url) OVER best_match AS url,
                 FIRST_VALUE(source_url) OVER best_match AS source_url,
-                FIRST_VALUE(updated_at) OVER best_match AS updated_at
+                FIRST_VALUE(created_at) OVER best_match AS created_at
             FROM %s vnames
                 RIGHT JOIN (SELECT NULL AS qname UNION VALUES %s) qn
                     ON LOWER(scname) = qname
@@ -80,7 +80,7 @@ def get_vnames(list_scnames):
                 PARTITION BY LOWER(scname), LOWER(lang) ORDER BY
                     LOWER(lang) DESC,
                     source_priority DESC,
-                    updated_at DESC
+                    created_at DESC
             )
             ORDER BY
                 qname ASC,
@@ -153,7 +153,7 @@ def get_vnames(list_scnames):
                     result['source_priority'] if result['source_priority'] is not None else config.PRIORITY_DEFAULT,
                     result['url'],
                     result['source_url'],
-                    result['updated_at']
+                    result['created_at']
                 )
 
     return final_results
@@ -186,14 +186,14 @@ def get_detailed_vname(scname):
             source,
             source_url,
             source_priority,
-            updated_at
+            created_at
         FROM %s
         WHERE
             LOWER(scname) = %s
             %s
         ORDER BY
             source_priority DESC,
-            updated_at DESC
+            created_at DESC
     """
     sql_query = sql.strip() % (
         access.ALL_NAMES_TABLE,
@@ -242,7 +242,7 @@ def get_detailed_vname(scname):
                 row['source_priority'],
                 row['url'],
                 row['source_url'],
-                row['updated_at']
+                row['created_at']
             ))
 
             tax_order.add(row['tax_order'].lower())
@@ -268,7 +268,7 @@ class VernacularName:
     """ Stores a single vernacular name in a particular language. """
 
     def __init__(self, scientific_name, matched_name, lang, vernacular_name, source, source_priority, url, source_url,
-                 updated_at):
+                 created_at):
         """ Create a VernacularName
         
         :param scientific_name: The scientific name that was queried (not necessarily the one that was matched!)
@@ -289,7 +289,7 @@ class VernacularName:
             self.source_priority = config.PRIORITY_DEFAULT
         self.url = url
         self.source_url = source_url
-        self.updated_at = updated_at
+        self.created_at = created_at
 
     def __repr__(self):
         """For debugging and the like."""
@@ -339,5 +339,5 @@ class VernacularName:
         return self.source_url
 
     @property
-    def updated_at(self):
-        return self.updated_at
+    def created_at(self):
+        return self.created_at
