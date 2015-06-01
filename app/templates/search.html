@@ -28,9 +28,7 @@ table.search_results tr:nth-child(even) {
         <tr><td width="20%" valign="top">
     
         {% if not search_results %}
-            {% if current_search or dataset_filter %}
-                <p><strong>No results found.</strong></p>
-            {% endif %}
+                <p><strong>No results found.</strong> Use the search box above to try another search.</p>
 
         {% else %}
 
@@ -129,6 +127,7 @@ table.search_results tr:nth-child(even) {
                             {% for result in lookup_results[language] %}
                                 <li>
                                     <div class="display_name" id="display_name_{{language}}_{{loop.index}}">
+                                        {% if not result.is_direct_match %}(for <em>{{ result.matched_name|capitalize }}</em>){% endif %}
                                         {% if loop.first %}<strong>{% endif %}
                                         <a class="nohistory" href="#" onclick="$('.display_name').show(); $('.edit_name').hide(); $('#display_name_{{language}}_{{loop.index}}').hide(); $('#edit_name_{{language}}_{{loop.index}}').show(); $('#edit_name_{{language}}_{{loop.index}} input:first').focus(); return false">{{ result.vernacular_name_formatted }}</a>
                                         {% if result.source_priority == 80 %}(added manually){% elif result.source_priority != 0%}(Priority: {{ result.source_priority }}){%endif%}
@@ -139,7 +138,7 @@ table.search_results tr:nth-child(even) {
                                         {% endif %}
                                         #} {% if result.url %}(<a target="_new" href="{{ result.url }}">URL</a>){% endif %}
                                         <ul>
-                                            <li><span style="font: 80% small-caps">{{ result.source|urlize }} ({{result.source_url|urlize}}) </span></li>
+                                            <li><span style="font: 80% small-caps">{{ result.source|urlize }}<!-- from {{result.source_url|urlize}} --></span></li>
                                         </ul>
                                     </div>
                                     <div class="edit_name" id="edit_name_{{language}}_{{loop.index}}" style="display: none">

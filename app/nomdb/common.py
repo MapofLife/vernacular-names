@@ -85,7 +85,20 @@ def group_by(rows, colname):
 
 
 def format_name(name):
-    """Utility function: format a common name.
+    """ Utility function: format a common name.
     This slows us by about 50% (44 mins for a full genus generation)
     """
     return titlecase(name)
+
+def get_genus_name(name):
+    """ Provide genus for a binomial name.
+
+    :param name:
+    :return:
+    """
+
+    pieces = name.split()
+    if len(pieces) > 1:
+        return pieces[0].lower()
+
+    return None

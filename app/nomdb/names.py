@@ -51,7 +51,7 @@ def get_vnames(list_scnames):
             if len(pieces) > 1:
                 set_scnames.add(pieces[0].lower())
 
-        # print("DEBUG: vnames = " + ', '.join(set_scnames))
+        print("DEBUG: vnames = " + ', '.join(set_scnames))
 
         scnames_str = ", ".join(set(
             map(lambda name: "(" + common.encode_b64_for_psql(name.lower()) + ")", set_scnames)
@@ -77,14 +77,13 @@ def get_vnames(list_scnames):
                     LOWER(lang) IN (%s)
                 )
             WINDOW best_match AS (
-                PARTITION BY LOWER(scname), lang ORDER BY
+                PARTITION BY LOWER(scname), LOWER(lang) ORDER BY
                     source_priority DESC,
                     updated_at DESC
             )
             ORDER BY
                 qname ASC,
-                scname_lc ASC,
-                cmname ASC
+                scname_lc ASC
         """
         sql_query = sql.strip() % (
             access.ALL_NAMES_TABLE,
@@ -102,28 +101,30 @@ def get_vnames(list_scnames):
                 "Could not read from CartoDB: " + str(urlresponse.status_code) + ": " + str(urlresponse.content))
 
         results = json.loads(urlresponse.content)
-        rows_by_scname = common.group_by(results['rows'], 'qname')
 
-        # Map qnames back to scnames
+        # Set up a dict for every scientific name.
         for scname in chunk_scnames:
             final_results[scname] = dict()
 
-            try:
-                rows_by_lang = common.group_by(rows_by_scname[scname.lower()], 'lang_lc')
-            except KeyError:
-                # This only gets triggered if we have a vname for 'scname', but
-                # not as one of the requested languages.
-                for lang in languages.language_names_list:
-                    final_results[scname][lang] = None
+        # Process each language separately.
+        rows_by_lang = common.group_by(results['rows'], 'lang_lc')
+        for lang in rows_by_lang:
+            rows_by_scname = common.group_by(rows_by_lang[lang], 'scname_lc')
 
-                continue
+            for scname in chunk_scnames:
+                matched_name = scname.lower()
 
-            for lang in languages.language_names_list:
-                if lang not in rows_by_lang:
-                    final_results[scname][lang] = None
-                    continue
+                if matched_name not in rows_by_scname:
+                    # No match for this language! But maybe there is a genus-level match?
+                    genus_name = common.get_genus_name(scname)
 
-                rows = rows_by_lang[lang]
+                    if genus_name and genus_name.lower() in rows_by_scname:
+                        matched_name = genus_name.lower()
+                    else:
+                        final_results[scname][lang] = None
+                        continue
+
+                rows = rows_by_scname[matched_name]
 
                 # There should only be one row!
                 if len(rows) != 1:
@@ -139,13 +140,8 @@ def get_vnames(list_scnames):
                 result = rows[0]
 
                 if result['cmname'] is None:
-                    # Maybe we have a genus match?
-                    pieces = scname.split()
-                    if len(pieces) > 1 and len(rows_by_scname[pieces[0].lower()]) == 1:
-                        result = rows_by_scname[pieces[0].lower()][0]
-                    else:
-                        final_results[scname][lang] = None
-                        continue
+                    final_results[scname][lang] = None
+                    continue
 
                 final_results[scname][lang] = VernacularName(
                     scname,
@@ -207,7 +203,6 @@ def get_detailed_vname(scname):
     # print("Sql = <<" + sql_query + ">>")
     # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
 
-
     # Make and parse the response.
     urlresponse = common.url_post(access.CDB_URL, {'q': sql_query})
 
@@ -230,8 +225,13 @@ def get_detailed_vname(scname):
         rows = rows_by_lang[lang]
 
         list_vnames = []
+        flag_direct_matches = False
 
         for row in rows:
+            # Is this a direct match?
+            if row['scname'].lower() == scname.lower():
+                flag_direct_matches = True
+
             list_vnames.append(VernacularName(
                 scname,
                 row['scname'],
@@ -248,7 +248,9 @@ def get_detailed_vname(scname):
             tax_class.add(row['tax_class'].lower())
             tax_family.add(row['tax_family'].lower())
 
-        # TODO: eliminate all genus matches if any non-genus matches exist.
+        # Eliminate all indirect (i.e. genus) matches if any direct matches exist.
+        if flag_direct_matches:
+            list_vnames = filter(lambda x: x.is_direct_match, list_vnames)
 
         final_results[lang] = list_vnames
 
@@ -302,6 +304,10 @@ class VernacularName:
     @property
     def matched_name(self):
         return self.matched_name
+
+    @property
+    def is_direct_match(self):
+        return self.scname.lower() == self.matched_name.lower()
 
     @property
     def lang(self):

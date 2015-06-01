@@ -63,13 +63,13 @@
                 {% for row in rows %}
                     {% for scname in row['scnames'] %}
                             <td>
-                                <em><a href="/?lookup={{scname}}">{{ scname|capitalize }}</a></em>
+                                <em><a href="/search?lookup={{scname}}">{{ scname|capitalize }}</a></em>
                             </td>
                             {% for lang in language_names_list %}
                             <td>
-                                {% if vnames[scname][lang].flag_genus_match %}<em>{% endif %}
+                                {% if not vnames[scname][lang].is_direct_match %}<em>{% endif %}
                                 {{ vnames[scname][lang].vernacular_name_formatted }}
-                                {% if vnames[scname][lang].flag_genus_match %}</em>{% endif %}
+                                {% if not vnames[scname][lang].is_direct_match %}</em>{% endif %}
                                 &nbsp;
                             </td>
                             {% endfor %}
