@@ -1,91 +1,18 @@
 # vim: set fileencoding=utf-8 : 
 
-# vnapi.py
-# An API for communicating with the Vernacular Name system on CartoDB.
+"""masterlist.py: Manages the Master List, which tells us which dataset a name belongs to."""
 
-import urlfetch
-
-import base64
 import json
 import urllib
-import re
 import logging
 
+import nomdb.common
 import access
-import vnnames
 
-# Configuration.
-DEADLINE_FETCH = 60 # seconds to wait during URL fetch (max: 60)
-
-# Min, max and default values for source_priority
-PRIORITY_MIN = 0
-PRIORITY_MAX = 100
-PRIORITY_DEFAULT = 0
-PRIORITY_DEFAULT_APP = 80
-
-# Helper functions.
-# Tricky: try to load google.appengine.api.urlfetch;
-# if so, use that instead of urlfetch.
-import importlib
-gae_urlfetch = None
-try:
-    gae_urlfetch = importlib.import_module('google.appengine.api.urlfetch')
-    gae_urlfetch.set_default_fetch_deadline(DEADLINE_FETCH)
-except ImportError:
-    pass
-
-def url_get(url):
-    if gae_urlfetch:
-        logging.info("url_get(" + url + ") with GAE")
-        return gae_urlfetch.fetch(url)
-    else:
-        logging.info("url_get(" + url + ") with urlfetch")
-        return urlfetch.fetch(url, deadline = DEADLINE_FETCH)
-
-def url_post(url, data):
-    if gae_urlfetch:
-        logging.info("url_post(" + url + ") with GAE")
-        return gae_urlfetch.fetch(url, 
-            payload=urllib.urlencode(data),
-            method=gae_urlfetch.POST,
-            headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=DEADLINE_FETCH
-        )
-    else:
-        logging.info("url_post(" + url + ") with urlfetch")
-        return urlfetch.post(url, data = data)
-
-# Encode a Unicode string as base64, then set it up to be decoded on the server.
-def encode_b64_for_psql(text):
-    return decode_b64_on_psql(base64.b64encode(text.encode('UTF-8')))
-
-# Prepare a bit of code for PostgreSQL to decode a string on the server side.
-def decode_b64_on_psql(text):
-    base64_only = re.compile(r"^[a-zA-Z0-9+/=]*$")
-    if not base64_only.match(text):
-        raise RuntimeError("Error: '" + text + "' sent to decode_b64_on_psql is not base64!")
-
-    return "convert_from(decode('" + text + "', 'base64'), 'utf-8')"
-
-# Given a list of rows, divide them until into groups of rows by the values
-# in the column provided in 'colName'. Return this as a dict.
-def groupBy(rows, colName):
-    result_table = dict()
-
-    for row in rows:
-        val = row[colName]
-
-        if not val in result_table:
-            result_table[val] = []
-
-        result_table[val].append(row)
-
-    return result_table
-
-# Return a list of every dataset in the master list.
-def getDatasets():
+def get_datasets():
+    """Return a list of every dataset in the master list."""
     sql = "SELECT DISTINCT dataset FROM %s ORDER BY dataset DESC"
-    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
+    response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql % (access.MASTER_LIST))
     ))
 
@@ -95,32 +22,33 @@ def getDatasets():
     results = json.loads(response.content)
     return results['rows']
 
-# Return a list of every dataset in the master list.
-def getDatasetCounts():
-    sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
-    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
-        dict(q = sql % (access.MASTER_LIST))
-    ))
-
-    if response.status_code != 200:
-        raise RuntimeError("Could not read server response: " + response.content)
-
-    results = json.loads(response.content)
-    return results['rows']
-
-# Return a list of every scientific name in every dataset.
-def getMasterList():
-    datasets = getDatasets()
+def get_master_list():
+    """Return a list of every scientific name in every dataset."""
+    # TODO: we could make this faster by querying it once from the master list.
+    datasets = get_datasets()
     all_names = set()
     for dataset in datasets:
-        all_names.update(getDatasetNames(dataset['dataset']))
-    return all_names
+        all_names.update(get_dataset_names(dataset['dataset']))
+    return list(all_names)
 
-# Return a list of every scientific name in this dataset.
-def getDatasetNames(dataset):
+def get_dataset_counts():
+    """Return a list of every dataset in the master list."""
+    sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
+    response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
+        dict(q = sql % (access.MASTER_LIST))
+    ))
+
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
+
+    results = json.loads(response.content)
+    return results['rows']
+
+def get_dataset_names(dataset):
+    """Return a list of every scientific name in this dataset."""
     sql = "SELECT scientificname FROM %s WHERE dataset=%s"
-    sql_query = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset))
-    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
+    sql_query = sql % (access.MASTER_LIST, nomdb.common.encode_b64_for_psql(dataset))
+    response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql_query)
     ))
 
@@ -132,8 +60,8 @@ def getDatasetNames(dataset):
 
     return scnames
 
-# Get the dataset coverage for a particular dataset.
-def getDatasetCoverage(datasets, langs):
+def get_dataset_coverage(datasets, langs):
+    """Get the dataset coverage for a particular dataset."""
     logging.info("getDatasetCoverage('" + ", ".join(datasets) + "')")
 
     # Retrieve names with languages without genus lookups.
@@ -152,10 +80,10 @@ def getDatasetCoverage(datasets, langs):
     """
     sql_query = sql % (
         access.MASTER_LIST, access.ALL_NAMES_TABLE, 
-        ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
+        ", ".join(map(lambda dataset: nomdb.common.encode_b64_for_psql(dataset), datasets))
     )
 
-    response = url_post(access.CDB_URL, dict(q = sql_query))
+    response = nomdb.common.url_post(access.CDB_URL, dict(q = sql_query))
     if response.status_code != 200:
         raise RuntimeError("Could not read server response: " + response.content)
 
@@ -179,10 +107,10 @@ def getDatasetCoverage(datasets, langs):
     """
     sql_query = sql % (
         access.MASTER_LIST, access.ALL_NAMES_TABLE, 
-        ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
+        ", ".join(map(lambda dataset: nomdb.common.encode_b64_for_psql(dataset), datasets))
     )
 
-    response = url_post(access.CDB_URL, dict(q = sql_query))
+    response = nomdb.common.url_post(access.CDB_URL, dict(q = sql_query))
     if response.status_code != 200:
         raise RuntimeError("Could not read server response: " + response.content)
 
@@ -191,8 +119,8 @@ def getDatasetCoverage(datasets, langs):
     logging.info(" - genus lookups complete")
 
     # Group by dataset, so we can go through the data dataset by dataset.
-    species_by_dataset = groupBy(species_lookups, 'dataset')
-    genus_by_dataset = groupBy(genus_lookups_by_row, 'dataset')
+    species_by_dataset = nomdb.common.group_by(species_lookups, 'dataset')
+    genus_by_dataset = nomdb.common.group_by(genus_lookups_by_row, 'dataset')
     
     logging.info(" - grouping by dataset complete")
 
@@ -206,7 +134,7 @@ def getDatasetCoverage(datasets, langs):
         species_rows = species_by_dataset[dataset]
         genus_by_scname = dict()
         if dataset in genus_by_dataset:
-            genus_by_scname = groupBy(genus_by_dataset[dataset], 'scname')
+            genus_by_scname = nomdb.common.group_by(genus_by_dataset[dataset], 'scname')
 
         # For each scname, figure out if it has a genus name and species name in each language.
         num_species = 0
@@ -230,12 +158,7 @@ def getDatasetCoverage(datasets, langs):
 
             for lang in langs:
                 if lang not in coverage:
-                    coverage[lang] = dict(
-                        count = 0,
-                        as_species = 0,
-                        as_genus = 0,
-                        as_unmatched = 0
-                    )
+                    coverage[lang] = {'count': 0, 'as_species': 0, 'as_genus': 0, 'as_unmatched': 0}
 
                 coverage[lang]['count'] += 1
 
@@ -264,35 +187,43 @@ def getDatasetCoverage(datasets, langs):
 
     return results
 
-# Check if a dataset contains name. It caches the entire list
-# of names in that dataset to make its job easier.
-def datasetContainsName(dataset, scname):
-    if dataset not in datasetContainsName.cache:
-        datasetContainsName.cache[dataset] = dict()
-        for scname in getNamesInDataset(dataset):
-            datasetContainsName.cache[dataset][scname.lower()] = 1
+def dataset_contains_name(dataset, scname):
+    """Check if a dataset contains name. It caches the entire list
+    of names in that dataset to make its job easier."""
+    if dataset not in dataset_contains_name.cache:
+        dataset_contains_name.cache[dataset] = dict()
+        for scname in get_dataset_names(dataset):
+            dataset_contains_name.cache[dataset][scname.lower()] = 1
 
-    result = (scname.lower() in datasetContainsName.cache[dataset])
+    result = (scname.lower() in dataset_contains_name.cache[dataset])
 
     return result
 
 # Initialize cache
-datasetContainsName.cache = dict()
+dataset_contains_name.cache = dict()
 
-# Note: only searches names in the master list.
-def searchForName(name):
-    # TODO: sanitize input                                                  
+def search_for_name(name):
+    """ Search for a scientific name or vernacular name using a LIKE pattern.
 
-    # Escape any characters that might be used in a LIKE pattern            
+    This pattern will be used to search both scnames and vnames.
+
+    :return: A dictionary with keys = scientific names and values = list of common names that match the query.
+    :rtype : dict
+    """
+
+    # TODO: sanitize input
+
+    # Escape any characters that might be used in a LIKE pattern
     # From http://www.postgresql.org/docs/9.1/static/functions-matching.html
-    search_pattern = name.replace("_", "__").replace("%", "%%")             
+
+    search_pattern = name.replace("_", "__").replace("%", "%%")
 
     sql = "SELECT DISTINCT scname, cmname FROM %s INNER JOIN %s ON (LOWER(scname)=LOWER(scientificname)) WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
-    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
+    response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql % (
             access.MASTER_LIST, access.ALL_NAMES_TABLE, 
-            encode_b64_for_psql("%" + name.lower() + "%"), 
-            encode_b64_for_psql("%" + name.lower() + "%")
+            nomdb.common.encode_b64_for_psql("%" + name.lower() + "%"),
+            nomdb.common.encode_b64_for_psql("%" + name.lower() + "%")
         ))
     ))
 
@@ -312,3 +243,48 @@ def searchForName(name):
             match_table[scname].append(match['cmname'])
 
     return match_table
+
+def get_higher_taxonomy(scnames):
+    """ Retrieve the higher taxonomy for these scientific names.
+
+    I'll write something that returns sources too if that becomes necessary.
+
+    :param scnames: Scientific names to look up.
+    :return: a dict() with scientific names as the keys. Values are a dict containing rank in lowercase and .
+    """
+
+    # For now, we only have 'family' and we retrieve that from access.MASTER_LIST.
+    sql = """SELECT
+            scientificname,
+            array_agg(family ORDER BY cartodb_id ASC) AS agg_family,
+            array_agg(family_source ORDER BY cartodb_id ASC) AS agg_family_source
+        FROM %s
+        WHERE LOWER(scientificname) IN (%s)
+        GROUP BY scientificname"""
+    query = sql % (
+        access.MASTER_LIST,
+        ", ".join(map(lambda x: nomdb.common.encode_b64_for_psql(x.lower()), scnames))
+    )
+    # print("DEBUG: " + query + ".")
+    response = nomdb.common.url_post(access.CDB_URL, {'q': query})
+
+    if response.status_code != 200:
+        raise "Could not read server response: " + response.content
+
+    rows = json.loads(response.content)['rows']
+
+    results = dict()
+    for row in rows:
+        scname = row['scientificname']
+        agg_family = row['agg_family']
+        agg_family_source = row['agg_family']
+
+        if len(agg_family) == 0:
+            raise RuntimeError("Scientific name '%s' does not have a family name in the master list!" % scname)
+
+        results[scname.lower()] = {
+            'family': agg_family[0],
+            'family_sources': zip(agg_family, agg_family_source)
+        }
+
+    return results

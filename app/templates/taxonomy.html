@@ -46,7 +46,7 @@
                     <tr>
                         <td id="family_{{family}}">&nbsp;&nbsp;&nbsp;&nbsp;Family <a href="/?lookup={{family}}">{{ family|capitalize }}</a></td>
                         {% for lang in language_names_list %}
-                            <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacularname}}</a></td> 
+                            <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacular_name_formatted}}</a></td>
                         {% endfor %}
                         <td>{{ higher_taxonomy_tree[class][order][family][0]['count_species'] }}</td>
                     </tr>

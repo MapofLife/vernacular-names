@@ -14,15 +14,12 @@
 
         <h2 id="bulk_imports">Bulk imports</h2>
 
-        <table border="1" class="sortable">
+        <table border="1" class="sortable" style="width: 100%">
             <thead><tr>
                 <th>&nbsp;</th>
                 <th>Source</th>
                 <th>Vernacular names</th>
                 <th>Languages covered</th>
-                <th>Classes covered</th>
-                <th>Orders covered</th>
-                <th>Families covered</th>
                 <th>Source priority</th>
                 <th>Actions</th>
             </tr></thead>
@@ -36,30 +33,6 @@
                             {{bulk_import.agg_lang[1:5]|join(', ')}} and {{bulk_import.agg_lang|length - 5}} others.
                         {% else %}
                             {{bulk_import.agg_lang|join(', ')}}
-                        {% endif %}
-                        &nbsp;
-                    </td>
-
-                    <td>{% if bulk_import.agg_class|length > 5 %}
-                            {{bulk_import.agg_class[1:5]|join(', ')}} and {{bulk_import.agg_class|length - 5}} others.
-                        {% else %}
-                            {{bulk_import.agg_class|join(', ')}}
-                        {% endif %}
-                        &nbsp;
-                    </td>
-
-                    <td>{% if bulk_import.agg_order|length > 5 %}
-                            {{bulk_import.agg_order[1:5]|join(', ')}} and {{bulk_import.agg_order|length - 5}} others.
-                        {% else %}
-                            {{bulk_import.agg_order|join(', ')}}
-                        {% endif %}
-                        &nbsp;
-                    </td>
-
-                    <td>{% if bulk_import.agg_family|length > 5 %}
-                            {{bulk_import.agg_family[1:5]|join(', ')}} and {{bulk_import.agg_family|length - 5}} others.
-                        {% else %}
-                            {{bulk_import.agg_family|join(', ')}}
                         {% endif %}
                         &nbsp;
                     </td>
@@ -80,7 +53,7 @@
 
         <h2 id="individual_imports">Individual imports</h2>
 
-        <table border="1" class="sortable">
+        <table border="1" class="sortable" style="width: 100%">
             <thead><tr>
                 <th>&nbsp;</th>
                 <th>Source</th>
