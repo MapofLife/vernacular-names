@@ -117,21 +117,21 @@
             {% for name in name_list %}
                 <tr>
                     <td>{{ loop.index + offset }}</td>
-                    <td><em><a href="/?lookup={{name}}&search={{name}}">{{ name | capitalize }}</a></em></td>
+                    <td><em><a href="/search?lookup={{name}}&search={{name}}">{{ name | capitalize }}</a></em></td>
                     <!--
                     <td style="font-size: 8pt"><tt>http://names.mol-api.appspot.com/?lookup={{name|replace(' ', '+')}}&amp;search={{name|replace(' ', '+')}}</tt></td>
                     <td>{{vnames[name]['tax_class']|join(", ") }}&nbsp;</td>
                     <td>{{vnames[name]['tax_order']|join(", ") }}&nbsp;</td>
                     -->
-                    <td><a href="/?lookup={{vnames[name]['tax_family']|join(', ')}}">{{vnames[name]['tax_family']|join(", ")|capitalize }}</a>&nbsp;</td>
+                    <td><a href="/search?lookup={{vnames[name]['tax_family']|join(', ')}}">{{vnames[name]['tax_family']|join(", ")|capitalize }}</a>&nbsp;</td>
                     {% set genus = name.split()[0] %}
-                    <td><em><a href="/?lookup={{genus}}">{{genus | capitalize}}</a></em></td>
+                    <td><em><a href="/search?lookup={{genus}}">{{genus | capitalize}}</a></em></td>
                     {% for lang in language_names_list %}
-                        {% if lang in vnames[name] and vnames[name][lang].vernacularname != '' %}
+                        {% if lang in vnames[name] and vnames[name][lang].vernacular_name_formatted != '' %}
                             <td>
-                            {% if vnames[name][lang].flag_uninomial %}<em>{% endif %}
-                            <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacularname }}</a>
-                            {% if vnames[name][lang].flag_uninomial %}</em>{% endif %}
+                            {% if not vnames[name][lang].is_direct_match %}<em>{% endif %}
+                            <a href="/search?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
+                            {% if not vnames[name][lang].is_direct_match %}</em>{% endif %}
                             </td>
                         {% else %}
                             <td>&nbsp;<!-- <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><center><em>None</em></center></a> --></td>

@@ -1,0 +1,16 @@
+# access.py.skeleton: Stores values that shouldn't be in Github.
+# Rename this to 'access.py' once you're done configuring this.
+
+# General settings.
+CDB_URL = 
+
+# Tables containing all vernacular names, master species list and higher taxonomy.
+ALL_NAMES_TABLE = 
+MASTER_LIST = 
+HIGHER_LIST = 
+
+# CartoDB API key.
+CARTODB_API_KEY = 
+
+# 'From' e-mail address.
+EMAIL_ADDRESS = 

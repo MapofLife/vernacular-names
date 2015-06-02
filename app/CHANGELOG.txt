@@ -1,27 +1,44 @@
+Development
+ - Reorganized code into an nomdb package.
+	- Configuration options and language settings moved into package.
+	- Common methods not directly related to names collected in 'nomdb.common'
+	- All code now uses Python-standard naming and (basic) method documentation.
+ - Rewrote vnnames.py with a MUCH simpler, faster interface.
+	- generate_tt.py rewritten to use new interface.
+ - Old higher-taxonomy system partially deleted; remainder will be deleted as the new
+   taxonomy system is incorporated.
+ - Source priority limiting improved.
+
 0.7: May 20, 2015
  - Ajay's style improvements.
  - Switched to use GAE's urlfetch if available, but fallback to the standard
    urlfetch package otherwise, which makes it easier to run it locally.
  - Renamed /genera to /family
+
 0.6: January 7, 2015
  - Reworked higher taxonomy so that it comes directly from the Master List.
  - Modified bulk uploader to support inserting either the family common name 
    or a family common/genus name hybrid.
  - Added a view for hemihomonyms.
+
 0.5: December 21, 2014
  - /import now includes names already in NomDB for the entered species.
  - /list and /masterlist now have buttons to send the current list of names to
    the bulk import/editor.
+
 0.4: October 22, 2014
  - Bulk Import: add multiple names from EOL to the database.
  - Some cleanup and optimization.
+
 0.3: October 14, 2014
  - List names: displays species by criteria.
  - Recent changes: displays recent changes, allow some to be deleted.
+
 0.2-alpha-1: August 30, 2014
  - Added support for filtering by dataset.
  - Improved display of sources and sorting of common names.
  - Added a warning for source_priority > 100.
  - Improved display of languages.
+
 0.1-alpha-1: August 8, 2014
  - Initial draft release after a week of hacking.

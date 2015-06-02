@@ -63,10 +63,10 @@
                 {% endfor %}
                 </td>
                 {% for lang in language_names_list %}
-                    {% if family is none or family == '' or vnames[family][lang].vernacularname == '' %}
+                    {% if family is none or family == '' or vnames[family][lang].vernacular_name_formatted == '' %}
                         <td>&nbsp;</td>
                     {% else %}
-                        <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacularname}}</a></td>
+                        <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacular_name_formatted }}</a></td>
                     {% endif %}
                 {% endfor %}
             </tr>
