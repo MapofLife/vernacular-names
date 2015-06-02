@@ -786,7 +786,7 @@ class BulkImportHandler(BaseHandler):
 
                     # Ignore any names which are identical to the name as in
                     # NomDB.
-                    vname_in_nomdb = self.request.get
+                    vname_in_nomdb = self.request.get(vname_arg + "_in_nomdb")
                     if vname_in_nomdb != '' and vname_in_nomdb == vname:
                         continue
 
@@ -898,7 +898,7 @@ class BulkImportHandler(BaseHandler):
                         vnames_source[loop_index][lang] = source
 
                         # Store in vnames_in_nomdb so we know if they've been edited.
-                        vnames_in_nomdb[loop_index][lang] = vname.cmname
+                        vnames_in_nomdb[loop_index][lang] = vname.vernacular_name
 
         # If this is a get request, we can only be in display-first-page mode.
         # So display first page and quit.
