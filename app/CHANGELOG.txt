@@ -1,6 +1,13 @@
 Development
  - Reorganized code into an nomdb package.
+	- Configuration options and language settings moved into package.
+	- Common methods not directly related to names collected in 'nomdb.common'
+	- All code now uses Python-standard naming and (basic) method documentation.
  - Rewrote vnnames.py with a MUCH simpler, faster interface.
+	- generate_tt.py rewritten to use new interface.
+ - Old higher-taxonomy system partially deleted; remainder will be deleted as the new
+   taxonomy system is incorporated.
+ - Source priority limiting improved.
 
 0.7: May 20, 2015
  - Ajay's style improvements.
