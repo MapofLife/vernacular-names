@@ -100,9 +100,11 @@ def get_vnames(list_scnames):
 
         results = json.loads(urlresponse.content)
 
-        # Set up a dict for every scientific name.
+        # Set up a dict for every scientific name and language.
         for scname in chunk_scnames:
             final_results[scname] = dict()
+            for lang in languages.language_names_list:
+                final_results[scname][lang] = None
 
         # Process each language separately.
         rows_by_lang = common.group_by(results['rows'], 'lang_lc')
