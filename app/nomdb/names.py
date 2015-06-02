@@ -317,7 +317,7 @@ class VernacularName:
 
     @property
     def vernacular_name_formatted(self):
-        return titlecase(self.cmname) if self.cmname is not None else None
+        return titlecase.titlecase(self.cmname) if self.cmname is not None else None
 
     @property
     def source_priority(self):

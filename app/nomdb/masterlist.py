@@ -6,13 +6,13 @@ import json
 import urllib
 import logging
 
-from nomdb.common import url_get, url_post, encode_b64_for_psql, group_by
+import nomdb.common
 import access
 
-# Return a list of every dataset in the master list.
-def getDatasets():
+def get_datasets():
+    """Return a list of every dataset in the master list."""
     sql = "SELECT DISTINCT dataset FROM %s ORDER BY dataset DESC"
-    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
+    response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql % (access.MASTER_LIST))
     ))
 
@@ -22,32 +22,33 @@ def getDatasets():
     results = json.loads(response.content)
     return results['rows']
 
-# Return a list of every dataset in the master list.
-def getDatasetCounts():
-    sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
-    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
-        dict(q = sql % (access.MASTER_LIST))
-    ))
-
-    if response.status_code != 200:
-        raise RuntimeError("Could not read server response: " + response.content)
-
-    results = json.loads(response.content)
-    return results['rows']
-
-# Return a list of every scientific name in every dataset.
-def getMasterList():
-    datasets = getDatasets()
+def get_master_list():
+    """Return a list of every scientific name in every dataset."""
+    # TODO: we could make this faster by querying it once from the master list.
+    datasets = get_datasets()
     all_names = set()
     for dataset in datasets:
-        all_names.update(getDatasetNames(dataset['dataset']))
+        all_names.update(get_dataset_names(dataset['dataset']))
     return list(all_names)
 
-# Return a list of every scientific name in this dataset.
-def getDatasetNames(dataset):
+def get_dataset_counts():
+    """Return a list of every dataset in the master list."""
+    sql = "SELECT dataset, COUNT(*) AS count FROM %s GROUP BY dataset ORDER BY count DESC"
+    response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
+        dict(q = sql % (access.MASTER_LIST))
+    ))
+
+    if response.status_code != 200:
+        raise RuntimeError("Could not read server response: " + response.content)
+
+    results = json.loads(response.content)
+    return results['rows']
+
+def get_dataset_names(dataset):
+    """Return a list of every scientific name in this dataset."""
     sql = "SELECT scientificname FROM %s WHERE dataset=%s"
-    sql_query = sql % (access.MASTER_LIST, encode_b64_for_psql(dataset))
-    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
+    sql_query = sql % (access.MASTER_LIST, nomdb.common.encode_b64_for_psql(dataset))
+    response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql_query)
     ))
 
@@ -59,8 +60,8 @@ def getDatasetNames(dataset):
 
     return scnames
 
-# Get the dataset coverage for a particular dataset.
-def getDatasetCoverage(datasets, langs):
+def get_dataset_coverage(datasets, langs):
+    """Get the dataset coverage for a particular dataset."""
     logging.info("getDatasetCoverage('" + ", ".join(datasets) + "')")
 
     # Retrieve names with languages without genus lookups.
@@ -79,10 +80,10 @@ def getDatasetCoverage(datasets, langs):
     """
     sql_query = sql % (
         access.MASTER_LIST, access.ALL_NAMES_TABLE, 
-        ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
+        ", ".join(map(lambda dataset: nomdb.common.encode_b64_for_psql(dataset), datasets))
     )
 
-    response = url_post(access.CDB_URL, dict(q = sql_query))
+    response = nomdb.common.url_post(access.CDB_URL, dict(q = sql_query))
     if response.status_code != 200:
         raise RuntimeError("Could not read server response: " + response.content)
 
@@ -106,10 +107,10 @@ def getDatasetCoverage(datasets, langs):
     """
     sql_query = sql % (
         access.MASTER_LIST, access.ALL_NAMES_TABLE, 
-        ", ".join(map(lambda dataset: encode_b64_for_psql(dataset), datasets))
+        ", ".join(map(lambda dataset: nomdb.common.encode_b64_for_psql(dataset), datasets))
     )
 
-    response = url_post(access.CDB_URL, dict(q = sql_query))
+    response = nomdb.common.url_post(access.CDB_URL, dict(q = sql_query))
     if response.status_code != 200:
         raise RuntimeError("Could not read server response: " + response.content)
 
@@ -118,8 +119,8 @@ def getDatasetCoverage(datasets, langs):
     logging.info(" - genus lookups complete")
 
     # Group by dataset, so we can go through the data dataset by dataset.
-    species_by_dataset = group_by(species_lookups, 'dataset')
-    genus_by_dataset = group_by(genus_lookups_by_row, 'dataset')
+    species_by_dataset = nomdb.common.group_by(species_lookups, 'dataset')
+    genus_by_dataset = nomdb.common.group_by(genus_lookups_by_row, 'dataset')
     
     logging.info(" - grouping by dataset complete")
 
@@ -133,7 +134,7 @@ def getDatasetCoverage(datasets, langs):
         species_rows = species_by_dataset[dataset]
         genus_by_scname = dict()
         if dataset in genus_by_dataset:
-            genus_by_scname = group_by(genus_by_dataset[dataset], 'scname')
+            genus_by_scname = nomdb.common.group_by(genus_by_dataset[dataset], 'scname')
 
         # For each scname, figure out if it has a genus name and species name in each language.
         num_species = 0
@@ -186,25 +187,27 @@ def getDatasetCoverage(datasets, langs):
 
     return results
 
-# Check if a dataset contains name. It caches the entire list
-# of names in that dataset to make its job easier.
-def datasetContainsName(dataset, scname):
-    if dataset not in datasetContainsName.cache:
-        datasetContainsName.cache[dataset] = dict()
-        for scname in getDatasetNames(dataset):
-            datasetContainsName.cache[dataset][scname.lower()] = 1
+def dataset_contains_name(dataset, scname):
+    """Check if a dataset contains name. It caches the entire list
+    of names in that dataset to make its job easier."""
+    if dataset not in dataset_contains_name.cache:
+        dataset_contains_name.cache[dataset] = dict()
+        for scname in get_dataset_names(dataset):
+            dataset_contains_name.cache[dataset][scname.lower()] = 1
 
-    result = (scname.lower() in datasetContainsName.cache[dataset])
+    result = (scname.lower() in dataset_contains_name.cache[dataset])
 
     return result
 
 # Initialize cache
-datasetContainsName.cache = dict()
+dataset_contains_name.cache = dict()
 
-# Note: only searches names in the master list.
-def searchForName(name):
-    """
+def search_for_name(name):
+    """ Search for a scientific name or vernacular name using a LIKE pattern.
 
+    This pattern will be used to search both scnames and vnames.
+
+    :return: A dictionary with keys = scientific names and values = list of common names that match the query.
     :rtype : dict
     """
 
@@ -216,11 +219,11 @@ def searchForName(name):
     search_pattern = name.replace("_", "__").replace("%", "%%")
 
     sql = "SELECT DISTINCT scname, cmname FROM %s INNER JOIN %s ON (LOWER(scname)=LOWER(scientificname)) WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
-    response = url_get(access.CDB_URL + "?" + urllib.urlencode(
+    response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql % (
             access.MASTER_LIST, access.ALL_NAMES_TABLE, 
-            encode_b64_for_psql("%" + name.lower() + "%"), 
-            encode_b64_for_psql("%" + name.lower() + "%")
+            nomdb.common.encode_b64_for_psql("%" + name.lower() + "%"),
+            nomdb.common.encode_b64_for_psql("%" + name.lower() + "%")
         ))
     ))
 
@@ -260,10 +263,10 @@ def get_higher_taxonomy(scnames):
         GROUP BY scientificname"""
     query = sql % (
         access.MASTER_LIST,
-        ", ".join(map(lambda x: encode_b64_for_psql(x.lower()), scnames))
+        ", ".join(map(lambda x: nomdb.common.encode_b64_for_psql(x.lower()), scnames))
     )
     # print("DEBUG: " + query + ".")
-    response = url_post(access.CDB_URL, {'q': query})
+    response = nomdb.common.url_post(access.CDB_URL, {'q': query})
 
     if response.status_code != 200:
         raise "Could not read server response: " + response.content

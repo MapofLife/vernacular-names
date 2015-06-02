@@ -181,7 +181,7 @@ class SearchPage(BaseHandler):
         search_results = dict()
         search_results_scnames = []
         if current_search != '':
-            search_results = masterlist.searchForName(current_search)
+            search_results = masterlist.search_for_name(current_search)
             search_results_scnames = sorted(search_results.keys())
 
         # Check for dataset_filter
@@ -190,12 +190,12 @@ class SearchPage(BaseHandler):
             if current_search != '':
                 # If there is a search, filter it using dataset_filter.
                 search_results_scnames = filter(
-                    lambda scname: masterlist.datasetContainsName(dataset_filter, scname),
+                    lambda scname: masterlist.dataset_contains_name(dataset_filter, scname),
                     search_results_scnames
                 )
             else:
                 # If not, search by dataset.
-                search_results_scnames = masterlist.getDatasetNames(dataset_filter)
+                search_results_scnames = masterlist.get_dataset_names(dataset_filter)
 
                 search_results = dict()
                 for scname in search_results_scnames:
@@ -402,11 +402,11 @@ class CoverageViewHandler(BaseHandler):
         langs = languages.language_names_list
 
         # Display 'display', offset by offset.
-        all_datasets = masterlist.getDatasets()
+        all_datasets = masterlist.get_datasets()
         datasets = all_datasets[offset:offset + display]
 
         dataset_names = map(lambda x: x['dataset'], all_datasets)
-        coverage = masterlist.getDatasetCoverage(dataset_names, langs)
+        coverage = masterlist.get_dataset_coverage(dataset_names, langs)
         datasets_count = coverage['num_species']
         datasets_coverage = coverage['coverage']
 
@@ -607,7 +607,7 @@ class MasterListHandler(BaseHandler):
 
         # Retrieve master list.
         dataset_filter = self.request.get('dataset')
-        datasets_data = masterlist.getDatasetCounts()
+        datasets_data = masterlist.get_dataset_counts()
         if dataset_filter == '':
             datasets = map(lambda x: x['dataset'], datasets_data)
         else:
@@ -615,7 +615,7 @@ class MasterListHandler(BaseHandler):
 
         species = dict()
         for dataset in datasets:
-            scnames = masterlist.getDatasetNames(dataset)
+            scnames = masterlist.get_dataset_names(dataset)
 
             for scname in scnames:
                 scname = scname.lower()
@@ -741,7 +741,7 @@ class BulkImportHandler(BaseHandler):
         message = self.request.get('message')
 
         # Check for presence in master list.
-        master_list = masterlist.getMasterList()
+        master_list = masterlist.get_master_list()
         master_list_lc = set(map(lambda x: x.lower(), master_list))
 
         scnames_not_in_master_list = filter(lambda x: (x.lower() not in master_list_lc), scnames)
@@ -1472,7 +1472,7 @@ class ListViewHandler(BaseHandler):
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
             'language_names': languages.language_names,
-            'datasets_data': masterlist.getDatasetCounts(),
+            'datasets_data': masterlist.get_dataset_counts(),
             'selected_datasets': set(self.request.get_all('dataset')),
             'selected_blank_langs': set(self.request.get_all('blank_lang')),
             'message': message,

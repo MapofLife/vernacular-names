@@ -55,7 +55,7 @@ def concat_names(names):
 rowcount = 0
 
 # Get a list of every name in the master list.
-all_names = masterlist.getMasterList()
+all_names = masterlist.get_master_list()
 
 # Look up higher taxonomy.
 print("Looking up higher taxonomy ... ")
