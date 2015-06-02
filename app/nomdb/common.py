@@ -83,13 +83,6 @@ def group_by(rows, colname):
 
     return result_table
 
-
-def format_name(name):
-    """ Utility function: format a common name.
-    This slows us by about 50% (44 mins for a full genus generation)
-    """
-    return titlecase(name)
-
 def get_genus_name(name):
     """ Provide genus for a binomial name.
 

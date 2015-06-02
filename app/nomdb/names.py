@@ -7,6 +7,7 @@ import json
 
 from nomdb import config, common, languages
 import access
+import titlecase
 
 # There are only two use-cases for vernacular name retrieval:
 # 1. /edit, which needs every possible name in every possible language with higher taxonomy.
@@ -18,10 +19,6 @@ import access
 #
 # In theory, we could make things faster by looking up scientific names within a dataset directly,
 # but in practice we don't do that often. Maybe if I write it, they will come?
-
-def get_vname(scname):
-    return get_detailed_vname(scname)
-
 
 def get_vnames(list_scnames):
     """
@@ -277,7 +274,7 @@ class VernacularName:
         :param vernacular_name: The vernacular name retrieved.
         :param source_priority: The source priority of the match.
         :param source: The source that was matched.
-        :return:
+        :return: VernacularName object
         """
         self.scname = scientific_name
         self.matched_name = matched_name
@@ -320,7 +317,7 @@ class VernacularName:
 
     @property
     def vernacular_name_formatted(self):
-        return common.format_name(self.cmname) if self.cmname is not None else None
+        return titlecase(self.cmname) if self.cmname is not None else None
 
     @property
     def source_priority(self):
