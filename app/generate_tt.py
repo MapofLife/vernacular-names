@@ -2,8 +2,11 @@
 
 #
 # generate_tt.py: Generate taxonomy_translations table.
-# This file is now defunct: we use Luis' script at
+# This file is now semi-defunct: we use Luis' script at
 # https://github.com/MapofLife/database/blob/master/scripts_autopopulate/taxonomy_translations.py
+# EXCEPT that -- since it's PostgreSQL-only -- it can't handle proper capitalization,
+# or at any rate the amount of capitalization that we can. So we need to remain functional
+# for the time being.
 #
 
 
@@ -16,6 +19,7 @@ import sys
 
 sys.path.append('config')
 sys.path.append('lib/urlfetch')
+sys.path.append('lib/python-titlecase')
 
 from nomdb import masterlist, names, languages
 
@@ -37,11 +41,8 @@ gzfile = gzip.GzipFile(filename=OUTPUT_PATH + csv_filename, mode='wb')
 # Prepare csv writer.
 csvfile = csv.writer(gzfile)
 
-# Get a list of every name in the master list.
-all_names = masterlist.getMasterList()
-
 # Prepare to write out CSV.
-header = ['scientificname', 'tax_family', 'tax_order', 'tax_class']
+header = ['scientificname', 'tax_family']
 for lang in languages.language_names_list:
     header.extend([lang + '_name', lang + '_source', lang + '_family'])
 header.extend(['empty'])
@@ -50,46 +51,59 @@ csvfile.writerow(header)
 def concat_names(names):
     return "|".join(sorted(names)).encode('utf-8')
 
+# Set up lookup.
 rowcount = 0
-def add_name(name, higher_taxonomy, vnames_by_lang):
-    global rowcount
-    rowcount += 1
 
-    if rowcount % 1000 == 0:
-        print("Adding row " + str(rowcount))
+# Get a list of every name in the master list.
+all_names = masterlist.getMasterList()
 
-    row = [name.encode('utf-8').capitalize(), 
-        concat_names(higher_taxonomy['family']),
-        concat_names(higher_taxonomy['order']),
-        concat_names(higher_taxonomy['class'])]
+# Look up higher taxonomy.
+print("Looking up higher taxonomy ... ")
+# TODO: Given that this is a slow-running SQL request, it might be easier to download the CSV and parse that instead.
+higher_taxonomy = masterlist.get_higher_taxonomy(all_names)
+print("Higher taxonomy retrieved for %d names." % len(higher_taxonomy))
 
-    for lang in languages.language_names_list:
-        if lang in vnames_by_lang:
-            vname = vnames_by_lang[lang].vernacular_name
-            sources = vnames_by_lang[lang].sources
-            tax_family = vnames_by_lang[lang].tax_family
+print("Looking up vernacular names for higher taxonomy ... ")
+tax_families = names.get_vnames(map(lambda entry: entry['family'].lower(), higher_taxonomy.itervalues()))
+print("Vernacular names downloaded for %d families." % len(tax_families))
 
-            # Use family latin name instead of common name 
-            # if we don't have one.
-            if len(tax_family) == 0:
-                tax_family = map(lambda x: x.capitalize(), higher_taxonomy['family'])
+# Break the request up into chunks.
+CHUNK_SIZE = 3000
+for i in xrange(0, len(all_names), CHUNK_SIZE):
+    chunk_scnames = all_names[i:i + CHUNK_SIZE]
 
-            row.extend([
-                vname.encode('utf-8'), 
-                concat_names(sources),
-                concat_names(list(tax_family)[0:1])   # Only enter a single family name.
-            ])
-        else:
-            row.extend([None, None, None])
+    vnames_chunk = names.get_vnames(chunk_scnames)
+    print("Retrieved vernacular names for %d scientific names, %d rows of %d (%.2f%%) written so far." % (
+        len(vnames_chunk), rowcount, len(all_names), float(rowcount)/len(all_names) * 100))
 
-    csvfile.writerow(row)
+    for name in chunk_scnames:
+        rowcount += 1
+        vnames = vnames_chunk[name]
+        family_name = higher_taxonomy[name.lower()]['family']
+        family_vnames = tax_families[family_name.lower()]
 
-# searchVernacularNames doesn't use the cache, but it calls 
-# getVernacularNames for higher taxonomy, which does.
-names.clearVernacularNamesCache()
-vnames = names.get_vnames(all_names)
+        row = [name.encode('utf-8').capitalize(), family_name.encode('utf-8').capitalize()]
 
-# TODO: recode to make this work again.
+        for lang in languages.language_names_list:
+            if lang in vnames:
+                vname = vnames[lang].vernacular_name_formatted.encode('utf-8') if lang in vnames and vnames[lang] is not None else None
+                source = vnames[lang].source.encode('utf-8') if lang in vnames and vnames[lang] is not None else None
+                tax_family = family_vnames[lang].vernacular_name_formatted.encode('utf-8') if lang in family_vnames and family_vnames[lang] is not None else None
+
+                # Use family latin name instead of common name
+                # if we don't have one.
+                if tax_family is None or tax_family == '':
+                    tax_family = family_name.encode('utf-8').capitalize()
+
+                row.extend([
+                    vname,
+                    source,
+                    tax_family
+                ])
+            else:
+                row.extend([None, None, None])
+
+        csvfile.writerow(row)
 
 # File completed!
 gzfile.close()

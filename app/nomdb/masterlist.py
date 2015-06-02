@@ -41,7 +41,7 @@ def getMasterList():
     all_names = set()
     for dataset in datasets:
         all_names.update(getDatasetNames(dataset['dataset']))
-    return all_names
+    return list(all_names)
 
 # Return a list of every scientific name in this dataset.
 def getDatasetNames(dataset):
@@ -240,3 +240,48 @@ def searchForName(name):
             match_table[scname].append(match['cmname'])
 
     return match_table
+
+def get_higher_taxonomy(scnames):
+    """ Retrieve the higher taxonomy for these scientific names.
+
+    I'll write something that returns sources too if that becomes necessary.
+
+    :param scnames: Scientific names to look up.
+    :return: a dict() with scientific names as the keys. Values are a dict containing rank in lowercase and .
+    """
+
+    # For now, we only have 'family' and we retrieve that from access.MASTER_LIST.
+    sql = """SELECT
+            scientificname,
+            array_agg(family ORDER BY cartodb_id ASC) AS agg_family,
+            array_agg(family_source ORDER BY cartodb_id ASC) AS agg_family_source
+        FROM %s
+        WHERE LOWER(scientificname) IN (%s)
+        GROUP BY scientificname"""
+    query = sql % (
+        access.MASTER_LIST,
+        ", ".join(map(lambda x: encode_b64_for_psql(x.lower()), scnames))
+    )
+    # print("DEBUG: " + query + ".")
+    response = url_post(access.CDB_URL, {'q': query})
+
+    if response.status_code != 200:
+        raise "Could not read server response: " + response.content
+
+    rows = json.loads(response.content)['rows']
+
+    results = dict()
+    for row in rows:
+        scname = row['scientificname']
+        agg_family = row['agg_family']
+        agg_family_source = row['agg_family']
+
+        if len(agg_family) == 0:
+            raise RuntimeError("Scientific name '%s' does not have a family name in the master list!" % scname)
+
+        results[scname.lower()] = {
+            'family': agg_family[0],
+            'family_sources': zip(agg_family, agg_family_source)
+        }
+
+    return results
