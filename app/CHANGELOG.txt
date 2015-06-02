@@ -1,4 +1,4 @@
-Development
+0.8: June 1, 2015
  - Reorganized code into an nomdb package.
 	- Configuration options and language settings moved into package.
 	- Common methods not directly related to names collected in 'nomdb.common'
