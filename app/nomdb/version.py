@@ -1,2 +1,2 @@
 # Stores the current version
-NOMDB_VERSION = "0.8.1"
+NOMDB_VERSION = "0.8.2"
