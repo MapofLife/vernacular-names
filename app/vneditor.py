@@ -914,7 +914,7 @@ class BulkImportHandler(BaseHandler):
             'debug_save': debug_save,
 
             'url_master_list': "https://mol.cartodb.com/tables/" + access.MASTER_LIST,
-            'sql_add_to_master_list': sql_add_to_master_list,
+#            'sql_add_to_master_list': sql_add_to_master_list,
 
             'message': message,
 

@@ -302,9 +302,7 @@
         <p>Source priority for entire dataset: <input name="source_priority" value="{{source_priority|default(0)}}" /></p>
 
         {% if scnames_not_in_master_list|length > 0 %}
-            <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in <a href="{{url_master_list}}">the master list</a>. To add them, <a onclick="$('#sql_add_to_master_list').show()" href="#">click here to display the appropriate SQL</a>.
-            <br>
-            <textarea cols="80" rows="5" readonly="1" id="sql_add_to_master_list" style="display:none">{{sql_add_to_master_list}}</textarea>
+            <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in the master list.
             </p>
         {% endif %}
 
