@@ -10,7 +10,7 @@
 {% set COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)' %}
 
 {% block head %}
-    <script src="/static/sorttable.js"></script>
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
     <script><!--
         function addToSources(source) { 
             if(source) {
@@ -374,7 +374,7 @@
                 {% set scname_index = loop.index %}
                 <td>{{ scname_index }}</td>
                 <td>{% if scname not in scnames_not_in_master_list %}
-                        <em><a href="/?lookup={{scname}}">{{ scname|capitalize }}</a></em>
+                        <em><a href="{{'/search'|url_to_base}}?lookup={{scname}}">{{ scname|capitalize }}</a></em>
                     {% else %}
                         <span style="color: red"><em>{{ scname|capitalize }}</em></span><br><strong>Warning: not in master list!</strong>
                     {% endif %}

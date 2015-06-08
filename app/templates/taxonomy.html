@@ -3,7 +3,7 @@
 {% block page_title %}Higher Taxonomy From Database{% endblock %}
 
 {% block head %}
-    <script src="/static/sorttable.js"></script>
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
 {% endblock %}
 
 {% block content %}
@@ -24,29 +24,29 @@
         <tbody>
         {% for class,v in higher_taxonomy_tree|dictsort %}
             <tr>
-                <td id="class_{{class}}" >Class <a href="/?lookup={{class}}">{{ class|capitalize }}</a></td>
+                <td id="class_{{class}}" >Class <a href="{{'/search'|url_to_base}}?lookup={{class}}">{{ class|capitalize }}</a></td>
                 {% for lang in language_names_list %}
                     {% if class is none or class == '' or vnames[class][lang].vernacularname == '' %}
                         <td>&nbsp;</td>
                     {% else %}
-                        <td><a href="/?lookup={{class}}#lang-{{lang}}">{{vnames[class][lang].vernacularname}}</a></td>
+                        <td><a href="{{'/search'|url_to_base}}?lookup={{class}}#lang-{{lang}}">{{vnames[class][lang].vernacularname}}</a></td>
                     {% endif %}
                 {% endfor %}
                 <td>TBD</td>
             </tr>
             {% for order,v in higher_taxonomy_tree[class]|dictsort %}
                 <tr>
-                    <td id="order_{{order}}">&nbsp;&nbsp;Order <a href="/?lookup={{order}}">{{ order|capitalize }}</a></td>
+                    <td id="order_{{order}}">&nbsp;&nbsp;Order <a href="{{'/search'|url_to_base}}?lookup={{order}}">{{ order|capitalize }}</a></td>
                     {% for lang in language_names_list %}
-                        <td><a href="/?lookup={{order}}#lang-{{lang}}">{{vnames[order][lang].vernacularname}}</a></td>
+                        <td><a href="{{'/search'|url_to_base}}?lookup={{order}}#lang-{{lang}}">{{vnames[order][lang].vernacularname}}</a></td>
                     {% endfor %}
                     <td>TBD</td>
                 </tr>
                 {% for family,v in higher_taxonomy_tree[class][order]|dictsort %}
                     <tr>
-                        <td id="family_{{family}}">&nbsp;&nbsp;&nbsp;&nbsp;Family <a href="/?lookup={{family}}">{{ family|capitalize }}</a></td>
+                        <td id="family_{{family}}">&nbsp;&nbsp;&nbsp;&nbsp;Family <a href="{{'/search'|url_to_base}}?lookup={{family}}">{{ family|capitalize }}</a></td>
                         {% for lang in language_names_list %}
-                            <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacular_name_formatted}}</a></td>
+                            <td><a href="{{'/search'|url_to_base}}?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacular_name_formatted}}</a></td>
                         {% endfor %}
                         <td>{{ higher_taxonomy_tree[class][order][family][0]['count_species'] }}</td>
                     </tr>

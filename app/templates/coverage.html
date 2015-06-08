@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block content %}
-            <p>Coverage for datasets currently on the <a href="/masterlist">Master List</a>.</p>
+            <p>Coverage for datasets currently on the <a href="{{'/masterlist'|url_to_base}}">Master List</a>.</p>
 
             <p>Displaying {{display}} entries{% if offset != 0 %} starting with {{ offset+1 }}{% endif %} (<a href="?display={{default_display}}&offset=0">reset</a>).</p>
 
@@ -40,7 +40,7 @@
                             <td>{{ offset + loop.index }}</td>
                             <td align="left">
                                 <!-- TODO: Add URL encoding here -->
-                                <a href="/list?dataset={{dataset['dataset']|trim}}">{{ dataset['dataset']|trim }}</a>
+                                <a href="{{'/list'|url_to_base}}?dataset={{dataset['dataset']|trim}}">{{ dataset['dataset']|trim }}</a>
                                 <br>
                                 <!-- Not sure where this count comes from, but it used to be the reliable one: 
                                 {{ datasets_count[cdataset] }} names/ -->

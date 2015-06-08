@@ -3,7 +3,7 @@
 {% block page_title %}Sources{% endblock %}
 
 {% block head %}
-    <script src="/static/sorttable.js"></script>
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
 {% endblock %}
 
 {% block content %}
@@ -40,7 +40,7 @@
                     <td>{{ bulk_import.agg_source_priority|sort|join(', ') }}</td>
                     
                     <td>
-                    <form action="/sources" method="POST">
+                    <form action="{{'/sources'|url_to_base}}" method="POST">
                         <input type="hidden" name="source" value="{{bulk_import.source}}" />
                         <input name="source_priority" size="5" value="{{bulk_import.max_source_priority}}" />
                         <button class="btn btn-primary" type="submit">Change</button>
@@ -105,7 +105,7 @@
                     <td>{{ individual_import.agg_source_priority|sort|join(', ') }}</td>
 
                     <td>
-                    <form action="/sources" method="POST">
+                    <form action="{{'/sources'|url_to_base}}" method="POST">
                         <input type="hidden" name="source" value="{{individual_import.source}}" />
                         <input name="source_priority" size="5" value="{{individual_import.max_source_priority}}" />
                         <button class="btn btn-primary" type="submit">Change</button>
