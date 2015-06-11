@@ -1,3 +1,6 @@
+Development
+ - Standardized print() and logging.info() to logging.debug().
+
 0.8.3: June 10, 2015
  - Moved to '/taxonomy/names' so that it can be integrated with other
    Google App Engine modules.

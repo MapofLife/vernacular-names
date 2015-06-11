@@ -5,6 +5,7 @@ import re
 import time
 import os
 import json
+import logging
 
 import webapp2
 
@@ -795,7 +796,7 @@ class BulkImportHandler(BaseHandler):
                         continue
 
                     if vname != '':
-                        logging.debug((
+                        logging.info((
                                   "scnames[" + str(loop_index - 1) + "] = " + scnames[loop_index - 1] + " => vnames[" + str(
                                       loop_index) + "][" + lang + "] = '" + vname + "'").encode('utf8'))
                         vnames[loop_index][lang] = vname.strip()
@@ -844,7 +845,7 @@ class BulkImportHandler(BaseHandler):
 
             debug_save += "</table>\n"
 
-            logging.debug("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
+            logging.error("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
 
             if len(save_errors) > 0:
                 message = "<strong>Error:</strong>" + "<br>".join(save_errors)
