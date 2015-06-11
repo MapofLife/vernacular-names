@@ -1,0 +1,6 @@
+# Copied from https://cloud.google.com/appengine/articles/python/recording_exceptions_with_ereporter
+cron:
+- description: Daily exception report
+  url: /taxonomy/names/_ereporter?sender=ggvaidya@gmail.com&to=ggvaidya@gmail.com
+  target: nomdb
+  schedule: every day 20:00 # E-mail report at 2pm MDT/1pm MST

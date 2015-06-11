@@ -10,6 +10,7 @@ import logging
 import webapp2
 
 from google.appengine.api import users, urlfetch
+from google.appengine.ext import ereporter
 import jinja2
 import access
 import nomdb.version
@@ -41,6 +42,7 @@ SOURCE_URL = "https://github.com/gaurav/vernacular-names"
 # INITIALIZATION
 #
 urlfetch.set_default_fetch_deadline(config.DEADLINE_FETCH)
+ereporter.register_logger()
 
 # Check whether we're in production mode (PROD = True) or not.
 PROD = True
