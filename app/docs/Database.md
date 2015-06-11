@@ -1,7 +1,7 @@
 Database schema
 ===============
 
-The `access.` names refer to https://github.com/MapofLife/vernacular-names/blob/develop/app/config/access.py.skeleton, which you should configure for your individual setup.
+The `access.*` names refer to https://github.com/MapofLife/vernacular-names/blob/develop/app/config/access.py.skeleton, which you should configure for your individual setup.
 
 # All names list table (`access.ALL_NAMES_TABLE`)
 
@@ -20,7 +20,7 @@ The list of every vernacular name we know about.
    * NomDB sets the default priority on manual changes to 80. Therefore, source priorities above 80 can't be overriden in NomDB.
    * Bulk uploads use a default priority of 0, but can be set as high as possible.
    * This field is deliberately kept denormalized, so that source priorities can be tweaked as necessary. The sources page on NomDB lets you see what source priorities have been set for each source.
-* `added_by`: The username of the user that added this name.
+ * `added_by`: The username of the user that added this name.
    * At the moment, this is the e-mail address from Google's authentication. Eventually, we'll replace this with a userid from MOL's authentication system.
  * `created_at`: The datetime at which this record was added to the database.
  * `updated_at`: The datetime at which this record was last updated to the database.
