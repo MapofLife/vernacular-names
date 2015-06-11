@@ -77,7 +77,7 @@ table.search_results tr:nth-child(even) {
 
                 {% set genus = lookup_search.split()[0] %}
                 <p>
-                    <form method="post" action="/add/name">
+                    <form method="post" action="{{'/add/name'|url_to_base}}">
                         <input type="hidden" name="dataset" value="{{dataset_filter}}">
                         <input type="hidden" name="search" value="{{current_search}}">
                         <input type="hidden" name="lookup" value="{{lookup_search}}">
@@ -142,7 +142,7 @@ table.search_results tr:nth-child(even) {
                                         </ul>
                                     </div>
                                     <div class="edit_name" id="edit_name_{{language}}_{{loop.index}}" style="display: none">
-                                        <form method="post" action="/add/name">
+                                        <form method="post" action="{{'/add/name'|url_to_base}}">
                                             <input name="name_to_add" value="{{result.cmname}}" size=40>
                                             <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.sources|join("|")}}">
      
@@ -159,7 +159,7 @@ table.search_results tr:nth-child(even) {
                             {% endfor %}
                             <li><a class="btn btn-info btn-xs nohistory" role="button" href="#" onclick="$('#add_new_{{language}}').toggle(); $('#name_to_add_{{language}}').focus(); return false"><em>Add another</em></a>
                                 <div id='add_new_{{language}}' style="display:none">
-                                    <form method="post" action="/add/name">
+                                    <form method="post" action="{{'/add/name'|url_to_base}}">
                                         <input name="name_to_add" id="name_to_add_{{language}}">
                                         <input name="source" size=50 value="Source">
                                         <input class="btn btn-success btn-sm" name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">

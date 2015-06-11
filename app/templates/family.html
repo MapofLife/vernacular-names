@@ -3,13 +3,13 @@
 {% block page_title %}Family Names{% endblock %}
 
 {% block head %}
-    <script src="/static/sorttable.js"></script>
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
 {% endblock %}
 
 {% block content %}
 
     <p>This list is generated from a master list of higher taxonomy.
-    You may want to look at <a href="/taxonomy">higher taxonomy stored
+    You may want to look at <a href="{{'/taxonomy'|url_to_base}}">higher taxonomy stored
     with nomenclatural names</a> instead.
     </p>
 
@@ -26,9 +26,9 @@
             {% for missing in missing_genera %}
                 <tr>
                     <td>{{loop.index}}</td>
-                    <td><em><a href="/?lookup={{missing['genus']}}">{{missing['genus']|capitalize}}</a></em></td>
+                    <td><em><a href="{{'/search'|url_to_base}}?lookup={{missing['genus']}}">{{missing['genus']|capitalize}}</a></em></td>
                     <td>{% for dataset in missing['datasets'] %}
-                        <a href="/list?dataset={{dataset}}">{{dataset}}</a> 
+                        <a href="{{'/list'|url_to_base}}?dataset={{dataset}}">{{dataset}}</a>
                     {% endfor %}
                     </td>
                 </tr>
@@ -53,20 +53,20 @@
             {% set family = row['family']|join(", ") %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td><em><a href="/?lookup={{row['genus']}}">{{row['genus']|capitalize}}</a></em></td>
+                <td><em><a href="{{'/search'|url_to_base}}?lookup={{row['genus']}}">{{row['genus']|capitalize}}</a></em></td>
                 <td>{% if family is none %}None{% else %}
-                    <a href="/?lookup={{family}}">{{ family|capitalize }}</a>
+                    <a href="{{'/search'|url_to_base}}?lookup={{family}}">{{ family|capitalize }}</a>
                 {% endif %}
                 </td>
                 <td>{% for dataset in row['datasets'] %}
-                    <a href="/list?dataset={{dataset}}">{{dataset}}</a> 
+                    <a href="{{'/list'|url_to_base}}?dataset={{dataset}}">{{dataset}}</a>
                 {% endfor %}
                 </td>
                 {% for lang in language_names_list %}
                     {% if family is none or family == '' or vnames[family][lang].vernacular_name_formatted == '' %}
                         <td>&nbsp;</td>
                     {% else %}
-                        <td><a href="/?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacular_name_formatted }}</a></td>
+                        <td><a href="{{'/search'|url_to_base}}?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacular_name_formatted }}</a></td>
                     {% endif %}
                 {% endfor %}
             </tr>

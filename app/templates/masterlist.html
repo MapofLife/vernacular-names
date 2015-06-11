@@ -3,7 +3,7 @@
 {% block page_title %}Master List{% endblock %}
 
 {% block head %}
-    <script src="/static/sorttable.js"></script>
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
 {% endblock %}
 
 {% block content %}
@@ -36,13 +36,13 @@
         <p>Displaying {{species_sorted|count}} names from the following datasets:</p>
         <ul>
             {% for dataset_data in datasets_data %}
-                <li><a href="?dataset={{dataset_data['dataset']}}">{{ dataset_data['dataset'] }}</a> ({{ dataset_data['count'] }} species)</li>
+                <li><a href="{{'/list'|url_to_base}}?dataset={{dataset_data['dataset']}}">{{ dataset_data['dataset'] }}</a> ({{ dataset_data['count'] }} species)</li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>Displaying {{species_sorted|count}} names from dataset <em><a href="/list?dataset={{dataset_filter}}">{{ dataset_filter }}</a></em> (<a href="?dataset=">reset</a>).
+        <p>Displaying {{species_sorted|count}} names from dataset <em><a href="{{'/list'|url_to_base}}?dataset={{dataset_filter}}">{{ dataset_filter }}</a></em> (<a href="?dataset=">reset</a>).
 
-        <form action="/import" method="POST">
+        <form action="{{'/import'|url_to_base}}" method="POST">
             <input type="hidden" name="input_dataset" value="{{dataset_filter}}" />
             <textarea style="display: none" name="scnames">{{species_sorted|join("\n")}}</textarea> <br />
             <input class="btn btn-primary btn-sm" type="submit" value="Display dataset in bulk import">
@@ -62,12 +62,12 @@
             {% set family = species[scname]['family'] %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td><em><a href="/?lookup={{scname}}">{{scname|capitalize}}</a></em></td>
+                <td><em><a href="{{'/list'|url_to_base}}?lookup={{scname}}">{{scname|capitalize}}</a></em></td>
                 <td>{% for dataset in species[scname]['datasets']|sort %}
                     {% if dataset == dataset_filter %}
                         {{dataset}}
                     {% else %}
-                        <a href="?dataset={{dataset}}">{{dataset}}</a> 
+                        <a href="{{'/list'|url_to_base}}?dataset={{dataset}}">{{dataset}}</a>
                     {% endif %}
                 {% endfor %}
                 </td>

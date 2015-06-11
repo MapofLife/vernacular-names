@@ -17,13 +17,16 @@ from nomdb import masterlist, names, config, common, languages, version
 
 # User interface configuration
 
+""" What is the base URL for this app? """
+BASE_URL = '/taxonomy/names'
+
 """ Display DEBUG information? This is only used once. """
 FLAG_DEBUG = False
 
-""" Display the total count in /list: expensive, but useful. """
+""" Display the total count in $BASE_URL/list: expensive, but useful. """
 FLAG_LIST_DISPLAY_COUNT = True
 
-""" How many rows to display in /list by default. """
+""" How many rows to display in $BASE_URL/list by default. """
 LISTVIEWHANDLER_DEFAULT_ROWS = 500
 
 """ Sources with fewer vname entries than this are considered to be individual imports;
@@ -49,6 +52,7 @@ JINJA_ENV = jinja2.Environment(
     extensions=['jinja2.ext.autoescape'],
     autoescape=True
 )
+JINJA_ENV.filters['url_to_base'] = lambda x: BASE_URL + x
 
 #
 # BaseHandler
@@ -72,7 +76,7 @@ class BaseHandler(webapp2.RequestHandler):
             self.redirect(users.create_login_url(self.request.uri))
 
         if not users.is_current_user_admin():
-            self.redirect('/page/private')
+            self.redirect(BASE_URL + '/page/private')
 
         return user
 
@@ -87,9 +91,9 @@ class StaticPages(BaseHandler):
     def __init__(self, request, response):
         BaseHandler.__init__(self, request, response)
 
-        """ Right now, there's only /page/private. """
+        """ Right now, there's only $BASE_URL/page/private. """
         self.template_mappings = {
-            '/page/private': 'private.html'
+            BASE_URL + '/page/private': 'private.html'
         }
         self.initialize(request, response)
 
@@ -100,8 +104,8 @@ class StaticPages(BaseHandler):
         path = self.request.path.lower()
         if path in self.template_mappings:
             self.render_template(self.template_mappings[path], {
-                'login_url': users.create_login_url('/'),
-                'logout_url': users.create_logout_url('/'),
+                'login_url': users.create_login_url(BASE_URL),
+                'logout_url': users.create_logout_url(BASE_URL),
                 'vneditor_version': version.NOMDB_VERSION
             })
         else:
@@ -120,7 +124,7 @@ class MainPage(BaseHandler):
         # Set up user details.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         # Allow not-logged-in code to run.
         if user is None:
@@ -129,8 +133,8 @@ class MainPage(BaseHandler):
         # Render the main template.
         self.render_template('main.html', {
             'message': self.request.get('msg'),
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'vneditor_version': version.NOMDB_VERSION
@@ -155,7 +159,7 @@ class SearchPage(BaseHandler):
         # Set up user details.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         # Allow not-logged-in code to run.
         if user is None:
@@ -223,8 +227,8 @@ class SearchPage(BaseHandler):
         self.render_template('search.html', {
             'message': self.request.get('msg'),
             'dataset_filter': dataset_filter,
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'current_search': current_search,
@@ -279,7 +283,7 @@ class DeleteNameByCDBIDHandler(BaseHandler):
             message = "Change %d deleted successfully." % cartodb_id
 
         # Redirect to the recent changes page, which is the only person using this service right now.
-        self.redirect("/recent?" + urllib.urlencode(dict(
+        self.redirect(BASE_URL + "/recent?" + urllib.urlencode(dict(
             msg=message,
         )))
 
@@ -369,7 +373,7 @@ class AddNameHandler(BaseHandler):
                 message = "Name added to language '" + lang + "'."
 
         # Redirect to the main page.
-        self.redirect("/search?" + urllib.urlencode(dict(
+        self.redirect(BASE_URL + "/search?" + urllib.urlencode(dict(
             msg=message,
             search=search,
             lookup=lookup
@@ -389,7 +393,7 @@ class CoverageViewHandler(BaseHandler):
         # Check that a user is logged in; otherwise, bail out.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -414,8 +418,8 @@ class CoverageViewHandler(BaseHandler):
         self.render_template('coverage.html', {
             'vneditor_version': version.NOMDB_VERSION,
             'user_url': user_url,
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'language_names_list': languages.language_names_list,
@@ -440,7 +444,7 @@ class SourcesHandler(BaseHandler):
         # Make sure a user is logged in.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -480,7 +484,7 @@ class SourcesHandler(BaseHandler):
             message = "Could not parse source priority, please try again."
 
         # Redirect to the main page.
-        self.redirect("/sources?" + urllib.urlencode(dict(
+        self.redirect(BASE_URL + "/sources?" + urllib.urlencode(dict(
             msg=message,
         )))
 
@@ -492,7 +496,7 @@ class SourcesHandler(BaseHandler):
         # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -560,8 +564,8 @@ class SourcesHandler(BaseHandler):
         # Render sources.
         self.render_template('sources.html', {
             'message': message,
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'language_names': languages.language_names,
@@ -597,7 +601,7 @@ class MasterListHandler(BaseHandler):
         # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -674,8 +678,8 @@ class MasterListHandler(BaseHandler):
 
         # Render template.
         self.render_template('masterlist.html', {
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'language_names': languages.language_names,
@@ -721,7 +725,7 @@ class BulkImportHandler(BaseHandler):
         # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -875,7 +879,7 @@ class BulkImportHandler(BaseHandler):
                     message = str(len(entries)) + " entries added to dataset '" + input_dataset + "'."
 
                     # Redirect to the main page.
-                    self.redirect("/list?" + urllib.urlencode({'msg': message, 'dataset': input_dataset}))
+                    self.redirect(BASE_URL + "/list?" + urllib.urlencode({'msg': message, 'dataset': input_dataset}))
 
         # So far, we've processed all user input. Let's fill in the gaps with
         # data that already exists in the system. To simplify this query and
@@ -903,8 +907,8 @@ class BulkImportHandler(BaseHandler):
         # If this is a get request, we can only be in display-first-page mode.
         # So display first page and quit.
         self.render_template('import.html', {
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'language_names': languages.language_names,
@@ -914,7 +918,7 @@ class BulkImportHandler(BaseHandler):
             'debug_save': debug_save,
 
             'url_master_list': "https://mol.cartodb.com/tables/" + access.MASTER_LIST,
-            'sql_add_to_master_list': sql_add_to_master_list,
+#            'sql_add_to_master_list': sql_add_to_master_list,
 
             'message': message,
 
@@ -943,7 +947,7 @@ class FamilyHandler(BaseHandler):
         # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -998,8 +1002,8 @@ class FamilyHandler(BaseHandler):
         # Render recent changes.
         self.render_template('family.html', {
             'message': message,
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'missing_genera': missing_genera,
@@ -1023,7 +1027,7 @@ class HemihomonymHandler(BaseHandler):
         # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -1081,8 +1085,8 @@ class HemihomonymHandler(BaseHandler):
         # Render recent changes.
         self.render_template('hemihomonyms.html', {
             'message': message,
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
 
@@ -1109,7 +1113,7 @@ class HigherTaxonomyHandler(BaseHandler):
         # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -1196,8 +1200,8 @@ class HigherTaxonomyHandler(BaseHandler):
         # Render recent changes.
         self.render_template('taxonomy.html', {
             'message': message,
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'vnames': names.get_vnames(all_names),
@@ -1225,7 +1229,7 @@ class RecentChangesHandler(BaseHandler):
         # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -1277,8 +1281,8 @@ class RecentChangesHandler(BaseHandler):
         # Render recent changes.
         self.render_template('recent.html', {
             'message': message,
-            'login_url': users.create_login_url('/'),
-            'logout_url': users.create_logout_url('/'),
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
             'user_name': user_name,
             'language_names': languages.language_names,
@@ -1348,7 +1352,7 @@ class ListViewHandler(BaseHandler):
         # Check user.
         user = self.check_user()
         user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url('/')
+        user_url = users.create_login_url(BASE_URL)
 
         if user is None:
             return
@@ -1489,19 +1493,23 @@ class ListViewHandler(BaseHandler):
 # ROUTING FOR APPLICATION
 #
 application = webapp2.WSGIApplication([
+    # If someone tries accessing the module directly, display the root page,
+    # but all links from here should go to another
     ('/', MainPage),
-    ('/search', SearchPage),
-    ('/index.html', MainPage),
-    ('/add/name', AddNameHandler),
-    ('/page/private', StaticPages),
-    ('/list', ListViewHandler),
-    ('/delete/cartodb_id', DeleteNameByCDBIDHandler),
-    ('/recent', RecentChangesHandler),
-    ('/taxonomy', HigherTaxonomyHandler),
-    ('/family', FamilyHandler),
-    ('/hemihomonyms', HemihomonymHandler),
-    ('/sources', SourcesHandler),
-    ('/coverage', CoverageViewHandler),
-    ('/import', BulkImportHandler),
-    ('/masterlist', MasterListHandler)
+
+    # Pages on our website.
+    (BASE_URL, MainPage),
+    (BASE_URL + '/search', SearchPage),
+    (BASE_URL + '/add/name', AddNameHandler),
+    (BASE_URL + '/page/private', StaticPages),
+    (BASE_URL + '/list', ListViewHandler),
+    (BASE_URL + '/delete/cartodb_id', DeleteNameByCDBIDHandler),
+    (BASE_URL + '/recent', RecentChangesHandler),
+    (BASE_URL + '/taxonomy', HigherTaxonomyHandler),
+    (BASE_URL + '/family', FamilyHandler),
+    (BASE_URL + '/hemihomonyms', HemihomonymHandler),
+    (BASE_URL + '/sources', SourcesHandler),
+    (BASE_URL + '/coverage', CoverageViewHandler),
+    (BASE_URL + '/import', BulkImportHandler),
+    (BASE_URL + '/masterlist', MasterListHandler)
 ], debug=not PROD)

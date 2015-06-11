@@ -3,7 +3,7 @@
 {% block page_title %}List{% endblock %}
 
 {% block head %}
-    <script src="/static/sorttable.js"></script>
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
 {% endblock %}
 
 {% block content %}
@@ -12,13 +12,13 @@
         <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
         <div class="well well-sm">
-            <form class="pull-left" style="padding-right: 10px;" method="POST" action="/import">
+            <form class="pull-left" style="padding-right: 10px;" method="POST" action="{{'/import'|url_to_base}}">
                 <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
                 <textarea style="display: none" name="scnames">{{ name_list|join("\n") }}</textarea>
                 <input class="btn btn-primary" type="submit" value="Edit {{ name_list|count }} currently displayed names" />
             </form>
 
-            <form method="POST" action="/import">
+            <form method="POST" action="{{'/import'|url_to_base}}">
                 <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
                 <textarea style="display: none" name="scnames">{{ genera_list|join("\n") }}</textarea>
                 <input class="btn btn-primary" type="submit" value="Edit {{ genera_list|count }} currently displayed genera" />
@@ -117,20 +117,20 @@
             {% for name in name_list %}
                 <tr>
                     <td>{{ loop.index + offset }}</td>
-                    <td><em><a href="/search?lookup={{name}}&search={{name}}">{{ name | capitalize }}</a></em></td>
+                    <td><em><a href="{{'/search'|url_to_base}}?lookup={{name}}&search={{name}}">{{ name | capitalize }}</a></em></td>
                     <!--
                     <td style="font-size: 8pt"><tt>http://names.mol-api.appspot.com/?lookup={{name|replace(' ', '+')}}&amp;search={{name|replace(' ', '+')}}</tt></td>
                     <td>{{vnames[name]['tax_class']|join(", ") }}&nbsp;</td>
                     <td>{{vnames[name]['tax_order']|join(", ") }}&nbsp;</td>
                     -->
-                    <td><a href="/search?lookup={{vnames[name]['tax_family']|join(', ')}}">{{vnames[name]['tax_family']|join(", ")|capitalize }}</a>&nbsp;</td>
+                    <td><a href="{{'/search'|url_to_base}}?lookup={{vnames[name]['tax_family']|join(', ')}}">{{vnames[name]['tax_family']|join(", ")|capitalize }}</a>&nbsp;</td>
                     {% set genus = name.split()[0] %}
-                    <td><em><a href="/search?lookup={{genus}}">{{genus | capitalize}}</a></em></td>
+                    <td><em><a href="{{'/search'|url_to_base}}?lookup={{genus}}">{{genus | capitalize}}</a></em></td>
                     {% for lang in language_names_list %}
                         {% if lang in vnames[name] and vnames[name][lang].vernacular_name_formatted != '' %}
                             <td>
                             {% if not vnames[name][lang].is_direct_match %}<em>{% endif %}
-                            <a href="/search?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
+                            <a href="{{'/search'|url_to_base}}?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
                             {% if not vnames[name][lang].is_direct_match %}</em>{% endif %}
                             </td>
                         {% else %}

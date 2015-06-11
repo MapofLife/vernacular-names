@@ -3,7 +3,7 @@
 {% block page_title %}Hemihomonyms{% endblock %}
 
 {% block head %}
-    <script src="/static/sorttable.js"></script>
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
 {% endblock %}
 
 {% block content %}
@@ -21,13 +21,13 @@
     </p>
 
     <div class="well well-sm">
-        <form class="pull-left" style="padding-right: 10px;" method="POST" action="/import">
+        <form class="pull-left" style="padding-right: 10px;" method="POST" action="{{'/import'|url_to_base}}">
             <input type="hidden" name="input_dataset" value="Hemihomonyms" />
             <textarea style="display: none" name="scnames">{{ scnames|join("\n") }}</textarea>
             <input class="btn btn-primary" type="submit" value="Edit {{ scnames|count }} currently displayed species" />
         </form>
 
-        <form method="POST" action="/import">
+        <form method="POST" action="{{'/import'|url_to_base}}">
             <input type="hidden" name="input_dataset" value="Hemihomonyms" />
             <textarea style="display: none" name="scnames">{{ hemihomonyms.keys()|join("\n") }}</textarea>
             <input class="btn btn-primary" type="submit" value="Edit {{ hemihomonyms.keys()|count }} currently displayed genera" />
@@ -49,7 +49,7 @@
             <tr>
                 <td rowspan="{{rowcount}}">{{ loop.index }}</td>
                 <td rowspan="{{rowcount}}">
-                    <strong>Genus&nbsp;<em><a href="/?lookup={{genus}}">{{genus|capitalize}}</a></em></strong>
+                    <strong>Genus&nbsp;<em><a href="{{'/search'|url_to_base}}?lookup={{genus}}">{{genus|capitalize}}</a></em></strong>
                     {% for row in rows %}
                         {% for family in row['families'] %}
                             <br>Family&nbsp;<a target="_blank" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{family}}">{{family|capitalize}}</a>
@@ -63,7 +63,7 @@
                 {% for row in rows %}
                     {% for scname in row['scnames'] %}
                             <td>
-                                <em><a href="/search?lookup={{scname}}">{{ scname|capitalize }}</a></em>
+                                <em><a href="{{'/search'|url_to_base}}?lookup={{scname}}">{{ scname|capitalize }}</a></em>
                             </td>
                             {% for lang in language_names_list %}
                             <td>

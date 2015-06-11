@@ -10,7 +10,7 @@
 {% set COLOR_MANUAL_ENTRY = 'rgba(0, 192, 0, 0.23)' %}
 
 {% block head %}
-    <script src="/static/sorttable.js"></script>
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
     <script><!--
         function addToSources(source) { 
             if(source) {
@@ -302,9 +302,7 @@
         <p>Source priority for entire dataset: <input name="source_priority" value="{{source_priority|default(0)}}" /></p>
 
         {% if scnames_not_in_master_list|length > 0 %}
-            <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in <a href="{{url_master_list}}">the master list</a>. To add them, <a onclick="$('#sql_add_to_master_list').show()" href="#">click here to display the appropriate SQL</a>.
-            <br>
-            <textarea cols="80" rows="5" readonly="1" id="sql_add_to_master_list" style="display:none">{{sql_add_to_master_list}}</textarea>
+            <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in the master list.
             </p>
         {% endif %}
 
@@ -376,7 +374,7 @@
                 {% set scname_index = loop.index %}
                 <td>{{ scname_index }}</td>
                 <td>{% if scname not in scnames_not_in_master_list %}
-                        <em><a href="/?lookup={{scname}}">{{ scname|capitalize }}</a></em>
+                        <em><a href="{{'/search'|url_to_base}}?lookup={{scname}}">{{ scname|capitalize }}</a></em>
                     {% else %}
                         <span style="color: red"><em>{{ scname|capitalize }}</em></span><br><strong>Warning: not in master list!</strong>
                     {% endif %}
