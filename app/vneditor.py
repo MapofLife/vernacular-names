@@ -795,7 +795,7 @@ class BulkImportHandler(BaseHandler):
                         continue
 
                     if vname != '':
-                        print((
+                        logging.debug((
                                   "scnames[" + str(loop_index - 1) + "] = " + scnames[loop_index - 1] + " => vnames[" + str(
                                       loop_index) + "][" + lang + "] = '" + vname + "'").encode('utf8'))
                         vnames[loop_index][lang] = vname.strip()
@@ -844,7 +844,7 @@ class BulkImportHandler(BaseHandler):
 
             debug_save += "</table>\n"
 
-            print("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
+            logging.debug("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
 
             if len(save_errors) > 0:
                 message = "<strong>Error:</strong>" + "<br>".join(save_errors)
@@ -872,7 +872,7 @@ class BulkImportHandler(BaseHandler):
 
                 if response.status_code != 200:
                     message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-                    print("Error: server returned error " + str(
+                    logging.error("Error: server returned error " + str(
                         response.status_code) + " on SQL '" + sql_query + "': " + response.content)
 
                 else:

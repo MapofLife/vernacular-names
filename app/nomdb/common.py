@@ -30,10 +30,10 @@ except ImportError:
 def url_get(url):
     """Retrieve a URL using HTTP GET."""
     if gae_urlfetch:
-        logging.info("url_get(" + url + ") with GAE")
+        logging.debug("url_get(" + url + ") with GAE")
         return gae_urlfetch.fetch(url)
     else:
-        logging.info("url_get(" + url + ") with urlfetch")
+        logging.debug("url_get(" + url + ") with urlfetch")
         return urlfetch.fetch(url, deadline =DEADLINE_FETCH)
 
 def url_post(url, data):
