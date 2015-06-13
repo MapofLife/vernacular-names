@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import inspect
+import datetime
 
 import webapp2
 
@@ -507,7 +508,7 @@ class SourcesHandler(BaseHandler):
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
-        display_count = 100
+        display_count = self.request.get_range('display', 0, default=100)
 
         # Is there a message?
         message = self.request.get('msg')
@@ -520,8 +521,7 @@ class SourcesHandler(BaseHandler):
             source_url,
             COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
-            TO_CHAR(MIN(created_at), 'FMMonth YYYY') AS min_created_at,
-            TO_CHAR(MAX(created_at), 'FMMonth YYYY') AS max_created_at,
+            ARRAY_AGG(TO_CHAR(created_at, 'YYYY-MM')) AS agg_created_at,
             array_agg(source_priority) AS agg_source_priority,
             array_agg(lang) AS agg_lang
             FROM %s 
@@ -556,10 +556,45 @@ class SourcesHandler(BaseHandler):
             if len(sources) > 0:
                 total_count = sources[0]['total_count']
 
-            # Distinctify some columns.
+            # Distinctify and reformat some columns.
             for row in sources:
-                row['agg_lang'] = list(set(row['agg_lang']))
-                row['agg_source_priority'] = list(set(row['agg_source_priority']))
+                # logging.info("Processing row: " + str(row))
+
+                row['vname_count_formatted'] = '{:,}'.format(int(row['vname_count']))
+                row['agg_lang'] = sorted(set(row['agg_lang']))
+                row['agg_source_priority'] = sorted(set(row['agg_source_priority']))
+
+                # Produce a list of continguous date sequences.
+                # i.e. something like ["August 2014", "February to March 2015", "June 2015"]
+                sorted_dates = (map(lambda x: datetime.datetime.strptime(x, "%Y-%m"), sorted(set(row['agg_created_at']))))
+
+                row['dates_added'] = []
+
+                prev_group = []
+
+                def format_dateset(prev_group):
+                    if len(prev_group) == 0:
+                        return []
+                    elif len(prev_group) == 1:
+                        return prev_group[0].strftime("%B %Y")
+                    else:
+                        return prev_group[0].strftime("%B %Y") + " to " + prev_group[-1].strftime("%B %Y")
+
+                for date in sorted_dates:
+                    # Is 'date' part of the previous group?
+                    if len(prev_group) == 0:
+                        prev_group.append(date)
+                    else:
+                        # logging.info("Date '" + str(date) + "' - '" + str(prev_group[-1]) + "' <=> 4 days")
+                        if (date - prev_group[-1]) < datetime.timedelta(days = 1):
+                            prev_group.append(date)
+                        else:
+                            row['dates_added'].append(format_dateset(prev_group))
+                            prev_group = []
+
+                if len(prev_group) > 0:
+                    row['dates_added'].append(format_dateset(prev_group))
+
 
         # There are two kinds of sources:
         #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.
