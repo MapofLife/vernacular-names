@@ -516,19 +516,17 @@ class SourcesHandler(BaseHandler):
 
         # Synthesize SQL
         source_sql = ("""SELECT 
-            source, 
-            COUNT(*) OVER() AS total_count,
+            source,
+            source_url,
+            COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
-            COUNT(DISTINCT LOWER(scname)) AS scname_count, 
-            array_agg(DISTINCT source_priority) AS agg_source_priority,
-            MAX(source_priority) AS max_source_priority,
-            array_agg(DISTINCT LOWER(lang)) AS agg_lang
+            TO_CHAR(MIN(created_at), 'FMMonth YYYY') AS min_created_at,
+            TO_CHAR(MAX(created_at), 'FMMonth YYYY') AS max_created_at,
+            array_agg(source_priority) AS agg_source_priority,
+            array_agg(lang) AS agg_lang
             FROM %s 
-            GROUP BY source 
-            ORDER BY 
-                max_source_priority DESC,
-                vname_count DESC,
-                source ASC
+            GROUP BY source, source_url
+            ORDER BY vname_count DESC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
@@ -557,6 +555,11 @@ class SourcesHandler(BaseHandler):
             sources = results['rows']
             if len(sources) > 0:
                 total_count = sources[0]['total_count']
+
+            # Distinctify some columns.
+            for row in sources:
+                row['agg_lang'] = list(set(row['agg_lang']))
+                row['agg_source_priority'] = list(set(row['agg_source_priority']))
 
         # There are two kinds of sources:
         #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.

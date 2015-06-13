@@ -42,6 +42,21 @@ The following fields are no longer used, are deprecated, and will eventually be 
  * `binomial`: The binomial name that goes with this scientific name.
  * `added`: The date on which this common name was added to the database. We now use `updated_at` instead.
 
+## Indexes
+
+The following indexes are necessary to efficient functioning:
+
+ * scname
+ * LOWER(scname)
+ * cmname
+ * sourcepriority
+ * lang
+ * LOWER(lang)
+ * source
+ * source_priority
+ * source_url
+ * created_at
+
 # Master list (`access.MASTER_LIST`)
 
 The master list of scientific names organized by dataset. This allows us to generate lists of names by dataset. Other parts of MOL are better at dealing with this, so this will eventually be replaced, but for now this is relatively easy to update and test, and so we leave it in.
@@ -52,3 +67,12 @@ The master list of scientific names organized by dataset. This allows us to gene
  * `family_source`: The source that asserts that `scientificname` belongs in `family`.
  * `genus`: The genus name of this species. **Deprecated, will be deleted.**
  * `iucn_red_list_status`: The IUCN Red List status of this species.
+
+## Indexes
+
+The following indexes are necessary to efficient functioning:
+
+ * scientificname
+ * LOWER(scientificname)
+ * family
+ * iucn_red_list_status
