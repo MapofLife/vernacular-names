@@ -6,6 +6,7 @@ import time
 import os
 import json
 import logging
+import inspect
 
 import webapp2
 
@@ -273,7 +274,7 @@ class DeleteNameByCDBIDHandler(BaseHandler):
         )
 
         # Make it so.
-        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+        response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
             dict(
                 q=sql_query,
                 api_key=access.CARTODB_API_KEY
@@ -472,7 +473,7 @@ class SourcesHandler(BaseHandler):
             )
 
             # Make it so.
-            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+            response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
                 dict(
                     q=sql_query,
                     api_key=access.CARTODB_API_KEY
@@ -1493,6 +1494,259 @@ class ListViewHandler(BaseHandler):
         })
 
 #
+# TESTS PAGE (/tests)
+#
+class TestsPage(BaseHandler):
+    """ Runs a set of consistency checks on the database, looking for
+    common errors (read: any oddness we find).
+    """
+
+    class TestResult:
+        """ Stores the result of a single test. It can succeed or not. """
+
+        def __init__(self, succeeded, message):
+            """ Create a new test result.
+
+            :param succeeded: The result of the test: True or False
+            :param message: A string description of the test's result.
+            :return: A new TestResult object.
+            """
+            self.message = message
+            self.succeeded = True if succeeded else False
+
+        @property
+        def succeeded(self):
+            """
+            :return: True if this test succeeded, else False.
+            """
+            return self.succeeded
+
+        @property
+        def message(self):
+            """
+            :return: A message relating to this test.
+            """
+            return self.message
+
+    class TestSet:
+        """ A set of tests. """
+
+        def __init__(self, name, description):
+            """
+            :param name: The name of this set of tests.
+            :param description: A description of this set of tests. May contain newlines; URLs will be URLized on display.
+            :return: A TestSet object.
+            """
+            self.name = name
+            self.description = description
+            self.results = []
+
+        @property
+        def name(self):
+            """
+            :return: The name of this TestSet.
+            """
+            return self.name
+
+        @property
+        def description(self):
+            """
+            :return: The description of this TestSet.
+            """
+            return self.description
+
+        @property
+        def succeeded(self):
+            """
+            :return: Returns True if every TestResult in this TestSet is true, False otherwise.
+            """
+            return len(filter(lambda x: not x.succeeded, self.results)) == 0
+
+        @property
+        def results(self):
+            """
+            :return: Return the list of TestResults that have been executed.
+            """
+            if len(self.results) == 0:
+                return [TestsPage.TestResult(False, "No tests run.")]
+            return self.results
+
+        # The following methods add a TestResult to this TestSet.
+
+        def success(self, message):
+            """ Add a successful test result.
+
+            :param message: The success message associated with this test result.
+            """
+            self.results.append(TestsPage.TestResult(True, message))
+
+        def failure(self, message):
+            """ Add a failed test result.
+
+            :param message: The failure message associated with this test result.
+            """
+            self.results.append(TestsPage.TestResult(False, message))
+
+        def ok(self, bool_result, message):
+            """ Add a test result -- if bool_result is True, we add a success message; otherwise,
+            we add a failure message.
+
+            :param bool_result: Success (True) or failure (False).
+            :param message: The message that goes with this.
+            """
+            logging.info("ok(" + str(bool_result) + ", '" + str(message) + "'")
+            self.results.append(TestsPage.TestResult(bool_result, message))
+
+        def test_sql(self, sql_query, fn_condition, fn_message):
+            """
+            Run an SQL request against CartoDB, and test the results in some way.
+
+            :param sql_query: An SQL query to pass to CartoDB
+            :param fn_condition: A callback function taking the rows returned from CartoDB; returns whether the test succeeded or failed.
+            :param fn_message: A callback function taking the rows returned from CartoDB; returns the message for this test result.
+            """
+            url = access.CDB_URL + "?" + urllib.urlencode({'q': sql_query})
+            response = urlfetch.fetch(url)
+
+            # logging.info("Querying: " + url)
+
+            if response.status_code != 200:
+                self.failure("Error: server returned error " + str(response.status_code) + ": " + response.content)
+                logging.error("Error: server returned error " + str(response.status_code) + ": " + response.content)
+                return
+
+            results = json.loads(response.content)
+            self.ok(fn_condition(results['rows']), fn_message(results['rows']))
+
+    def test_blank_fields(self):
+        """ Some fields in the database should never be blank. We highlight such records here."""
+
+        test = TestsPage.TestSet("blank_fields", inspect.getdoc(self.test_blank_fields))
+
+        # Tests for access.ALL_NAMES_TABLE: scname
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE scname='' OR scname IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'scname' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.ALL_NAMES_TABLE: cmname
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE cmname='' OR cmname IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'cmname' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.ALL_NAMES_TABLE: lang
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE lang='' OR lang IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'lang' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.ALL_NAMES_TABLE: source
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE source='' OR source IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'source' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.ALL_NAMES_TABLE: source_priority
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE source_priority='' OR source_priority IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'source_priority' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.MASTER_LIST: scientificname
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE scientificname='' OR scientificname IS NULL" % access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'scientificname' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.MASTER_LIST: dataset
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE dataset='' OR dataset IS NULL" % access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'dataset' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.MASTER_LIST: family
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE family='' OR family IS NULL" % access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'family' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.MASTER_LIST: iucn_red_list_status
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE iucn_red_list_status='' OR iucn_red_list_status IS NULL" % access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'family' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        return test
+
+    def test_field_range(self):
+        """ Test the range of some values in the database."""
+
+        test = TestsPage.TestSet("test_field_range", inspect.getdoc(self.test_field_range))
+
+        # Tests for access.MASTER_LIST: source_priority within config.PRIORITY_MIN to config.PRIORITY_MAX.
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE source_priority::INT < %d OR source_priority::INT > %d" % (
+                access.ALL_NAMES_TABLE,
+                config.PRIORITY_MIN,
+                config.PRIORITY_MAX
+            ),
+            lambda results: results[0]['count'] == 0,
+            lambda results:
+                "All names table: 'source_priority' column contains %d rows that are less than %d (PRIORITY_MIN) or greater than %d (PRIORITY_MAX)." %
+                    (results[0]['count'], config.PRIORITY_MIN, config.PRIORITY_MAX)
+        )
+
+        # Tests for access.MASTER_LIST: iucn_red_list_status IN ('CD', 'EX', 'EW', 'CR', 'EN', 'VU', 'NT', 'LC', 'DD', 'NE')
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE iucn_red_list_status != '' AND iucn_red_list_status NOT IN ('CD', 'EX', 'EW', 'CR', 'EN', 'VU', 'NT', 'LC', 'DD', 'NE')" %
+                access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'iucn_red_list_status' column contains %d values that are not valid IUCN Red List statuses." %
+                (results[0]['count'])
+        )
+
+        return test
+
+    def get(self):
+        """ Display a filtered list of species names and their vernacular names. """
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        # Message?
+        message = self.request.get('msg')
+
+        # Run tests and see what the response is.
+        tests = list()
+        tests.append(self.test_blank_fields())
+        tests.append(self.test_field_range())
+
+        # Display test results.
+        self.render_template('tests.html', {
+            'vneditor_version': version.NOMDB_VERSION,
+            'user_url': user_url,
+            'user_name': user_name,
+            'message': message,
+            'tests': tests
+        })
+
+#
 # ROUTING FOR APPLICATION
 #
 application = webapp2.WSGIApplication([
@@ -1514,5 +1768,6 @@ application = webapp2.WSGIApplication([
     (BASE_URL + '/sources', SourcesHandler),
     (BASE_URL + '/coverage', CoverageViewHandler),
     (BASE_URL + '/import', BulkImportHandler),
-    (BASE_URL + '/masterlist', MasterListHandler)
+    (BASE_URL + '/masterlist', MasterListHandler),
+    (BASE_URL + '/tests', TestsPage)
 ], debug=not PROD)
