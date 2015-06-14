@@ -443,6 +443,8 @@ class CoverageViewHandler(BaseHandler):
 class SourcesHandler(BaseHandler):
     """Lists the sources and their priorities and to change them."""
 
+    DEFAULT_DISPLAY_COUNT = 100
+
     def post(self):
         """ Handle changing the name, URL or priority of an entire source at once.
         We only handle changing EITHER the name OR the priority, not both at the same time.
@@ -458,6 +460,10 @@ class SourcesHandler(BaseHandler):
 
         # Set up error msg.
         message = ""
+
+        # Retrieve offset/display of the /sources page we should redirect to.
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
 
         # Retrieve source to modify
         source = self.request.get('source')
@@ -525,6 +531,8 @@ class SourcesHandler(BaseHandler):
         # Redirect to the main page.
         self.redirect(BASE_URL + "/sources?" + urllib.urlencode(dict(
             msg=message,
+            display=display_count,
+            offset=offset
         )))
 
     def get(self):
@@ -542,7 +550,7 @@ class SourcesHandler(BaseHandler):
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
-        display_count = self.request.get_range('display', 0, default=100)
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
 
         # Is there a message?
         message = self.request.get('msg')

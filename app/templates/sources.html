@@ -12,6 +12,16 @@
     {% else %}
         <p>Displaying {{ sources|length }} sources from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
+        <div class="well well-sm">
+            {% if offset > 0 %}
+            <a class="btn btn-default" href="?offset=0">Start</a>
+            <a class="btn btn-default" href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            {% endif %}
+            {% if offset + display_count < total_count %}
+            <a class="btn btn-default" href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            {% endif %}
+        </div>
+
         <table border="1" class="sortable" style="width: 100%">
             <thead><tr>
                 <th>&nbsp;</th>
@@ -29,6 +39,8 @@
                     <td><a href="#row_source_{{loop.index}}" onclick="$('.edit_source_{{loop.index}}').toggle()">{{ bulk_import.source }}</a>
                         <div class="edit_source_{{loop.index}}" style="display: none">
                             <form action="{{'/sources'|url_to_base}}" method="POST">
+                                <input type="hidden" name="offset" value="{{ offset }}" />
+                                <input type="hidden" name="display" value="{{ display_count }}" />
                                 <input type="hidden" name="source" value="{{ bulk_import.source }}" />
                                 <table>
                                     <tr>
@@ -66,16 +78,29 @@
                     <td><a href="#row_source_{{loop.index}}" onclick="$('.edit_source_{{loop.index}}').toggle()">{{ bulk_import.agg_source_priority|sort|join(', ') }}</a>
                         <div class="edit_source_{{loop.index}}" style="display: none">
                             <form action="{{'/sources'|url_to_base}}" method="POST">
-                            <input type="hidden" name="source" value="{{bulk_import.source}}" />
-                            <input name="source_priority" size="5" value="{{bulk_import.max_source_priority}}" />
-                            <button class="btn btn-primary" type="submit">Change priority</button>
+                                <input type="hidden" name="offset" value="{{ offset }}" />
+                                <input type="hidden" name="display" value="{{ display_count }}" />
+                                <input type="hidden" name="source" value="{{bulk_import.source}}" />
+                                <input name="source_priority" size="5" value="{{bulk_import.max_source_priority}}" />
+                                <button class="btn btn-primary" type="submit">Change priority</button>
+                            </form>
                         </div>
-                    </form>
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
+
+        <div class="well well-sm">
+            {% if offset > 0 %}
+                <a class="btn btn-default" href="?offset=0">Start</a>
+                <a class="btn btn-default" href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            {% endif %}
+            {% if offset + display_count < total_count %}
+                <a class="btn btn-default" href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            {% endif %}
+        </div>
+
 
     {% endif %}
 {% endblock %}
