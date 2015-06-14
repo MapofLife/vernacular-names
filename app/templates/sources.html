@@ -7,28 +7,66 @@
 {% endblock %}
 
 {% block content %}
-    {% if not bulk_imports and not individual_imports %}
+    {% if not sources and not individual_imports %}
         <p>No sources to display.</p>
     {% else %}
-        <p>Displaying {{ bulk_imports|length }} bulk import results and {{ individual_imports|length }} <a href="#individual_imports">individual imports</a> from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
+        <p>Displaying {{ sources|length }} sources from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
-        <h2 id="bulk_imports">Bulk imports</h2>
+        <div class="well well-sm">
+            {% if offset > 0 %}
+            <a class="btn btn-default" href="?offset=0">Start</a>
+            <a class="btn btn-default" href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            {% endif %}
+            {% if offset + display_count < total_count %}
+            <a class="btn btn-default" href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            {% endif %}
+        </div>
 
         <table border="1" class="sortable" style="width: 100%">
             <thead><tr>
                 <th>&nbsp;</th>
                 <th>Source</th>
+                <th>Source URL</th>
                 <th>Vernacular names</th>
+                <th>Dates added</th>
                 <th>Languages covered</th>
                 <th>Source priority</th>
-                <th>Actions</th>
             </tr></thead>
             <tbody>
-            {% for bulk_import in bulk_imports %}
-                <tr>
+            {% for bulk_import in sources %}
+                <tr id="#row_source_{{loop.index}}">
                     <td>{{ loop.index + offset }}</td>
-                    <td>{{ bulk_import.source|urlize }}</td>
-                    <td>{{ bulk_import.vname_count }}</td>
+                    <td><a href="#row_source_{{loop.index}}" onclick="$('.edit_source_{{loop.index}}').toggle()">{{ bulk_import.source }}</a>
+                        <div class="edit_source_{{loop.index}}" style="display: none">
+                            <form action="{{'/sources'|url_to_base}}" method="POST">
+                                <input type="hidden" name="offset" value="{{ offset }}" />
+                                <input type="hidden" name="display" value="{{ display_count }}" />
+                                <input type="hidden" name="source" value="{{ bulk_import.source }}" />
+                                <table>
+                                    <tr>
+                                        <td>Source name</td>
+                                        <td><input name="source_new_name" value="{{ bulk_import.source }}" size="50"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Source URL</td>
+                                        <td><input name="source_url" value="{{ bulk_import.source_url }}" size="50"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2">
+                                            <button type="submit" class="btn btn-primary">Rename source</button>
+                                            <button type="button" onclick="$('.edit_source_{{loop.index}}').toggle()" class="btn btn-primary">Cancel</button>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </form>
+                        </div>
+                    </td>
+                    <td>{% if bulk_import.source_url %}<a target="_blank" href="{{ bulk_import.source_url }}">URL</a>{%else%}None{% endif %}</td>
+                    <td>{{ bulk_import.vname_count_formatted }}</td>
+                    <td>{% for date_range in bulk_import.dates_added %}
+                            {{ date_range }}{% if not loop.last %}<br>{% endif %}
+                        {% endfor %}
+                    </td>
                     <td>{% if bulk_import.agg_lang|length > 5 %}
                             {{bulk_import.agg_lang[1:5]|join(', ')}} and {{bulk_import.agg_lang|length - 5}} others.
                         {% else %}
@@ -37,84 +75,32 @@
                         &nbsp;
                     </td>
 
-                    <td>{{ bulk_import.agg_source_priority|sort|join(', ') }}</td>
-                    
-                    <td>
-                    <form action="{{'/sources'|url_to_base}}" method="POST">
-                        <input type="hidden" name="source" value="{{bulk_import.source}}" />
-                        <input name="source_priority" size="5" value="{{bulk_import.max_source_priority}}" />
-                        <button class="btn btn-primary" type="submit">Change</button>
-                    </form>
+                    <td><a href="#row_source_{{loop.index}}" onclick="$('.edit_source_{{loop.index}}').toggle()">{{ bulk_import.agg_source_priority|sort|join(', ') }}</a>
+                        <div class="edit_source_{{loop.index}}" style="display: none">
+                            <form action="{{'/sources'|url_to_base}}" method="POST">
+                                <input type="hidden" name="offset" value="{{ offset }}" />
+                                <input type="hidden" name="display" value="{{ display_count }}" />
+                                <input type="hidden" name="source" value="{{bulk_import.source}}" />
+                                <input name="source_priority" size="5" value="{{bulk_import.max_source_priority}}" />
+                                <button class="btn btn-primary" type="submit">Change priority</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
 
-        <h2 id="individual_imports">Individual imports</h2>
+        <div class="well well-sm">
+            {% if offset > 0 %}
+                <a class="btn btn-default" href="?offset=0">Start</a>
+                <a class="btn btn-default" href="?offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            {% endif %}
+            {% if offset + display_count < total_count %}
+                <a class="btn btn-default" href="?offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            {% endif %}
+        </div>
 
-        <table border="1" class="sortable" style="width: 100%">
-            <thead><tr>
-                <th>&nbsp;</th>
-                <th>Source</th>
-                <th>Vernacular names</th>
-                <th>Languages covered</th>
-                <th>Classes covered</th>
-                <th>Orders covered</th>
-                <th>Families covered</th>
-                <th>Source priority</th>
-                <th>Action</th>
-            </tr></thead>
-            <tbody>
-            {% for individual_import in individual_imports %}
-                <tr>
-                    <td>{{ loop.index + offset }}</td>
-                    <td>{{ individual_import.source|urlize }}</td>
-                    <td>{{ individual_import.vname_count }}</td>
-                    <td>{% if individual_import.agg_lang|length > 5 %}
-                            {{individual_import.agg_lang[1:5]|join(', ')}} and {{individual_import.agg_lang|length - 5}} others.
-                        {% else %}
-                            {{individual_import.agg_lang|join(', ')}}
-                        {% endif %}
-                    </td>
 
-                    <td>{% if individual_import.agg_class|length > 5 %}
-                            {{individual_import.agg_class[1:5]|join(', ')}} and {{individual_import.agg_class|length - 5}} others.
-                        {% else %}
-                            {{individual_import.agg_class|join(', ')}}
-                        {% endif %}
-                        &nbsp;
-                    </td>
-
-                    <td>{% if individual_import.agg_order|length > 5 %}
-                            {{individual_import.agg_order[1:5]|join(', ')}} and {{individual_import.agg_order|length - 5}} others.
-                        {% else %}
-                            {{individual_import.agg_order|join(', ')}}
-                        {% endif %}
-                        &nbsp;
-                    </td>
-
-                    <td>{% if individual_import.agg_family|length > 5 %}
-                            {{individual_import.agg_family[1:5]|join(', ')}} and {{individual_import.agg_family|length - 5}} others.
-                        {% else %}
-                            {{individual_import.agg_family|join(', ')}}
-                        {% endif %}
-                        &nbsp;
-                    </td>
-
-                    <td>{{ individual_import.agg_source_priority|sort|join(', ') }}</td>
-
-                    <td>
-                    <form action="{{'/sources'|url_to_base}}" method="POST">
-                        <input type="hidden" name="source" value="{{individual_import.source}}" />
-                        <input name="source_priority" size="5" value="{{individual_import.max_source_priority}}" />
-                        <button class="btn btn-primary" type="submit">Change</button>
-                    </form>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
- 
     {% endif %}
 {% endblock %}

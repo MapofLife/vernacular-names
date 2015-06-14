@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import inspect
+import datetime
 
 import webapp2
 
@@ -442,8 +443,12 @@ class CoverageViewHandler(BaseHandler):
 class SourcesHandler(BaseHandler):
     """Lists the sources and their priorities and to change them."""
 
+    DEFAULT_DISPLAY_COUNT = 100
+
     def post(self):
-        """ Handle changing the priority of an entire source at once. """
+        """ Handle changing the name, URL or priority of an entire source at once.
+        We only handle changing EITHER the name OR the priority, not both at the same time.
+        """
 
         # Make sure a user is logged in.
         user = self.check_user()
@@ -456,40 +461,81 @@ class SourcesHandler(BaseHandler):
         # Set up error msg.
         message = ""
 
+        # Retrieve offset/display of the /sources page we should redirect to.
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
+
         # Retrieve source to modify
         source = self.request.get('source')
-        try:
-            source_priority = int(self.request.get('source_priority'))
-        except ValueError:
-            source_priority = -1
 
-        if config.PRIORITY_MIN <= source_priority <= config.PRIORITY_MAX:
-            # Synthesize SQL
-            sql = "UPDATE %s SET source_priority = %d WHERE source=%s"
-            sql_query = sql % (
-                access.ALL_NAMES_TABLE,
-                source_priority,
-                nomdb.common.encode_b64_for_psql(source)
-            )
+        if source == '':
+            message = "No source provided; nothing to edit."
 
-            # Make it so.
-            response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
-                dict(
-                    q=sql_query,
-                    api_key=access.CARTODB_API_KEY
+        elif self.request.get('source_priority'):
+            source_priority = self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX, config.PRIORITY_MIN)
+
+            if config.PRIORITY_MIN <= source_priority <= config.PRIORITY_MAX:
+                # Synthesize SQL
+                sql = "UPDATE %s SET source_priority = %d WHERE source=%s"
+                sql_query = sql % (
+                    access.ALL_NAMES_TABLE,
+                    source_priority,
+                    nomdb.common.encode_b64_for_psql(source)
                 )
-            ))
 
-            if response.status_code != 200:
-                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                # Make it so.
+                response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
+                    dict(
+                        q=sql_query,
+                        api_key=access.CARTODB_API_KEY
+                    )
+                ))
+
+                if response.status_code != 200:
+                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                else:
+                    message = "Source priority modified to %d." % source_priority
+        elif self.request.get('source_new_name'):
+            source_new_name = self.request.get('source_new_name')
+            source_url = self.request.get('source_url')
+
+            if source_new_name == '':
+                # Blank names will not be accepted.
+
+                logging.warning("User tried to change source to '%s', which is invalid." % source_new_name)
+                message = "Could not parse new source name, please try another."
+
             else:
-                message = "Source priority modified to %d." % source_priority
+                # Synthesize SQL
+                sql = "UPDATE %s SET source=%s, source_url=%s WHERE source=%s"
+                sql_query = sql % (
+                    access.ALL_NAMES_TABLE,
+                    nomdb.common.encode_b64_for_psql(source_new_name),
+                    nomdb.common.encode_b64_for_psql(source_url),
+                    nomdb.common.encode_b64_for_psql(source)
+                )
+
+                # Make it so.
+                response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
+                    dict(
+                        q=sql_query,
+                        api_key=access.CARTODB_API_KEY
+                    )
+                ))
+
+                if response.status_code != 200:
+                    logging.error("SQL query '%s' failed: %s" % (sql_query, response.content))
+                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                else:
+                    message = "Source '%s' renamed to '%s' and URL modified to '%s' successfully." % (source, source_new_name, source_url)
         else:
-            message = "Could not parse source priority, please try again."
+            message = "Neither source priority nor source new name was provided."
 
         # Redirect to the main page.
         self.redirect(BASE_URL + "/sources?" + urllib.urlencode(dict(
             msg=message,
+            display=display_count,
+            offset=offset
         )))
 
     def get(self):
@@ -507,7 +553,7 @@ class SourcesHandler(BaseHandler):
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
-        display_count = 100
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
 
         # Is there a message?
         message = self.request.get('msg')
@@ -516,19 +562,16 @@ class SourcesHandler(BaseHandler):
 
         # Synthesize SQL
         source_sql = ("""SELECT 
-            source, 
-            COUNT(*) OVER() AS total_count,
+            source,
+            source_url,
+            COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
-            COUNT(DISTINCT LOWER(scname)) AS scname_count, 
-            array_agg(DISTINCT source_priority) AS agg_source_priority,
-            MAX(source_priority) AS max_source_priority,
-            array_agg(DISTINCT LOWER(lang)) AS agg_lang
+            ARRAY_AGG(TO_CHAR(created_at, 'YYYY-MM')) AS agg_created_at,
+            array_agg(source_priority) AS agg_source_priority,
+            array_agg(lang) AS agg_lang
             FROM %s 
-            GROUP BY source 
-            ORDER BY 
-                max_source_priority DESC,
-                vname_count DESC,
-                source ASC
+            GROUP BY source, source_url
+            ORDER BY vname_count DESC, source ASC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
@@ -558,12 +601,53 @@ class SourcesHandler(BaseHandler):
             if len(sources) > 0:
                 total_count = sources[0]['total_count']
 
+            # Distinctify and reformat some columns.
+            for row in sources:
+                # logging.info("Processing row: " + str(row))
+
+                row['vname_count_formatted'] = '{:,}'.format(int(row['vname_count']))
+                row['agg_lang'] = sorted(set(row['agg_lang']))
+                row['agg_source_priority'] = sorted(set(row['agg_source_priority']))
+
+                # Produce a list of continguous date sequences.
+                # i.e. something like ["August 2014", "February to March 2015", "June 2015"]
+                sorted_dates = (map(lambda x: datetime.datetime.strptime(x, "%Y-%m"), sorted(set(row['agg_created_at']))))
+
+                row['dates_added'] = []
+
+                prev_group = []
+
+                def format_dateset(prev_group):
+                    if len(prev_group) == 0:
+                        return []
+                    elif len(prev_group) == 1:
+                        return prev_group[0].strftime("%B %Y")
+                    else:
+                        return prev_group[0].strftime("%B %Y") + " to " + prev_group[-1].strftime("%B %Y")
+
+                logging.info("Sorted dates for '" + row['source'] + "': " + str(sorted_dates))
+                for date in sorted_dates:
+                    # Is 'date' part of the previous group?
+                    if len(prev_group) == 0:
+                        prev_group.append(date)
+                    else:
+                        # logging.info("Date '" + str(date) + "' - '" + str(prev_group[-1]) + "' <=> 4 days")
+                        if (date - prev_group[-1]) < datetime.timedelta(weeks = 5):
+                            prev_group.append(date)
+                        else:
+                            row['dates_added'].append(format_dateset(prev_group))
+                            prev_group = [date]
+
+                if len(prev_group) > 0:
+                    row['dates_added'].append(format_dateset(prev_group))
+
+
         # There are two kinds of sources:
         #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.
         #       These should be grouped by prefix.
         #   2. Anything > INDIVIDUAL_IMPORT_LIMIT is a bulk import, and should be displayed separately.
-        individual_imports = filter(lambda x: int(x['vname_count']) <= INDIVIDUAL_IMPORT_LIMIT, sources)
-        bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
+        #individual_imports = filter(lambda x: int(x['vname_count']) <= INDIVIDUAL_IMPORT_LIMIT, sources)
+        #bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
 
         # Render sources.
         self.render_template('sources.html', {
@@ -579,8 +663,9 @@ class SourcesHandler(BaseHandler):
             'display_count': display_count,
 
             'total_count': total_count,
-            'individual_imports': individual_imports,
-            'bulk_imports': bulk_imports,
+            'sources': sources,
+            #'bulk_imports': bulk_imports,
+            #'individual_imports': individual_imports,
 
             'vneditor_version': version.NOMDB_VERSION
         })
