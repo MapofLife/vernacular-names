@@ -468,7 +468,10 @@ class SourcesHandler(BaseHandler):
         # Retrieve source to modify
         source = self.request.get('source')
 
-        if self.request.get('source_priority'):
+        if source == '':
+            message = "No source provided; nothing to edit."
+
+        elif self.request.get('source_priority'):
             source_priority = self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX, config.PRIORITY_MIN)
 
             if config.PRIORITY_MIN <= source_priority <= config.PRIORITY_MAX:
@@ -568,7 +571,7 @@ class SourcesHandler(BaseHandler):
             array_agg(lang) AS agg_lang
             FROM %s 
             GROUP BY source, source_url
-            ORDER BY vname_count DESC
+            ORDER BY vname_count DESC, source ASC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
