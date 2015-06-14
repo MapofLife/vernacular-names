@@ -625,7 +625,7 @@ class SourcesHandler(BaseHandler):
                     else:
                         return prev_group[0].strftime("%B %Y") + " to " + prev_group[-1].strftime("%B %Y")
 
-                logging.info("Sorted dates for '" + row['source'] + "': " + str(sorted_dates))
+                # logging.info("Sorted dates for '" + row['source'] + "': " + str(sorted_dates))
                 for date in sorted_dates:
                     # Is 'date' part of the previous group?
                     if len(prev_group) == 0:
@@ -1679,7 +1679,7 @@ class TestsPage(BaseHandler):
             :param bool_result: Success (True) or failure (False).
             :param message: The message that goes with this.
             """
-            logging.info("ok(" + str(bool_result) + ", '" + str(message) + "'")
+            # logging.info("ok(" + str(bool_result) + ", '" + str(message) + "'")
             self.results.append(TestsPage.TestResult(bool_result, message))
 
         def test_sql(self, sql_query, fn_condition, fn_message):
