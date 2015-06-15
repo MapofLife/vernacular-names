@@ -32,7 +32,7 @@
             <a href="{{ user_url }}">{{ user_name }}</a> | <a href="{{ logout_url }}">Logout</a>
         </div>
 
-        <form action="/search" method="GET">
+        <form action="{{'/search'|url_to_base}}" method="GET">
             Search: <input name="search" value="{{ current_search }}"> <input class="btn btn-primary btn-sm"
                                                                               type="submit" value="Search"> <input
                 class="btn btn-default btn-sm" type="submit" name="clear" value="Clear">
