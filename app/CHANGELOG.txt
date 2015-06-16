@@ -1,3 +1,11 @@
+0.9: June 15, 2015
+ - Standardized print() and logging.info() to logging.debug().
+ - Added ereporter support so that exceptions are e-mailed to me daily.
+ - Added /tests, a page to run some automated tests against the database.
+ - /sources can now be used to edit source names and URLs, and has pagination.
+ - Cleaned up menu at top of page.
+ - Hotfix: fixed incorrect path in search box in base.html (#103).
+
 0.8.3: June 10, 2015
  - Moved to '/taxonomy/names' so that it can be integrated with other
    Google App Engine modules.

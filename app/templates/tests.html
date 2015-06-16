@@ -1,0 +1,36 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Database errors{% endblock %}
+
+{% block head %}
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
+{% endblock %}
+
+{% block content %}
+
+    <div style="float: right; width: 20%; border: 1px solid black; padding: 1em;">
+        {% for test in tests %}
+            <a style="color: {% if test.succeeded %}green{%else%}red{%endif%}" href="#test_{{loop.index}}">{{test.name}}</a><br>
+        {% endfor %}
+    </div>
+
+    <p>This page will run a series of tests on the database to look for odd or unexpected entries. Check out
+    <a target="_blank" href="https://github.com/MapofLife/vernacular-names/blob/master/app/docs/Database.md">the database documentation</a>
+    to look at what the expected range of values is.</p>
+
+    <ul>
+    {% for test in tests %}
+        <li id="test_{{loop.index}}"><strong style="color: {% if test.succeeded %}green{%else%}red{%endif%}">{{test.name}}</strong>:
+            <span style="white-space: pre-wrap">{{test.description|urlize}}</span>
+        <ul>
+        {% if test.succeeded %}
+            <li style="color:green">{{test.results|count}} tests passed successfully.</li>
+        {% else %}
+            {% for result in test.results %}
+                <li style="color: {% if result.succeeded %}green{%else%}red{%endif%}">{{result.message|urlize}}</li>
+            {% endfor %}
+        {% endif %}
+        </ul>
+    {% endfor %}
+    </ul>
+{% endblock %}

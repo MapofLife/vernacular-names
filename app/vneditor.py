@@ -5,10 +5,14 @@ import re
 import time
 import os
 import json
+import logging
+import inspect
+import datetime
 
 import webapp2
 
 from google.appengine.api import users, urlfetch
+from google.appengine.ext import ereporter
 import jinja2
 import access
 import nomdb.version
@@ -40,6 +44,7 @@ SOURCE_URL = "https://github.com/gaurav/vernacular-names"
 # INITIALIZATION
 #
 urlfetch.set_default_fetch_deadline(config.DEADLINE_FETCH)
+ereporter.register_logger()
 
 # Check whether we're in production mode (PROD = True) or not.
 PROD = True
@@ -270,7 +275,7 @@ class DeleteNameByCDBIDHandler(BaseHandler):
         )
 
         # Make it so.
-        response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
+        response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
             dict(
                 q=sql_query,
                 api_key=access.CARTODB_API_KEY
@@ -438,8 +443,12 @@ class CoverageViewHandler(BaseHandler):
 class SourcesHandler(BaseHandler):
     """Lists the sources and their priorities and to change them."""
 
+    DEFAULT_DISPLAY_COUNT = 100
+
     def post(self):
-        """ Handle changing the priority of an entire source at once. """
+        """ Handle changing the name, URL or priority of an entire source at once.
+        We only handle changing EITHER the name OR the priority, not both at the same time.
+        """
 
         # Make sure a user is logged in.
         user = self.check_user()
@@ -452,40 +461,81 @@ class SourcesHandler(BaseHandler):
         # Set up error msg.
         message = ""
 
+        # Retrieve offset/display of the /sources page we should redirect to.
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
+
         # Retrieve source to modify
         source = self.request.get('source')
-        try:
-            source_priority = int(self.request.get('source_priority'))
-        except ValueError:
-            source_priority = -1
 
-        if config.PRIORITY_MIN <= source_priority <= config.PRIORITY_MAX:
-            # Synthesize SQL
-            sql = "UPDATE %s SET source_priority = %d WHERE source=%s"
-            sql_query = sql % (
-                access.ALL_NAMES_TABLE,
-                source_priority,
-                nomdb.common.encode_b64_for_psql(source)
-            )
+        if source == '':
+            message = "No source provided; nothing to edit."
 
-            # Make it so.
-            response = urlfetch.fetch(access.CDB_URL % urllib.urlencode(
-                dict(
-                    q=sql_query,
-                    api_key=access.CARTODB_API_KEY
+        elif self.request.get('source_priority'):
+            source_priority = self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX, config.PRIORITY_MIN)
+
+            if config.PRIORITY_MIN <= source_priority <= config.PRIORITY_MAX:
+                # Synthesize SQL
+                sql = "UPDATE %s SET source_priority = %d WHERE source=%s"
+                sql_query = sql % (
+                    access.ALL_NAMES_TABLE,
+                    source_priority,
+                    nomdb.common.encode_b64_for_psql(source)
                 )
-            ))
 
-            if response.status_code != 200:
-                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                # Make it so.
+                response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
+                    dict(
+                        q=sql_query,
+                        api_key=access.CARTODB_API_KEY
+                    )
+                ))
+
+                if response.status_code != 200:
+                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                else:
+                    message = "Source priority modified to %d." % source_priority
+        elif self.request.get('source_new_name'):
+            source_new_name = self.request.get('source_new_name')
+            source_url = self.request.get('source_url')
+
+            if source_new_name == '':
+                # Blank names will not be accepted.
+
+                logging.warning("User tried to change source to '%s', which is invalid." % source_new_name)
+                message = "Could not parse new source name, please try another."
+
             else:
-                message = "Source priority modified to %d." % source_priority
+                # Synthesize SQL
+                sql = "UPDATE %s SET source=%s, source_url=%s WHERE source=%s"
+                sql_query = sql % (
+                    access.ALL_NAMES_TABLE,
+                    nomdb.common.encode_b64_for_psql(source_new_name),
+                    nomdb.common.encode_b64_for_psql(source_url),
+                    nomdb.common.encode_b64_for_psql(source)
+                )
+
+                # Make it so.
+                response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
+                    dict(
+                        q=sql_query,
+                        api_key=access.CARTODB_API_KEY
+                    )
+                ))
+
+                if response.status_code != 200:
+                    logging.error("SQL query '%s' failed: %s" % (sql_query, response.content))
+                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                else:
+                    message = "Source '%s' renamed to '%s' and URL modified to '%s' successfully." % (source, source_new_name, source_url)
         else:
-            message = "Could not parse source priority, please try again."
+            message = "Neither source priority nor source new name was provided."
 
         # Redirect to the main page.
         self.redirect(BASE_URL + "/sources?" + urllib.urlencode(dict(
             msg=message,
+            display=display_count,
+            offset=offset
         )))
 
     def get(self):
@@ -503,7 +553,7 @@ class SourcesHandler(BaseHandler):
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
-        display_count = 100
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
 
         # Is there a message?
         message = self.request.get('msg')
@@ -512,19 +562,17 @@ class SourcesHandler(BaseHandler):
 
         # Synthesize SQL
         source_sql = ("""SELECT 
-            source, 
-            COUNT(*) OVER() AS total_count,
+            source,
+            source_url,
+            added_by,
+            COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
-            COUNT(DISTINCT LOWER(scname)) AS scname_count, 
-            array_agg(DISTINCT source_priority) AS agg_source_priority,
-            MAX(source_priority) AS max_source_priority,
-            array_agg(DISTINCT LOWER(lang)) AS agg_lang
+            (CASE WHEN added_by IS NULL THEN ARRAY[]::TEXT[] ELSE ARRAY_AGG(TO_CHAR(created_at, 'YYYY-MM')) END) AS agg_created_at,
+            array_agg(source_priority) AS agg_source_priority,
+            array_agg(lang) AS agg_lang
             FROM %s 
-            GROUP BY source 
-            ORDER BY 
-                max_source_priority DESC,
-                vname_count DESC,
-                source ASC
+            GROUP BY source, source_url, added_by
+            ORDER BY vname_count DESC, source ASC, added_by DESC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
@@ -542,6 +590,8 @@ class SourcesHandler(BaseHandler):
             deadline=config.DEADLINE_FETCH
         )
 
+        logging.info("Response retrieved.")
+
         # Retrieve results. Store the total count if there is one.
         total_count = 0
         if response.status_code != 200:
@@ -550,16 +600,66 @@ class SourcesHandler(BaseHandler):
             sources = []
         else:
             results = json.loads(response.content)
+
+            logging.info("JSON loaded.")
+
             sources = results['rows']
             if len(sources) > 0:
                 total_count = sources[0]['total_count']
+
+            logging.info("Distinctification started.")
+
+            # Distinctify and reformat some columns.
+            for row in sources:
+                # logging.info("Processing row: " + str(row))
+
+                row['vname_count_formatted'] = '{:,}'.format(int(row['vname_count']))
+                row['agg_lang'] = sorted(set(row['agg_lang']))
+                row['agg_source_priority'] = sorted(set(row['agg_source_priority']))
+
+                # Produce a list of continguous date sequences.
+                # i.e. something like ["August 2014", "February to March 2015", "June 2015"]
+                sorted_dates = (map(lambda x: datetime.datetime.strptime(x, "%Y-%m"), sorted(set(row['agg_created_at']))))
+
+                row['dates_added'] = []
+
+                prev_group = []
+
+                def format_dateset(prev_group):
+                    if len(prev_group) == 0:
+                        return []
+                    elif len(prev_group) == 1:
+                        return prev_group[0].strftime("%B %Y")
+                    elif prev_group[0].year == prev_group[-1].year:
+                        return prev_group[0].strftime("%B") + " to " + prev_group[-1].strftime("%B %Y")
+                    else:
+                        return prev_group[0].strftime("%B %Y") + " to " + prev_group[-1].strftime("%B %Y")
+
+                # logging.info("Sorted dates for '" + row['source'] + "': " + str(sorted_dates))
+                for date in sorted_dates:
+                    # Is 'date' part of the previous group?
+                    if len(prev_group) == 0:
+                        prev_group.append(date)
+                    else:
+                        # logging.info("Date '" + str(date) + "' - '" + str(prev_group[-1]) + "' <=> 4 days")
+                        if (date - prev_group[-1]) < datetime.timedelta(weeks = 5):
+                            prev_group.append(date)
+                        else:
+                            row['dates_added'].append(format_dateset(prev_group))
+                            prev_group = [date]
+
+                if len(prev_group) > 0:
+                    row['dates_added'].append(format_dateset(prev_group))
+
+            logging.info("Distinctify and reformat.")
+
 
         # There are two kinds of sources:
         #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.
         #       These should be grouped by prefix.
         #   2. Anything > INDIVIDUAL_IMPORT_LIMIT is a bulk import, and should be displayed separately.
-        individual_imports = filter(lambda x: int(x['vname_count']) <= INDIVIDUAL_IMPORT_LIMIT, sources)
-        bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
+        #individual_imports = filter(lambda x: int(x['vname_count']) <= INDIVIDUAL_IMPORT_LIMIT, sources)
+        #bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
 
         # Render sources.
         self.render_template('sources.html', {
@@ -575,8 +675,9 @@ class SourcesHandler(BaseHandler):
             'display_count': display_count,
 
             'total_count': total_count,
-            'individual_imports': individual_imports,
-            'bulk_imports': bulk_imports,
+            'sources': sources,
+            #'bulk_imports': bulk_imports,
+            #'individual_imports': individual_imports,
 
             'vneditor_version': version.NOMDB_VERSION
         })
@@ -795,7 +896,7 @@ class BulkImportHandler(BaseHandler):
                         continue
 
                     if vname != '':
-                        print((
+                        logging.info((
                                   "scnames[" + str(loop_index - 1) + "] = " + scnames[loop_index - 1] + " => vnames[" + str(
                                       loop_index) + "][" + lang + "] = '" + vname + "'").encode('utf8'))
                         vnames[loop_index][lang] = vname.strip()
@@ -844,7 +945,7 @@ class BulkImportHandler(BaseHandler):
 
             debug_save += "</table>\n"
 
-            print("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
+            logging.error("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
 
             if len(save_errors) > 0:
                 message = "<strong>Error:</strong>" + "<br>".join(save_errors)
@@ -872,7 +973,7 @@ class BulkImportHandler(BaseHandler):
 
                 if response.status_code != 200:
                     message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-                    print("Error: server returned error " + str(
+                    logging.error("Error: server returned error " + str(
                         response.status_code) + " on SQL '" + sql_query + "': " + response.content)
 
                 else:
@@ -1490,6 +1591,259 @@ class ListViewHandler(BaseHandler):
         })
 
 #
+# TESTS PAGE (/tests)
+#
+class TestsPage(BaseHandler):
+    """ Runs a set of consistency checks on the database, looking for
+    common errors (read: any oddness we find).
+    """
+
+    class TestResult:
+        """ Stores the result of a single test. It can succeed or not. """
+
+        def __init__(self, succeeded, message):
+            """ Create a new test result.
+
+            :param succeeded: The result of the test: True or False
+            :param message: A string description of the test's result.
+            :return: A new TestResult object.
+            """
+            self.message = message
+            self.succeeded = True if succeeded else False
+
+        @property
+        def succeeded(self):
+            """
+            :return: True if this test succeeded, else False.
+            """
+            return self.succeeded
+
+        @property
+        def message(self):
+            """
+            :return: A message relating to this test.
+            """
+            return self.message
+
+    class TestSet:
+        """ A set of tests. """
+
+        def __init__(self, name, description):
+            """
+            :param name: The name of this set of tests.
+            :param description: A description of this set of tests. May contain newlines; URLs will be URLized on display.
+            :return: A TestSet object.
+            """
+            self.name = name
+            self.description = description
+            self.results = []
+
+        @property
+        def name(self):
+            """
+            :return: The name of this TestSet.
+            """
+            return self.name
+
+        @property
+        def description(self):
+            """
+            :return: The description of this TestSet.
+            """
+            return self.description
+
+        @property
+        def succeeded(self):
+            """
+            :return: Returns True if every TestResult in this TestSet is true, False otherwise.
+            """
+            return len(filter(lambda x: not x.succeeded, self.results)) == 0
+
+        @property
+        def results(self):
+            """
+            :return: Return the list of TestResults that have been executed.
+            """
+            if len(self.results) == 0:
+                return [TestsPage.TestResult(False, "No tests run.")]
+            return self.results
+
+        # The following methods add a TestResult to this TestSet.
+
+        def success(self, message):
+            """ Add a successful test result.
+
+            :param message: The success message associated with this test result.
+            """
+            self.results.append(TestsPage.TestResult(True, message))
+
+        def failure(self, message):
+            """ Add a failed test result.
+
+            :param message: The failure message associated with this test result.
+            """
+            self.results.append(TestsPage.TestResult(False, message))
+
+        def ok(self, bool_result, message):
+            """ Add a test result -- if bool_result is True, we add a success message; otherwise,
+            we add a failure message.
+
+            :param bool_result: Success (True) or failure (False).
+            :param message: The message that goes with this.
+            """
+            # logging.info("ok(" + str(bool_result) + ", '" + str(message) + "'")
+            self.results.append(TestsPage.TestResult(bool_result, message))
+
+        def test_sql(self, sql_query, fn_condition, fn_message):
+            """
+            Run an SQL request against CartoDB, and test the results in some way.
+
+            :param sql_query: An SQL query to pass to CartoDB
+            :param fn_condition: A callback function taking the rows returned from CartoDB; returns whether the test succeeded or failed.
+            :param fn_message: A callback function taking the rows returned from CartoDB; returns the message for this test result.
+            """
+            url = access.CDB_URL + "?" + urllib.urlencode({'q': sql_query})
+            response = urlfetch.fetch(url)
+
+            # logging.info("Querying: " + url)
+
+            if response.status_code != 200:
+                self.failure("Error: server returned error " + str(response.status_code) + ": " + response.content)
+                logging.error("Error: server returned error " + str(response.status_code) + ": " + response.content)
+                return
+
+            results = json.loads(response.content)
+            self.ok(fn_condition(results['rows']), fn_message(results['rows']))
+
+    def test_blank_fields(self):
+        """ Some fields in the database should never be blank. We highlight such records here."""
+
+        test = TestsPage.TestSet("blank_fields", inspect.getdoc(self.test_blank_fields))
+
+        # Tests for access.ALL_NAMES_TABLE: scname
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE scname='' OR scname IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'scname' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.ALL_NAMES_TABLE: cmname
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE cmname='' OR cmname IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'cmname' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.ALL_NAMES_TABLE: lang
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE lang='' OR lang IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'lang' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.ALL_NAMES_TABLE: source
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE source='' OR source IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'source' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.ALL_NAMES_TABLE: source_priority
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE source_priority='' OR source_priority IS NULL" % access.ALL_NAMES_TABLE,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "All names table: 'source_priority' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.MASTER_LIST: scientificname
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE scientificname='' OR scientificname IS NULL" % access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'scientificname' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.MASTER_LIST: dataset
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE dataset='' OR dataset IS NULL" % access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'dataset' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.MASTER_LIST: family
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE family='' OR family IS NULL" % access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'family' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        # Tests for access.MASTER_LIST: iucn_red_list_status
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE iucn_red_list_status='' OR iucn_red_list_status IS NULL" % access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'family' column contains %d rows that are blank or null." % (results[0]['count'])
+        )
+
+        return test
+
+    def test_field_range(self):
+        """ Test the range of some values in the database."""
+
+        test = TestsPage.TestSet("test_field_range", inspect.getdoc(self.test_field_range))
+
+        # Tests for access.MASTER_LIST: source_priority within config.PRIORITY_MIN to config.PRIORITY_MAX.
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE source_priority::INT < %d OR source_priority::INT > %d" % (
+                access.ALL_NAMES_TABLE,
+                config.PRIORITY_MIN,
+                config.PRIORITY_MAX
+            ),
+            lambda results: results[0]['count'] == 0,
+            lambda results:
+                "All names table: 'source_priority' column contains %d rows that are less than %d (PRIORITY_MIN) or greater than %d (PRIORITY_MAX)." %
+                    (results[0]['count'], config.PRIORITY_MIN, config.PRIORITY_MAX)
+        )
+
+        # Tests for access.MASTER_LIST: iucn_red_list_status IN ('CD', 'EX', 'EW', 'CR', 'EN', 'VU', 'NT', 'LC', 'DD', 'NE')
+        test.test_sql(
+            "SELECT COUNT(*) AS count FROM %s WHERE iucn_red_list_status != '' AND iucn_red_list_status NOT IN ('CD', 'EX', 'EW', 'CR', 'EN', 'VU', 'NT', 'LC', 'DD', 'NE')" %
+                access.MASTER_LIST,
+            lambda results: results[0]['count'] == 0,
+            lambda results: "Master list: 'iucn_red_list_status' column contains %d values that are not valid IUCN Red List statuses." %
+                (results[0]['count'])
+        )
+
+        return test
+
+    def get(self):
+        """ Display a filtered list of species names and their vernacular names. """
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        # Message?
+        message = self.request.get('msg')
+
+        # Run tests and see what the response is.
+        tests = list()
+        tests.append(self.test_blank_fields())
+        tests.append(self.test_field_range())
+
+        # Display test results.
+        self.render_template('tests.html', {
+            'vneditor_version': version.NOMDB_VERSION,
+            'user_url': user_url,
+            'user_name': user_name,
+            'message': message,
+            'tests': tests
+        })
+
+#
 # ROUTING FOR APPLICATION
 #
 application = webapp2.WSGIApplication([
@@ -1511,5 +1865,6 @@ application = webapp2.WSGIApplication([
     (BASE_URL + '/sources', SourcesHandler),
     (BASE_URL + '/coverage', CoverageViewHandler),
     (BASE_URL + '/import', BulkImportHandler),
-    (BASE_URL + '/masterlist', MasterListHandler)
+    (BASE_URL + '/masterlist', MasterListHandler),
+    (BASE_URL + '/tests', TestsPage)
 ], debug=not PROD)

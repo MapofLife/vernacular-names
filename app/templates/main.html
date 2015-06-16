@@ -7,17 +7,19 @@
 
 {% block content %}
     <p>
-        Welcome to Map of Life Vernacular Name Editor. Please select from the following options or search for a species
+        Welcome to Map of Life Vernacular Name Editor. Please select from the following options or search for a species above.
     </p>
 
     <ul>
-        <li><a href="{{'/coverage'|url_to_base}}">Coverage</a></li>
-        <li><a href="{{'/masterlist'|url_to_base}}">Master List</a></li>
-        <li><a href="{{'/list'|url_to_base}}">List names</a></li>
+        <li><a href="{{'/list'|url_to_base}}">Vernacular Names</a></li>
         <li><a href="{{'/family'|url_to_base}}">Family Names</a></li>
-        <li><a href="{{'/hemihomonyms'|url_to_base}}">Hemihomonyms</a></li>
+        <li><a href="{{'/masterlist'|url_to_base}}">Master List</a></li>
+        <li><a href="{{'/coverage'|url_to_base}}">Coverage</a></li>
         <li><a href="{{'/sources'|url_to_base}}">Sources</a></li>
         <li><a href="{{'/recent'|url_to_base}}">Recent changes</a></li>
-        <li><a href="{{'/import'|url_to_base}}">Bulk import</a></li>
+        <li><a href="{{'/import'|url_to_base}}">Import</a></li>
+
+        <li><a href="{{'/hemihomonyms'|url_to_base}}">Hemihomonyms</a></li>
+        <li><a href="{{'/tests'|url_to_base}}">Tests</a></li>
     </ul>
 {% endblock %}

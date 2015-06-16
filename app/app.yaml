@@ -17,5 +17,8 @@ libraries:
 handlers:
 - url: /taxonomy/names/static
   static_dir: static
+- url: /taxonomy/names/_ereporter.*
+  script: google.appengine.ext.ereporter.report_generator.application
+  login: admin
 - url: .*
   script: vneditor.application
