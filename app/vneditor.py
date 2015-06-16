@@ -443,7 +443,7 @@ class CoverageViewHandler(BaseHandler):
 class SourcesHandler(BaseHandler):
     """Lists the sources and their priorities and to change them."""
 
-    DEFAULT_DISPLAY_COUNT = 100
+    DEFAULT_DISPLAY_COUNT = 20
 
     def post(self):
         """ Handle changing the name, URL or priority of an entire source at once.
@@ -620,9 +620,9 @@ class SourcesHandler(BaseHandler):
                 # Produce a list of continguous date sequences.
                 # i.e. something like ["August 2014", "February to March 2015", "June 2015"]
                 sorted_dates = (map(lambda x: datetime.datetime.strptime(x, "%Y-%m"), sorted(set(row['agg_created_at']))))
+                row['agg_created_at'] = list()
 
                 row['dates_added'] = []
-
                 prev_group = []
 
                 def format_dateset(prev_group):
@@ -650,6 +650,9 @@ class SourcesHandler(BaseHandler):
 
                 if len(prev_group) > 0:
                     row['dates_added'].append(format_dateset(prev_group))
+
+                sorted_dates = []
+                prev_group = []
 
             logging.info("Distinctify and reformat.")
 
