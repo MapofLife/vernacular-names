@@ -1,4 +1,4 @@
-Development
+0.9: June 15, 2015
  - Standardized print() and logging.info() to logging.debug().
  - Added ereporter support so that exceptions are e-mailed to me daily.
  - Added /tests, a page to run some automated tests against the database.

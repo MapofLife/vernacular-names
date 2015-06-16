@@ -567,7 +567,7 @@ class SourcesHandler(BaseHandler):
             added_by,
             COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
-            ARRAY_AGG(TO_CHAR(created_at, 'YYYY-MM')) AS agg_created_at,
+            (CASE WHEN added_by IS NULL THEN ARRAY[]::TEXT[] ELSE ARRAY_AGG(TO_CHAR(created_at, 'YYYY-MM')) END) AS agg_created_at,
             array_agg(source_priority) AS agg_source_priority,
             array_agg(lang) AS agg_lang
             FROM %s 
@@ -590,6 +590,8 @@ class SourcesHandler(BaseHandler):
             deadline=config.DEADLINE_FETCH
         )
 
+        logging.info("Response retrieved.")
+
         # Retrieve results. Store the total count if there is one.
         total_count = 0
         if response.status_code != 200:
@@ -598,9 +600,14 @@ class SourcesHandler(BaseHandler):
             sources = []
         else:
             results = json.loads(response.content)
+
+            logging.info("JSON loaded.")
+
             sources = results['rows']
             if len(sources) > 0:
                 total_count = sources[0]['total_count']
+
+            logging.info("Distinctification started.")
 
             # Distinctify and reformat some columns.
             for row in sources:
@@ -623,6 +630,8 @@ class SourcesHandler(BaseHandler):
                         return []
                     elif len(prev_group) == 1:
                         return prev_group[0].strftime("%B %Y")
+                    elif prev_group[0].year == prev_group[-1].year:
+                        return prev_group[0].strftime("%B") + " to " + prev_group[-1].strftime("%B %Y")
                     else:
                         return prev_group[0].strftime("%B %Y") + " to " + prev_group[-1].strftime("%B %Y")
 
@@ -641,6 +650,8 @@ class SourcesHandler(BaseHandler):
 
                 if len(prev_group) > 0:
                     row['dates_added'].append(format_dateset(prev_group))
+
+            logging.info("Distinctify and reformat.")
 
 
         # There are two kinds of sources:
