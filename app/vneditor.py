@@ -7,7 +7,6 @@ import os
 import json
 import logging
 import inspect
-import datetime
 
 import webapp2
 
@@ -443,7 +442,7 @@ class CoverageViewHandler(BaseHandler):
 class SourcesHandler(BaseHandler):
     """Lists the sources and their priorities and to change them."""
 
-    DEFAULT_DISPLAY_COUNT = 100
+    DEFAULT_DISPLAY_COUNT = 50
 
     def post(self):
         """ Handle changing the name, URL or priority of an entire source at once.
@@ -569,8 +568,10 @@ class SourcesHandler(BaseHandler):
             COUNT(*) AS vname_count,
             TO_CHAR(MIN(created_at), 'Month YYYY') AS min_created_at,
             TO_CHAR(MAX(created_at), 'Month YYYY') AS max_created_at,
-            array_agg(source_priority) AS agg_source_priority,
-            array_agg(lang) AS agg_lang
+            MIN(source_priority) AS min_source_priority,
+            MAX(source_priority) AS max_source_priority,
+            MIN(lang) AS min_lang,
+            MAX(lang) AS max_lang
             FROM %s 
             GROUP BY source, source_url, added_by
             ORDER BY vname_count DESC, source ASC, added_by DESC
@@ -610,8 +611,6 @@ class SourcesHandler(BaseHandler):
                 # logging.info("Processing row: " + str(row))
 
                 row['vname_count_formatted'] = '{:,}'.format(int(row['vname_count']))
-                row['agg_lang'] = sorted(set(row['agg_lang']))
-                row['agg_source_priority'] = sorted(set(row['agg_source_priority']))
 
         # There are two kinds of sources:
         #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.
