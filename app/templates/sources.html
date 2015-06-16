@@ -27,6 +27,7 @@
                 <th>&nbsp;</th>
                 <th>Source</th>
                 <th>Source URL</th>
+                <th>Added by</th>
                 <th>Vernacular names</th>
                 <th>Dates added</th>
                 <th>Languages covered</th>
@@ -62,6 +63,7 @@
                         </div>
                     </td>
                     <td>{% if bulk_import.source_url %}<a target="_blank" href="{{ bulk_import.source_url }}">URL</a>{%else%}None{% endif %}</td>
+                    <td>{% if bulk_import.added_by %}{{bulk_import.added_by}}{% else %}<em>Left blank</em>{% endif %}</td>
                     <td>{{ bulk_import.vname_count_formatted }}</td>
                     <td>{% for date_range in bulk_import.dates_added %}
                             {{ date_range }}{% if not loop.last %}<br>{% endif %}

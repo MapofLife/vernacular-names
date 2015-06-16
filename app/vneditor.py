@@ -564,14 +564,15 @@ class SourcesHandler(BaseHandler):
         source_sql = ("""SELECT 
             source,
             source_url,
+            added_by,
             COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
             ARRAY_AGG(TO_CHAR(created_at, 'YYYY-MM')) AS agg_created_at,
             array_agg(source_priority) AS agg_source_priority,
             array_agg(lang) AS agg_lang
             FROM %s 
-            GROUP BY source, source_url
-            ORDER BY vname_count DESC, source ASC
+            GROUP BY source, source_url, added_by
+            ORDER BY vname_count DESC, source ASC, added_by DESC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
