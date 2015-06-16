@@ -65,20 +65,24 @@
                     <td>{% if bulk_import.source_url %}<a target="_blank" href="{{ bulk_import.source_url }}">URL</a>{%else%}None{% endif %}</td>
                     <td>{% if bulk_import.added_by %}{{bulk_import.added_by}}{% else %}<em>Left blank</em>{% endif %}</td>
                     <td>{{ bulk_import.vname_count_formatted }}</td>
-                    <td>{% if bulk_import.dates_added|length == 0 %}<em>Direct import</em>{%else%}
-                        {% for date_range in bulk_import.dates_added %}
-                            {{ date_range }}{% if not loop.last %}<br>{% endif %}
-                        {% endfor %}{%endif%}
-                    </td>
-                    <td>{% if bulk_import.agg_lang|length > 5 %}
-                            {{bulk_import.agg_lang[1:5]|join(', ')}} and {{bulk_import.agg_lang|length - 5}} others.
+                    <td>{% if bulk_import.min_created_at == bulk_import.max_created_at %}
+                            {{ bulk_import.min_created_at }}
                         {% else %}
-                            {{bulk_import.agg_lang|join(', ')}}
+                            {{ bulk_import.min_created_at }} to {{ bulk_import.max_created_at }}
                         {% endif %}
-                        &nbsp;
+                    </td>
+                    <td>{% if bulk_import.min_lang == bulk_import.max_lang %}
+                            {{ bulk_import.min_lang }}
+                        {% else %}
+                            {{ bulk_import.min_lang }} to {{ bulk_import.max_lang }}
+                        {% endif %}
                     </td>
 
-                    <td><a href="#row_source_{{loop.index}}" onclick="$('.edit_source_{{loop.index}}').toggle()">{{ bulk_import.agg_source_priority|sort|join(', ') }}</a>
+                    <td><a href="#row_source_{{loop.index}}" onclick="$('.edit_source_{{loop.index}}').toggle()">{% if bulk_import.min_source_priority == bulk_import.max_source_priority %}
+                            {{ bulk_import.min_source_priority }}
+                        {% else %}
+                            {{ bulk_import.min_source_priority }} to {{ bulk_import.max_source_priority }}
+                        {% endif %}</a>
                         <div class="edit_source_{{loop.index}}" style="display: none">
                             <form action="{{'/sources'|url_to_base}}" method="POST">
                                 <input type="hidden" name="offset" value="{{ offset }}" />

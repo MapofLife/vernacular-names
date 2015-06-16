@@ -7,7 +7,6 @@ import os
 import json
 import logging
 import inspect
-import datetime
 
 import webapp2
 
@@ -443,7 +442,7 @@ class CoverageViewHandler(BaseHandler):
 class SourcesHandler(BaseHandler):
     """Lists the sources and their priorities and to change them."""
 
-    DEFAULT_DISPLAY_COUNT = 100
+    DEFAULT_DISPLAY_COUNT = 50
 
     def post(self):
         """ Handle changing the name, URL or priority of an entire source at once.
@@ -567,9 +566,12 @@ class SourcesHandler(BaseHandler):
             added_by,
             COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
-            (CASE WHEN added_by IS NULL THEN ARRAY[]::TEXT[] ELSE ARRAY_AGG(TO_CHAR(created_at, 'YYYY-MM')) END) AS agg_created_at,
-            array_agg(source_priority) AS agg_source_priority,
-            array_agg(lang) AS agg_lang
+            TO_CHAR(MIN(created_at), 'Month YYYY') AS min_created_at,
+            TO_CHAR(MAX(created_at), 'Month YYYY') AS max_created_at,
+            MIN(source_priority) AS min_source_priority,
+            MAX(source_priority) AS max_source_priority,
+            MIN(lang) AS min_lang,
+            MAX(lang) AS max_lang
             FROM %s 
             GROUP BY source, source_url, added_by
             ORDER BY vname_count DESC, source ASC, added_by DESC
@@ -590,8 +592,6 @@ class SourcesHandler(BaseHandler):
             deadline=config.DEADLINE_FETCH
         )
 
-        logging.info("Response retrieved.")
-
         # Retrieve results. Store the total count if there is one.
         total_count = 0
         if response.status_code != 200:
@@ -600,59 +600,17 @@ class SourcesHandler(BaseHandler):
             sources = []
         else:
             results = json.loads(response.content)
-
-            logging.info("JSON loaded.")
+            response = None
 
             sources = results['rows']
             if len(sources) > 0:
                 total_count = sources[0]['total_count']
-
-            logging.info("Distinctification started.")
 
             # Distinctify and reformat some columns.
             for row in sources:
                 # logging.info("Processing row: " + str(row))
 
                 row['vname_count_formatted'] = '{:,}'.format(int(row['vname_count']))
-                row['agg_lang'] = sorted(set(row['agg_lang']))
-                row['agg_source_priority'] = sorted(set(row['agg_source_priority']))
-
-                # Produce a list of continguous date sequences.
-                # i.e. something like ["August 2014", "February to March 2015", "June 2015"]
-                sorted_dates = (map(lambda x: datetime.datetime.strptime(x, "%Y-%m"), sorted(set(row['agg_created_at']))))
-
-                row['dates_added'] = []
-
-                prev_group = []
-
-                def format_dateset(prev_group):
-                    if len(prev_group) == 0:
-                        return []
-                    elif len(prev_group) == 1:
-                        return prev_group[0].strftime("%B %Y")
-                    elif prev_group[0].year == prev_group[-1].year:
-                        return prev_group[0].strftime("%B") + " to " + prev_group[-1].strftime("%B %Y")
-                    else:
-                        return prev_group[0].strftime("%B %Y") + " to " + prev_group[-1].strftime("%B %Y")
-
-                # logging.info("Sorted dates for '" + row['source'] + "': " + str(sorted_dates))
-                for date in sorted_dates:
-                    # Is 'date' part of the previous group?
-                    if len(prev_group) == 0:
-                        prev_group.append(date)
-                    else:
-                        # logging.info("Date '" + str(date) + "' - '" + str(prev_group[-1]) + "' <=> 4 days")
-                        if (date - prev_group[-1]) < datetime.timedelta(weeks = 5):
-                            prev_group.append(date)
-                        else:
-                            row['dates_added'].append(format_dateset(prev_group))
-                            prev_group = [date]
-
-                if len(prev_group) > 0:
-                    row['dates_added'].append(format_dateset(prev_group))
-
-            logging.info("Distinctify and reformat.")
-
 
         # There are two kinds of sources:
         #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.
