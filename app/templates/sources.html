@@ -65,9 +65,10 @@
                     <td>{% if bulk_import.source_url %}<a target="_blank" href="{{ bulk_import.source_url }}">URL</a>{%else%}None{% endif %}</td>
                     <td>{% if bulk_import.added_by %}{{bulk_import.added_by}}{% else %}<em>Left blank</em>{% endif %}</td>
                     <td>{{ bulk_import.vname_count_formatted }}</td>
-                    <td>{% for date_range in bulk_import.dates_added %}
+                    <td>{% if bulk_import.dates_added|length == 0 %}<em>Direct import</em>{%else%}
+                        {% for date_range in bulk_import.dates_added %}
                             {{ date_range }}{% if not loop.last %}<br>{% endif %}
-                        {% endfor %}
+                        {% endfor %}{%endif%}
                     </td>
                     <td>{% if bulk_import.agg_lang|length > 5 %}
                             {{bulk_import.agg_lang[1:5]|join(', ')}} and {{bulk_import.agg_lang|length - 5}} others.
