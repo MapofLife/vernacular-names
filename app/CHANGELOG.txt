@@ -1,3 +1,6 @@
+0.9.1: June 15, 2015
+ - Took out group-additions-by-date because it kept hitting GAE memory limits.
+
 0.9: June 15, 2015
  - Standardized print() and logging.info() to logging.debug().
  - Added ereporter support so that exceptions are e-mailed to me daily.
