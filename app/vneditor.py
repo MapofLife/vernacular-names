@@ -903,10 +903,12 @@ class BulkImportHandler(BaseHandler):
 
             debug_save += "</table>\n"
 
-            logging.error("um: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
+            logging.error("Number of errors recorded: " + str(len(save_errors)) + " of " + str(len(scnames)) + ".")
 
-            if len(save_errors) > 0:
-                message = "<strong>Error:</strong>" + "<br>".join(save_errors)
+            if len(entries) == 0:
+                message = "Note: No changes made, so no changes to save."
+            elif len(save_errors) > 0:
+                message = "Error: " + "\n".join(save_errors)
             else:
                 # Write all the entries into CartoDB.
                 # TODO: chunk this so we can add huge datasets.
