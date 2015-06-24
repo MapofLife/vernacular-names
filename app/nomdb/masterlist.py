@@ -250,7 +250,8 @@ def get_higher_taxonomy(scnames):
     I'll write something that returns sources too if that becomes necessary.
 
     :param scnames: Scientific names to look up.
-    :return: a dict() with scientific names as the keys. Values are a dict containing rank in lowercase and .
+    :return: a dict() with scientific names as the keys. Values are a dict containing rank in lowercase and the
+    higher taxonomy as its value.
     """
 
     # For now, we only have 'family' and we retrieve that from access.MASTER_LIST.
@@ -277,14 +278,14 @@ def get_higher_taxonomy(scnames):
     for row in rows:
         scname = row['scientificname']
         agg_family = row['agg_family']
-        agg_family_source = row['agg_family']
+        agg_family_source = row['agg_family_source']
 
         if len(agg_family) == 0:
             raise RuntimeError("Scientific name '%s' does not have a family name in the master list!" % scname)
 
         results[scname.lower()] = {
             'family': agg_family[0],
-            'family_sources': zip(agg_family, agg_family_source)
+            'family_source': dict(zip(agg_family, agg_family_source))[agg_family[0]]
         }
 
     return results

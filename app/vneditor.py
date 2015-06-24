@@ -222,10 +222,16 @@ class SearchPage(BaseHandler):
         if lookup_search != '':
             lookup_results = names.get_detailed_vname(lookup_search)
 
-            # Summarize higher taxonomy.
+            # Summarize higher taxonomy from vnames.
             tax_family = lookup_results['tax_family']
             tax_order = lookup_results['tax_order']
             tax_class = lookup_results['tax_class']
+
+            # But also look up higher taxonomy from the Master List.
+            result = masterlist.get_higher_taxonomy([lookup_search.lower()])
+            higher_taxonomy = dict()
+            if lookup_search.lower() in result:
+                higher_taxonomy = result[lookup_search.lower()]
 
         # Render the main template.
         self.render_template('search.html', {
@@ -241,6 +247,7 @@ class SearchPage(BaseHandler):
             'tax_family': tax_family,
             'tax_order': tax_order,
             'tax_class': tax_class,
+            'higher_taxonomy': higher_taxonomy,
             'lookup_search': lookup_search,
             'lookup_results': lookup_results,
             'language_names': languages.language_names,
