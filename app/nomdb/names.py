@@ -257,11 +257,12 @@ def get_detailed_vname(scname):
         dict_vnames = dict()
         list_unique_vnames = list()
         for vname in list_vnames:
-            if vname.cmname in dict_vnames:
-                dict_vnames[vname.cmname].append(vname)
+            cmname = vname.vernacular_name_formatted
+            if cmname in dict_vnames:
+                dict_vnames[cmname].append(vname)
             else:
-                list_unique_vnames.append(vname.cmname)
-                dict_vnames[vname.cmname] = [vname]
+                list_unique_vnames.append(cmname)
+                dict_vnames[cmname] = [vname]
 
         final_results[lang] = list_vnames
         final_results[lang + '_unique'] = list_unique_vnames
