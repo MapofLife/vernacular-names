@@ -1,3 +1,7 @@
+Development:
+ - Added a test to check for duplicate common names for the same scientific
+   name from the same source.
+
 0.9.3: June 21, 2015
  - Added support for Appstats so that we can track timeouts better
    (https://cloud.google.com/appengine/docs/python/tools/appstats)
