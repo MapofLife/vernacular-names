@@ -1774,6 +1774,24 @@ class TestsPage(BaseHandler):
 
         return test
 
+    def test_duplicates(self):
+        """ Test for duplicates in the database. """
+
+        test = TestsPage.TestSet("test_duplicates", inspect.getdoc(self.test_duplicates))
+
+        # Tests for duplicates, which we define as the same cmname for the same scname in source.
+        test.test_sql(
+            "SELECT scname, cmname, source FROM %s GROUP BY scname, cmname, source HAVING COUNT(*) > 1" % (
+                access.ALL_NAMES_TABLE
+            ),
+            lambda results: len(results) == 0,
+            lambda results:
+                "All names table: contains %d vernacular names for the same scientific name from the same source." %
+                    (len(results))
+        )
+
+        return test
+
     def get(self):
         """ Display a filtered list of species names and their vernacular names. """
         self.response.headers['Content-type'] = 'text/html'
@@ -1793,6 +1811,7 @@ class TestsPage(BaseHandler):
         tests = list()
         tests.append(self.test_blank_fields())
         tests.append(self.test_field_range())
+        tests.append(self.test_duplicates())
 
         # Display test results.
         self.render_template('tests.html', {
