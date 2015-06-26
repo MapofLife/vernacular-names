@@ -130,11 +130,11 @@
                         {% if lang in vnames[name] and vnames[name][lang].vernacular_name_formatted != '' %}
                             <td>
                             {% if not vnames[name][lang].is_direct_match %}<em>{% endif %}
-                            <a href="{{'/search'|url_to_base}}?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
+                            <a href="{{'/search'|url_to_base}}?lookup={{name}}&search={{name}}&open_lang={{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
                             {% if not vnames[name][lang].is_direct_match %}</em>{% endif %}
                             </td>
                         {% else %}
-                            <td>&nbsp;<!-- <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><center><em>None</em></center></a> --></td>
+                            <td>&nbsp;<!-- <a href="/?lookup={{name}}&search={{name}}&open_lang={{lang}}"><center><em>None</em></center></a> --></td>
                         {% endif %}
                     {% endfor %}
                 </tr>

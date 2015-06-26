@@ -41,17 +41,13 @@ div.block {
 {% block content %}
     {% if dataset_filter %}<p>Datasets filtered by <em>{{dataset_filter}}</em> (<a href="?dataset=&search={{current_search}}&lookup={{lookup_search}}">reset</a>).</p>{% endif %}
 
-    {# TODO: we need a way to find names like http://localhost:9001/taxonomy/names/search?search=panthera&dataset=,
-        which don't exist within the master list, but do match results in the right box, which means they don't appear
-        as "This name is not in the list" #}
     {% if not search_results %}
-        <p><strong>No results found.</strong> Use the search box above to try another search, or
-            enter common names for this scientific name below: remember that it will not be
-            exported until it is added to <a href="{{'/masterlist'|url_to_base}}">the Master List</a>.
-        </p>
+        <div class="alert alert-danger"><strong>No results found.</strong> Use the search box above to try another search, or
+            enter common names for this scientific name below.
+        </div>
     {% endif %}
 
-    <div class="block" style="width: 20em; padding: 0.5em; margin: 1em;">
+    <div class="block" style="width: 20em; padding: 0.8em; margin: 0em 0.5em;">
         Search results
         <ul>
         {% if not search_results_scnames %}
@@ -84,11 +80,12 @@ div.block {
 
     <!-- TODO: Add list of datasets? -->
 
-    {% if not search_results %}
-        <p><strong>Higher taxonomy</strong>:
+    {% if 'family' not in higher_taxonomy %}
+        <div class="alert alert-warning"><strong>Higher taxonomy</strong>:
             This name does not exist in the <a href="{{'/masterlist'|url_to_base}}">Master List</a>,
-            and so higher taxonomy cannot be looked up.
-        </p>
+            and so higher taxonomy cannot be looked up. Since the master list only displays species-level
+            names, this might just mean you're adding vernacular names to a genus or family, which is fine.
+        </div>
     {% else %}
         <p><strong>Higher taxonomy</strong> (according to the <a href="{{'/masterlist'|url_to_base}}">Master List</a>):</p>
         <ul>
@@ -117,7 +114,11 @@ div.block {
 
     <table border="1">
         {% for language in language_names_list %}
-            {% set unique_vnames = lookup_results[language + '_unique'] + [""] %}
+            {% if language + '_unique' in lookup_results %}
+                {% set unique_vnames = lookup_results[language + '_unique'] + [""] %}
+            {% else %}
+                {% set unique_vnames = [""] %}
+            {% endif %}
             <tr class="results-lang{% if language in language_names_list %} results-lang-mol{% endif %}"
                 id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}
             >
@@ -140,7 +141,7 @@ div.block {
                 </select>
 
                 {% for vname in unique_vnames %}
-                    <div id="{{language}}_opt_{{loop.index}}" class="{{language}}_edit" style="display: none">
+                    <div id="{{language}}_opt_{{loop.index}}" class="{{language}}_edit" style="{% if not (open_lang == language and loop.first) %}display: none{% endif %}">
                         <table>
                             <tr><td>Name</td><td>
                                 <input name="name_to_add" id="{{language}}_vname" size="50"
