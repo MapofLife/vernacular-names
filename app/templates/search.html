@@ -60,15 +60,14 @@ div.block {
                 <em><a href="{{'/search'|url_to_base}}?dataset={{dataset_filter}}&search={{current_search}}&lookup={{scname}}">{{scname|capitalize}}</a></em>
                 {% if scname|lower == lookup_search|lower %}</strong> (currently displayed){% endif %}
                 <div style="font-size: 90%; width: auto;">
-                    {% if search_results[scname] %}<br><strong>Matched common name</strong>
+                    {% if search_results[scname] %}<strong>Matched common name</strong>
                     <ul>
-                    {% for cmname in search_results[scname] %}
-                        <li>{{ cmname }}</li>
-                    {% endfor %}
-                    </ul>
+                        {% for cmname in search_results[scname] %}
+                            <li>{{ cmname }}</li>
+                        {% endfor %}
+                    </ul><br>
                     {% endif %}
                 </div>
-                </td>
             </li>
         {% endfor %}
         </ul>
@@ -123,18 +122,17 @@ div.block {
                 id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}
             >
 
-            <form method="post" action="{{'/add/name'|url_to_base}}">
-
             {% if language in lookup_results and (lookup_results[language])|length > 0 %}
                 <td><strong id="lang-{{language}}">{{ language_names[language] }}</strong></td>
             {% else %}
                 <td><strong id="lang-{{language}}">{{ language_names[language] }}: </strong></td>
             {% endif %}
 
-            <td><select id="{{language}}_select" style="width: 100%">
+            <td><select id="{{language}}_select" style="width: 100%"
+                onchange='$(".{{language}}_edit").hide(); $("#{{language}}_opt_" + ($(this).val())).show()'
+            >
                     {% for vname in unique_vnames %}
-                        <option
-                                onclick='$(".{{language}}_edit").hide(); $("#{{language}}_opt_{{loop.index}}").show()'
+                        <option value="{{loop.index}}"
                                 {% if loop.first %}selected="true"{% endif %}>{% if vname == '' %}New ...{%
                                 else %}{{ vname }} ({{ lookup_results[language + '_dict'][vname]|count }} sources){% endif %}</option>
                     {% endfor %}
@@ -142,6 +140,7 @@ div.block {
 
                 {% for vname in unique_vnames %}
                     <div id="{{language}}_opt_{{loop.index}}" class="{{language}}_edit" style="{% if not (open_lang == language and loop.first) %}display: none{% endif %}">
+                        <form method="post" action="{{'/add/name'|url_to_base}}">
                         <table>
                             <tr><td>Name</td><td>
                                 <input name="name_to_add" id="{{language}}_vname" size="50"
@@ -161,10 +160,10 @@ div.block {
                             </center></td></tr>
 
                         </table>
+                        </form>
                     </div>
                 {% endfor %}
             </td>
-        </form>
         </tr>
         {% endfor %}
     </table>
