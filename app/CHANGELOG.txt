@@ -1,6 +1,7 @@
 Development:
  - Added a test to check for duplicate common names for the same scientific
    name from the same source.
+ - Modified EOL match in bulk import from exact to approximate (#76).
 
 0.9.3: June 21, 2015
  - Added support for Appstats so that we can track timeouts better
