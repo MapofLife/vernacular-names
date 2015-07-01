@@ -437,6 +437,208 @@ class CoverageViewHandler(BaseHandler):
         })
 
 #
+# SOURCES SUMMARY HANDLER
+#
+class SourceSummaryHandler(BaseHandler):
+    """Summarizes a single source."""
+
+    def post(self):
+        """ Handle changing the name, URL or priority of an entire source at once.
+        We only handle changing EITHER the name OR the priority, not both at the same time.
+        """
+
+        # Make sure a user is logged in.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        # Set up error msg.
+        message = ""
+
+        # Retrieve offset/display of the /sources page we should redirect to.
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
+
+        # Retrieve source to modify
+        source = self.request.get('source')
+
+        if source == '':
+            message = "No source provided; nothing to edit."
+
+        elif self.request.get('source_priority'):
+            source_priority = self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX, config.PRIORITY_MIN)
+
+            if config.PRIORITY_MIN <= source_priority <= config.PRIORITY_MAX:
+                # Synthesize SQL
+                sql = "UPDATE %s SET source_priority = %d WHERE source=%s"
+                sql_query = sql % (
+                    access.ALL_NAMES_TABLE,
+                    source_priority,
+                    nomdb.common.encode_b64_for_psql(source)
+                )
+
+                # Make it so.
+                response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
+                    dict(
+                        q=sql_query,
+                        api_key=access.CARTODB_API_KEY
+                    )
+                ))
+
+                if response.status_code != 200:
+                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                else:
+                    message = "Source priority modified to %d." % source_priority
+        elif self.request.get('source_new_name'):
+            source_new_name = self.request.get('source_new_name')
+            source_url = self.request.get('source_url')
+
+            if source_new_name == '':
+                # Blank names will not be accepted.
+
+                logging.warning("User tried to change source to '%s', which is invalid." % source_new_name)
+                message = "Could not parse new source name, please try another."
+
+            else:
+                # Synthesize SQL
+                sql = "UPDATE %s SET source=%s, source_url=%s WHERE source=%s"
+                sql_query = sql % (
+                    access.ALL_NAMES_TABLE,
+                    nomdb.common.encode_b64_for_psql(source_new_name),
+                    nomdb.common.encode_b64_for_psql(source_url),
+                    nomdb.common.encode_b64_for_psql(source)
+                )
+
+                # Make it so.
+                response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
+                    dict(
+                        q=sql_query,
+                        api_key=access.CARTODB_API_KEY
+                    )
+                ))
+
+                if response.status_code != 200:
+                    logging.error("SQL query '%s' failed: %s" % (sql_query, response.content))
+                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+                else:
+                    message = "Source '%s' renamed to '%s' and URL modified to '%s' successfully." % (source, source_new_name, source_url)
+        else:
+            message = "Neither source priority nor source new name was provided."
+
+        # Redirect to the main page.
+        self.redirect(BASE_URL + "/sources?" + urllib.urlencode(dict(
+            msg=message,
+            display=display_count,
+            offset=offset
+        )))
+
+    def get(self):
+        """ Display list of sources currently being used. """
+
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Synthesize SQL
+        source_sql = ("""SELECT
+            source,
+            source_url,
+            added_by,
+            COUNT(*) OVER () AS total_count,
+            COUNT(*) AS vname_count,
+            TO_CHAR(MIN(created_at), 'Month YYYY') AS min_created_at,
+            TO_CHAR(MAX(created_at), 'Month YYYY') AS max_created_at,
+            MIN(source_priority) AS min_source_priority,
+            MAX(source_priority) AS max_source_priority,
+            MIN(lang) AS min_lang,
+            MAX(lang) AS max_lang
+            FROM %s
+            GROUP BY source, source_url, added_by
+            ORDER BY vname_count DESC, source ASC, added_by DESC
+            LIMIT %d OFFSET %d
+        """) % (
+            access.ALL_NAMES_TABLE,
+            display_count,
+            offset
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(
+            access.CDB_URL,
+            payload=urllib.urlencode(
+                {'q': source_sql}),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=config.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        total_count = 0
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + source_sql + "'), server returned error " + str(
+                response.status_code) + ": " + response.content
+            sources = []
+        else:
+            results = json.loads(response.content)
+            response = None
+
+            sources = results['rows']
+            if len(sources) > 0:
+                total_count = sources[0]['total_count']
+
+            # Distinctify and reformat some columns.
+            for row in sources:
+                # logging.info("Processing row: " + str(row))
+
+                row['vname_count_formatted'] = '{:,}'.format(int(row['vname_count']))
+
+        # There are two kinds of sources:
+        #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.
+        #       These should be grouped by prefix.
+        #   2. Anything > INDIVIDUAL_IMPORT_LIMIT is a bulk import, and should be displayed separately.
+        #individual_imports = filter(lambda x: int(x['vname_count']) <= INDIVIDUAL_IMPORT_LIMIT, sources)
+        #bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
+
+        # Render sources.
+        self.render_template('sources.html', {
+            'message': message,
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
+            'user_url': user_url,
+            'user_name': user_name,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+
+            'offset': offset,
+            'display_count': display_count,
+
+            'total_count': total_count,
+            'sources': sources,
+            #'bulk_imports': bulk_imports,
+            #'individual_imports': individual_imports,
+
+            'vneditor_version': version.NOMDB_VERSION
+        })
+
+#
 # SOURCES HANDLER: /sources
 #
 class SourcesHandler(BaseHandler):
@@ -1878,6 +2080,7 @@ application = webapp2.WSGIApplication([
     (BASE_URL + '/family', FamilyHandler),
     (BASE_URL + '/hemihomonyms', HemihomonymHandler),
     (BASE_URL + '/sources', SourcesHandler),
+    (BASE_URL + '/source', SourceSummaryHandler),
     (BASE_URL + '/coverage', CoverageViewHandler),
     (BASE_URL + '/import', BulkImportHandler),
     (BASE_URL + '/masterlist', MasterListHandler),
