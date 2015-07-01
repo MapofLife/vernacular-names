@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-    <p><strong>{{ search_criteria|capitalize }}</strong></p>
+    <p><strong>{{ search_criteria }}</strong></p>
 
         <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
@@ -36,7 +36,7 @@
             <div class="panel-heading">Filter data</div>
             <div class="panel-body">
 
-                <p>Dataset
+                <p>Dataset:
 
                 <select name="dataset">
                     <option value="all" {% if 'all' in selected_datasets %}selected=1{% endif %}>All</option>
@@ -51,7 +51,7 @@
                 </select>
                 </p>
 
-                <p>Missing names in
+                <p>Missing names in:
                 <select name="blank_lang">
                 <option value="none" {% if 'none' in selected_blank_langs %}selected="1"{%endif%}>None</option>
                 {% for lang in language_names_list %}
@@ -63,9 +63,22 @@
                 {% endfor %}
                 </select>
                 </p>
+
+                <p><span {#title="Including names that aren't the primary name" style="border-bottom: 1px dotted black;"#}>Names from source (including secondary names)</span>:
+                <select name="source">
+                <option value="all" {% if 'all' in selected_blank_langs %}selected="1"{%endif%}>All</option>
+                {% for source in sources %}
+                    <option value="{{source}}"
+                        {% if  'all' not in selected_sources and source in selected_sources %}
+                            selected="1"
+                        {% endif %}
+                    >{{source|truncate(60, True)}}</option>
+                {% endfor %}
+                </select>
+                </p>
             </div>
 
-            <div class="panel-footer"><button type="submit">Update</button></div>
+            <div class="panel-footer"><button type="submit">Filter</button></div>
         </div>
 
                 <button class="btn btn-default btn-xs" type="submit" name="offset" value="0"

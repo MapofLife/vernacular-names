@@ -1406,6 +1406,24 @@ class ListViewHandler(BaseHandler):
         if len(sql_having) > 0:
             results['having'].append("(" + " AND ".join(sql_having) + ")")
 
+    @staticmethod
+    def filter_by_source(request, results):
+        """ If given any $source in the request, select scientific names from those datasets only. """
+        sources = request.get_all('source')
+        if 'all' in sources:
+            sources = []
+
+        #if len(sources) > 0:
+        #    results['select'].append("array_agg(DISTINCT source)")
+
+        sql_having = []
+        for source in sources:
+            sql_having.append(nomdb.common.encode_b64_for_psql(source) + " = ANY(array_agg(DISTINCT source))")
+            results['search_criteria'].append("filter by source '" + source + "'")
+
+        if len(sql_having) > 0:
+            results['having'].append("(" + " OR ".join(sql_having) + ")")
+
     def get(self):
         """ Display a filtered list of species names and their vernacular names. """
         self.response.headers['Content-type'] = 'text/html'
@@ -1458,6 +1476,7 @@ class ListViewHandler(BaseHandler):
 
         ListViewHandler.filter_by_datasets(self.request, results)
         ListViewHandler.filter_by_blank_langs(self.request, results)
+        ListViewHandler.filter_by_source(self.request, results)
 
         # There's an implicit first filter if there is no filter.
         if len(results['search_criteria']) == 0:
@@ -1485,6 +1504,8 @@ class ListViewHandler(BaseHandler):
         )
 
         search_criteria = ", ".join(results['search_criteria'])
+        # Capitalize the first letter.
+        search_criteria = search_criteria[0].upper() + search_criteria[1:]
 
         # Put all the pieces of the SELECT statement together.
         list_sql = """SELECT
@@ -1531,6 +1552,19 @@ class ListViewHandler(BaseHandler):
 
         vnames = names.get_vnames(name_list)
 
+        # Get a list of all sources.
+        sources = list()
+        response = urlfetch.fetch(
+            access.CDB_URL,
+            payload=urllib.urlencode({'q': "SELECT DISTINCT source FROM %s" % access.ALL_NAMES_TABLE}),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=config.DEADLINE_FETCH
+        )
+        if response.status_code == 200:
+            results = json.loads(response.content)
+            sources = map(lambda x: x['source'], results['rows'])
+
         self.render_template('list.html', {
             'vneditor_version': version.NOMDB_VERSION,
             'user_url': user_url,
@@ -1540,6 +1574,8 @@ class ListViewHandler(BaseHandler):
             'datasets_data': masterlist.get_dataset_counts(),
             'selected_datasets': set(self.request.get_all('dataset')),
             'selected_blank_langs': set(self.request.get_all('blank_lang')),
+            'selected_sources': set(self.request.get_all('source')),
+            'sources': sources,
             'message': message,
             'search_criteria': search_criteria,
             'name_list': name_list,
