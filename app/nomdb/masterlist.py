@@ -203,7 +203,8 @@ def dataset_contains_name(dataset, scname):
 dataset_contains_name.cache = dict()
 
 def search_for_name(name):
-    """ Search for a scientific name or vernacular name using a LIKE pattern.
+    """ Search for a scientific name or vernacular name using a LIKE pattern. Names in the vernacular name table
+    will be returned, along with a field that indicates whether they are listed in the master list or not.
 
     This pattern will be used to search both scnames and vnames.
 
@@ -218,7 +219,7 @@ def search_for_name(name):
 
     search_pattern = name.replace("_", "__").replace("%", "%%")
 
-    sql = "SELECT DISTINCT scname, cmname FROM %s INNER JOIN %s ON (LOWER(scname)=LOWER(scientificname)) WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
+    sql = "SELECT DISTINCT scname, (scientificname IS NOT NULL) AS flag_in_master_list, cmname FROM %s RIGHT JOIN %s ON (LOWER(scname)=LOWER(scientificname)) WHERE LOWER(scname) LIKE %s OR LOWER(cmname) LIKE %s ORDER BY scname ASC"
     response = nomdb.common.url_get(access.CDB_URL + "?" + urllib.urlencode(
         dict(q = sql % (
             access.MASTER_LIST, access.ALL_NAMES_TABLE, 
@@ -230,17 +231,23 @@ def search_for_name(name):
     if response.status_code != 200:
         raise "Could not read server response: " + response.content
 
-    matches = json.loads(response.content)['rows']  
+    rows = json.loads(response.content)['rows']
 
     match_table = dict()
-    for match in matches:
-        scname = match['scname']
+    for row in rows:
+        scname = row['scname']
 
         if not scname in match_table:
-            match_table[scname] = []
+            # HACK! We create a 'common name' of 'flag_in_master_list' to store whether or not
+            # this name is in the Master List. It should be ignored when displaying the results.
+            match_table[scname] = {
+                '_flag_in_master_list': row['flag_in_master_list']
+            }
 
-        if match['cmname'].find(name.lower()) >= 0:
-            match_table[scname].append(match['cmname'])
+        if row['cmname'].lower().find(name.lower()) >= 0:
+            match_table[scname][row['cmname']] = 1
+
+    # Hacky!
 
     return match_table
 

@@ -53,17 +53,26 @@ div.block {
         {% if not search_results_scnames %}
             <li>No matches in database.</li>
         {% endif %}
+        {% if search_results_scnames|length > 20 %}
+            <p></p><strong>Too many search results</strong>: species not in the master list may be hidden to simplify the search,
+            but <a href="#" onclick="$('.search_matches_not_in_master_list').toggle(); return false;">click here to display them</a>.
+            </p>
+        {% endif %}
         {% for scname in search_results_scnames %}
-            <li>
+            {# If there are less than 20 matches, display all; otherwise, skip those which are not in the master list. #}
+            <li {% if search_results_scnames|length > 20 and not search_results[scname]['_flag_in_master_list'] %}style="display: none" class="search_matches_not_in_master_list"{% endif %}>
                 <!-- TODO: these should be URL encoded before being used in a link -->
                 {% if scname|lower == lookup_search|lower %}<strong>{% endif %}
                 <em><a href="{{'/search'|url_to_base}}?dataset={{dataset_filter}}&search={{current_search}}&lookup={{scname}}">{{scname|capitalize}}</a></em>
                 {% if scname|lower == lookup_search|lower %}</strong> (currently displayed){% endif %}
+                {% if search_results[scname] and not search_results[scname]['_flag_in_master_list'] %} (not in master list){% endif %}
                 <div style="font-size: 90%; width: auto;">
-                    {% if search_results[scname] %}<strong>Matched common name</strong>
+                    {% if search_results[scname]|length > 1 %}<strong>Matched common name</strong>
                     <ul>
                         {% for cmname in search_results[scname] %}
-                            <li>{{ cmname }}</li>
+                            {% if cmname != '_flag_in_master_list' %}
+                                <li>{{ cmname }}</li>
+                            {% endif %}
                         {% endfor %}
                     </ul><br>
                     {% endif %}
