@@ -23,7 +23,7 @@ from nomdb import masterlist, names, config, common, languages, version
 """ What is the base URL for this app? """
 BASE_URL = '/taxonomy/names'
 
-""" Display DEBUG information? This is only used once. """
+""" Display DEBUG information? This is only used once (in /list). """
 FLAG_DEBUG = False
 
 """ Display the total count in $BASE_URL/list: expensive, but useful. """
@@ -437,10 +437,10 @@ class CoverageViewHandler(BaseHandler):
         })
 
 #
-# SOURCES SUMMARY HANDLER
+# SOURCES SUMMARY HANDLER: /sources/summary?name={{source}}
 #
 class SourceSummaryHandler(BaseHandler):
-    """Summarizes a single source."""
+    """Summarizes a single source, allowing renames, detailed logs, and other cool features."""
 
     def post(self):
         """ Handle changing the name, URL or priority of an entire source at once.
@@ -1610,13 +1610,15 @@ class ListViewHandler(BaseHandler):
 
     @staticmethod
     def filter_by_source(request, results):
-        """ If given any $source in the request, select scientific names from those datasets only. """
+        """ If given any $source in the request, select scientific names from those datasets only.
+        Unfortunately, this is kind of pointless and so is now deprecated.
+        """
         sources = request.get_all('source')
         if 'all' in sources:
             sources = []
 
-        #if len(sources) > 0:
-        #    results['select'].append("array_agg(DISTINCT source)")
+        if len(sources) > 0:
+            results['select'].append("array_agg(DISTINCT source)")
 
         sql_having = []
         for source in sources:
@@ -1678,7 +1680,7 @@ class ListViewHandler(BaseHandler):
 
         ListViewHandler.filter_by_datasets(self.request, results)
         ListViewHandler.filter_by_blank_langs(self.request, results)
-        ListViewHandler.filter_by_source(self.request, results)
+        # ListViewHandler.filter_by_source(self.request, results) -- deprecated; will be replaced by source summary.
 
         # There's an implicit first filter if there is no filter.
         if len(results['search_criteria']) == 0:
@@ -2080,7 +2082,7 @@ application = webapp2.WSGIApplication([
     (BASE_URL + '/family', FamilyHandler),
     (BASE_URL + '/hemihomonyms', HemihomonymHandler),
     (BASE_URL + '/sources', SourcesHandler),
-    (BASE_URL + '/source', SourceSummaryHandler),
+    (BASE_URL + '/sources/summary', SourceSummaryHandler),
     (BASE_URL + '/coverage', CoverageViewHandler),
     (BASE_URL + '/import', BulkImportHandler),
     (BASE_URL + '/masterlist', MasterListHandler),

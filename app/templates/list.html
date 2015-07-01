@@ -64,7 +64,8 @@
                 </select>
                 </p>
 
-                <p><span {#title="Including names that aren't the primary name" style="border-bottom: 1px dotted black;"#}>Names from source (including secondary names)</span>:
+                {# -- deprecated, use source summary instead.
+                <p><span title="Including names that aren't the primary name" style="border-bottom: 1px dotted black;">Names from source (including secondary names)</span>:
                 <select name="source" id="source">
                     <option value="all" {% if 'all' in selected_blank_langs %}selected="1"{%endif%}>All</option>
                     {% for source in sources %}
@@ -74,8 +75,10 @@
                             {% endif %}
                         >{{source|truncate(60, True)}}</option>
                     {% endfor %}
-                </select>
-                <button type="button" class="btn btn-info btn-xs" onclick="location.href = '{{"/source"|url_to_base}}?source=' + $('#source').val(); return false;">Edit source</button>
+                </select><!--
+                <button type="button" class="btn btn-info btn-xs" onclick="location.href = '{{"/sources/summary"|url_to_base}}?source=' + $('#source').val(); return false;">View source</button>
+                -->
+                #}
                 </p>
             </div>
 
