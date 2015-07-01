@@ -15,13 +15,13 @@
             <form class="pull-left" style="padding-right: 10px;" method="POST" action="{{'/import'|url_to_base}}">
                 <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
                 <textarea style="display: none" name="scnames">{{ name_list|join("\n") }}</textarea>
-                <input class="btn btn-primary" type="submit" value="Edit {{ name_list|count }} currently displayed names" />
+                <input class="btn btn-primary" type="submit" value="Bulk-edit {{ name_list|count }} currently displayed names" />
             </form>
 
             <form method="POST" action="{{'/import'|url_to_base}}">
                 <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
                 <textarea style="display: none" name="scnames">{{ genera_list|join("\n") }}</textarea>
-                <input class="btn btn-primary" type="submit" value="Edit {{ genera_list|count }} currently displayed genera" />
+                <input class="btn btn-primary" type="submit" value="Bulk-edit {{ genera_list|count }} currently displayed genera" />
             </form>
         </div>
 
@@ -30,40 +30,9 @@
             <input type="hidden" name="display" value="{{display_count}}">
 
     <div id="list_content" style="width: 100%; margins: auto; text-align: center">
-    <p>
-        <button class="btn btn-default btn-xs" type="submit" name="offset" value="0"
-            {% if offset == 0 %}disabled="disabled"{% endif %}
-        ><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span></button>
-
-        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{offset - display_count}}"
-            {% if offset - display_count < 0 %}disabled="disabled"{% endif %}
-        ><span class="glyphicon glyphicon-backward" aria-hidden="true"></span></button>
-
-        |
-        <select name="display" onchange="this.form.submit()">
-            <option {% if display_count == 20 %}selected=1{% endif %}  value="20">Display 20 rows at once</option>
-            <option {% if display_count == 40 %}selected=1{% endif %}  value="40">Display 40 rows at once</option>
-            <option {% if display_count == 60 %}selected=1{% endif %}  value="60">Display 60 rows at once</option>
-            <option {% if display_count == 80 %}selected=1{% endif %}  value="80">Display 80 rows at once</option>
-            <option {% if display_count == 100 %}selected=1{% endif %}  value="100">Display 100 rows at once</option>
-            <option {% if display_count == 200 %}selected=1{% endif %}  value="200">Display 200 rows at once</option>
-            <option {% if display_count == 500 %}selected=1{% endif %}  value="500">Display 500 rows at once</option>
-            <option {% if display_count == 1000 %}selected=1{% endif %}  value="1000">Display 1000 rows at once</option>
-            <option {% if display_count == 2000 %}selected=1{% endif %}  value="2000">Display 2000 rows at once</option>
-            <option {% if display_count == 5000 %}selected=1{% endif %}  value="5000">Display 5000 rows at once</option>
-            <option {% if display_count == 10000 %}selected=1{% endif %}  value="10000">Display 10000 rows at once</option>
-        </select>
-
-        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{offset + display_count}}"
-            {% if total_count != 0 and offset + display_count >= total_count %}disabled="disabled"{% endif %}
-        ><span class="glyphicon glyphicon-forward" aria-hidden="true"></span></button>
-
-        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{total_count - display_count}}"
-            {% if total_count == 0 or offset >= total_count - display_count %}disabled="disabled"{% endif %}
-        ><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>
 
         <!-- <div class="well well-sm "> -->
-        <div class="panel panel-info">
+        <div class="panel panel-info panel-sm">
             <div class="panel-heading">Filter data</div>
             <div class="panel-body">
 
@@ -97,6 +66,38 @@
             </div>
 
             <div class="panel-footer"><button type="submit">Update</button></div>
+        </div>
+
+                <button class="btn btn-default btn-xs" type="submit" name="offset" value="0"
+            {% if offset == 0 %}disabled="disabled"{% endif %}
+        ><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span></button>
+
+        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{offset - display_count}}"
+            {% if offset - display_count < 0 %}disabled="disabled"{% endif %}
+        ><span class="glyphicon glyphicon-backward" aria-hidden="true"></span></button>
+
+        |
+        <select name="display" onchange="this.form.submit()">
+            <option {% if display_count == 20 %}selected=1{% endif %}  value="20">Display 20 rows at once</option>
+            <option {% if display_count == 40 %}selected=1{% endif %}  value="40">Display 40 rows at once</option>
+            <option {% if display_count == 60 %}selected=1{% endif %}  value="60">Display 60 rows at once</option>
+            <option {% if display_count == 80 %}selected=1{% endif %}  value="80">Display 80 rows at once</option>
+            <option {% if display_count == 100 %}selected=1{% endif %}  value="100">Display 100 rows at once</option>
+            <option {% if display_count == 200 %}selected=1{% endif %}  value="200">Display 200 rows at once</option>
+            <option {% if display_count == 500 %}selected=1{% endif %}  value="500">Display 500 rows at once</option>
+            <option {% if display_count == 1000 %}selected=1{% endif %}  value="1000">Display 1000 rows at once</option>
+            <option {% if display_count == 2000 %}selected=1{% endif %}  value="2000">Display 2000 rows at once</option>
+            <option {% if display_count == 5000 %}selected=1{% endif %}  value="5000">Display 5000 rows at once</option>
+            <option {% if display_count == 10000 %}selected=1{% endif %}  value="10000">Display 10000 rows at once</option>
+        </select>
+
+        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{offset + display_count}}"
+            {% if total_count != 0 and offset + display_count >= total_count %}disabled="disabled"{% endif %}
+        ><span class="glyphicon glyphicon-forward" aria-hidden="true"></span></button>
+
+        <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{total_count - display_count}}"
+            {% if total_count == 0 or offset >= total_count - display_count %}disabled="disabled"{% endif %}
+        ><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>
     </div>
 
     <p>(Genus common names are italicized)</p>
