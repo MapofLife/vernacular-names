@@ -29,7 +29,7 @@
             <input type="hidden" name="offset" value="{{offset}}">
             <input type="hidden" name="display" value="{{display_count}}">
 
-    <div id="list_content" style="width: 100%; margins: auto; text-align: center">
+            <div id="list_content" style="width: 100%; margins: auto; text-align: center">
 
         <!-- <div class="well well-sm "> -->
         <div class="panel panel-info panel-sm">
@@ -133,8 +133,11 @@
                         {% if lang in vnames[name] and vnames[name][lang].vernacular_name_formatted != '' %}
                             <td>
                             {% if not vnames[name][lang].is_direct_match %}<em>{% endif %}
-                            <a href="{{'/search'|url_to_base}}?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
+                            <a {% if vnames[name][lang].source and vnames[name][lang].source != '' %}title="Source: {{vnames[name][lang].source}}" style="border-bottom: 1px dotted black;"{% endif %}
+                                    href="{{'/search'|url_to_base}}?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
                             {% if not vnames[name][lang].is_direct_match %}</em>{% endif %}
+<!--                            {% if vnames[name][lang].source and vnames[name][lang].source != '' %}<span class="label label-info" title="{{vnames[name][lang].source}}">{{vnames[name][lang].source|truncate(5, False)}}</span>{% endif %}
+-->
                             </td>
                         {% else %}
                             <td>&nbsp;<!-- <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><center><em>None</em></center></a> --></td>
