@@ -581,6 +581,8 @@ class SourceSummaryHandler(BaseHandler):
             deadline=config.DEADLINE_FETCH
         )
 
+        # logging.info("SQL: '" + source_sql + "'")
+
         # Retrieve results. Store the total count if there is one.
         total_count = 0
         results = []
