@@ -467,7 +467,7 @@ class SourceSummaryHandler(BaseHandler):
         source = self.request.get('name')
 
         # Retrieve item to modify.
-        cartodb_id = self.request.get('cartodb_id')
+        cartodb_id = self.request.get_range('cartodb_id')
 
         # What action are we dealing with?
         action = self.request.get('action')
@@ -498,9 +498,9 @@ class SourceSummaryHandler(BaseHandler):
                 message = "Change %d deleted successfully." % cartodb_id
 
         # Redirect back to the main page.
-        self.redirect(BASE_URL + "/recent?" + urllib.urlencode(dict(
+        self.redirect(BASE_URL + "/sources/summary?" + urllib.urlencode(dict(
             msg=message,
-            source=source,
+            name=source,
             cartodb_id=cartodb_id,
             offset=offset,
             display=display_count
