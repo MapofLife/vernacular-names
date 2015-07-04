@@ -64,7 +64,10 @@
                     </td>
                     <td>{% if bulk_import.source_url %}<a target="_blank" href="{{ bulk_import.source_url }}">URL</a>{%else%}None{% endif %}</td>
                     <td>{% if bulk_import.added_by %}{{bulk_import.added_by}}{% else %}<em>Left blank</em>{% endif %}</td>
-                    <td>{# TODO: replace with a link to the source summary %}<a href="{{"/list"|url_to_base}}?source={{bulk_import.source}}" >#}{{ bulk_import.vname_count_formatted }}</td>
+                    <td>{% if bulk_import.vname_count < NO_SUMMARIES_IF_VNAME_GT %}<a href="{{"/sources/summary"|url_to_base}}?name={{bulk_import.source}}">{% endif %}
+                        {{ bulk_import.vname_count_formatted }}
+                        {% if bulk_import.vname_count < NO_SUMMARIES_IF_VNAME_GT %}</a>{% else %}(Too many names to summarize){% endif %}
+                    </td>
                     <td>{% if bulk_import.min_created_at == bulk_import.max_created_at %}
                             {{ bulk_import.min_created_at }}
                         {% else %}

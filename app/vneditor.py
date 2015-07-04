@@ -443,8 +443,9 @@ class SourceSummaryHandler(BaseHandler):
     """Summarizes a single source, allowing renames, detailed logs, and other cool features."""
 
     def post(self):
-        """ Handle changing the name, URL or priority of an entire source at once.
-        We only handle changing EITHER the name OR the priority, not both at the same time.
+        """ Change details relating to a single source or entry. For now,
+        we'll leave "single source" down to /sources, which can handle that
+        for now, and deal only with individual entries.
         """
 
         # Make sure a user is logged in.
@@ -462,81 +463,51 @@ class SourceSummaryHandler(BaseHandler):
         offset = self.request.get_range('offset', 0, default=0)
         display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
 
-        # Retrieve source to modify
-        source = self.request.get('source')
+        # Retrieve source to modify.
+        source = self.request.get('name')
 
-        if source == '':
-            message = "No source provided; nothing to edit."
+        # Retrieve item to modify.
+        cartodb_id = self.request.get('cartodb_id')
 
-        elif self.request.get('source_priority'):
-            source_priority = self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX, config.PRIORITY_MIN)
+        # What action are we dealing with?
+        action = self.request.get('action')
 
-            if config.PRIORITY_MIN <= source_priority <= config.PRIORITY_MAX:
-                # Synthesize SQL
-                sql = "UPDATE %s SET source_priority = %d WHERE source=%s"
-                sql_query = sql % (
-                    access.ALL_NAMES_TABLE,
-                    source_priority,
-                    nomdb.common.encode_b64_for_psql(source)
+        if action == 'delete':
+            if cartodb_id == '':
+                message = "DELETE attempted without a CartoDB ID. Try again?"
+                return
+
+            # Synthesize SQL
+            sql = "DELETE FROM %s WHERE cartodb_id=%d"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                cartodb_id
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
+                dict(
+                    q=sql_query,
+                    api_key=access.CARTODB_API_KEY
                 )
+            ))
 
-                # Make it so.
-                response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
-                    dict(
-                        q=sql_query,
-                        api_key=access.CARTODB_API_KEY
-                    )
-                ))
-
-                if response.status_code != 200:
-                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-                else:
-                    message = "Source priority modified to %d." % source_priority
-        elif self.request.get('source_new_name'):
-            source_new_name = self.request.get('source_new_name')
-            source_url = self.request.get('source_url')
-
-            if source_new_name == '':
-                # Blank names will not be accepted.
-
-                logging.warning("User tried to change source to '%s', which is invalid." % source_new_name)
-                message = "Could not parse new source name, please try another."
-
+            if response.status_code != 200:
+                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
             else:
-                # Synthesize SQL
-                sql = "UPDATE %s SET source=%s, source_url=%s WHERE source=%s"
-                sql_query = sql % (
-                    access.ALL_NAMES_TABLE,
-                    nomdb.common.encode_b64_for_psql(source_new_name),
-                    nomdb.common.encode_b64_for_psql(source_url),
-                    nomdb.common.encode_b64_for_psql(source)
-                )
+                message = "Change %d deleted successfully." % cartodb_id
 
-                # Make it so.
-                response = urlfetch.fetch(access.CDB_URL + "?" +  urllib.urlencode(
-                    dict(
-                        q=sql_query,
-                        api_key=access.CARTODB_API_KEY
-                    )
-                ))
-
-                if response.status_code != 200:
-                    logging.error("SQL query '%s' failed: %s" % (sql_query, response.content))
-                    message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-                else:
-                    message = "Source '%s' renamed to '%s' and URL modified to '%s' successfully." % (source, source_new_name, source_url)
-        else:
-            message = "Neither source priority nor source new name was provided."
-
-        # Redirect to the main page.
-        self.redirect(BASE_URL + "/sources?" + urllib.urlencode(dict(
+        # Redirect back to the main page.
+        self.redirect(BASE_URL + "/recent?" + urllib.urlencode(dict(
             msg=message,
-            display=display_count,
-            offset=offset
+            source=source,
+            cartodb_id=cartodb_id,
+            offset=offset,
+            display=display_count
         )))
 
     def get(self):
-        """ Display list of sources currently being used. """
+        """ Display summary for a single source. """
 
         self.response.headers['Content-type'] = 'text/html'
 
@@ -557,25 +528,45 @@ class SourceSummaryHandler(BaseHandler):
         if not message:
             message = ""
 
+        # Which source are we summarizing?
+        source = self.request.get('name')
+        if source == '':
+            # If this is blank, redirect the sources list and ask the user to pick one.
+            self.redirect(BASE_URL + "/sources?" + urllib.urlencode(dict(
+                msg="Cannot display source summary: no source provided!"
+            )))
+            return
+
         # Synthesize SQL
-        source_sql = ("""SELECT
-            source,
-            source_url,
-            added_by,
-            COUNT(*) OVER () AS total_count,
-            COUNT(*) AS vname_count,
-            TO_CHAR(MIN(created_at), 'Month YYYY') AS min_created_at,
-            TO_CHAR(MAX(created_at), 'Month YYYY') AS max_created_at,
-            MIN(source_priority) AS min_source_priority,
-            MAX(source_priority) AS max_source_priority,
-            MIN(lang) AS min_lang,
-            MAX(lang) AS max_lang
-            FROM %s
-            GROUP BY source, source_url, added_by
-            ORDER BY vname_count DESC, source ASC, added_by DESC
+        source_sql = ("""
+            SELECT
+                COUNT(*) OVER () AS total_count,
+                ARRAY_AGG(LOWER(source_url)) OVER (ROWS BETWEEN CURRENT ROW AND 100 FOLLOWING) AS agg_source_url,
+                ARRAY_AGG(TO_CHAR(vn.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')) OVER () AS agg_created_at,
+                ARRAY_AGG(LOWER(lang)) OVER () AS agg_lang_lc,
+                ARRAY_AGG(LOWER(family)) OVER () AS agg_family_lc,
+                ARRAY_AGG(added_by) OVER () AS agg_added_by,
+                vn.cartodb_id AS cartodb_id,
+                LOWER(scname) AS scname_lc,
+                LOWER(lang) AS lang_lc,
+                scientificname IS NOT NULL AS flag_in_master_list,
+                cmname,
+                url,
+                source,
+                source_url,
+                source_priority,
+                added_by,
+                TO_CHAR(vn.created_at AT TIME ZONE 'UTC', 'FMDay, Month DD, YYYY at HH:MI pm') AS created_at
+            FROM %s vn
+                LEFT JOIN %s
+                    ON LOWER(scname) = LOWER(scientificname)
+            WHERE source=%s
+            ORDER BY scname ASC, lang ASC, source_priority DESC, vn.created_at ASC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
+            access.MASTER_LIST,
+            common.encode_b64_for_psql(source),
             display_count,
             offset
         )
@@ -592,23 +583,25 @@ class SourceSummaryHandler(BaseHandler):
 
         # Retrieve results. Store the total count if there is one.
         total_count = 0
+        results = []
+        source_summary = {
+            'agg_source_url': {},
+            'agg_added_by': {},
+            'agg_lang_lc': {},
+            'agg_family_lc': {}
+        }
         if response.status_code != 200:
             message += "<br><strong>Error</strong>: query ('" + source_sql + "'), server returned error " + str(
                 response.status_code) + ": " + response.content
-            sources = []
         else:
-            results = json.loads(response.content)
-            response = None
-
-            sources = results['rows']
-            if len(sources) > 0:
-                total_count = sources[0]['total_count']
-
-            # Distinctify and reformat some columns.
-            for row in sources:
-                # logging.info("Processing row: " + str(row))
-
-                row['vname_count_formatted'] = '{:,}'.format(int(row['vname_count']))
+            results = json.loads(response.content)['rows']
+            # message += "LOok what wwe go: '" + response.content + "'"
+            if len(results) > 0:
+                total_count = results[0]['total_count']
+                source_summary['agg_source_url'] = {x:results[0]['agg_source_url'].count(x) for x in results[0]['agg_source_url']}
+                source_summary['agg_added_by'] = {x:results[0]['agg_added_by'].count(x) for x in results[0]['agg_added_by']}
+                source_summary['agg_lang_lc'] = {x:results[0]['agg_lang_lc'].count(x) for x in results[0]['agg_lang_lc']}
+                source_summary['agg_family_lc'] = {x:results[0]['agg_family_lc'].count(x) for x in results[0]['agg_family_lc']}
 
         # There are two kinds of sources:
         #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.
@@ -618,7 +611,7 @@ class SourceSummaryHandler(BaseHandler):
         #bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
 
         # Render sources.
-        self.render_template('sources.html', {
+        self.render_template('source_summary.html', {
             'message': message,
             'login_url': users.create_login_url(BASE_URL),
             'logout_url': users.create_logout_url(BASE_URL),
@@ -630,10 +623,10 @@ class SourceSummaryHandler(BaseHandler):
             'offset': offset,
             'display_count': display_count,
 
+            'source': source,
+            'source_summary': source_summary,
             'total_count': total_count,
-            'sources': sources,
-            #'bulk_imports': bulk_imports,
-            #'individual_imports': individual_imports,
+            'results': results,
 
             'vneditor_version': version.NOMDB_VERSION
         })
@@ -764,8 +757,6 @@ class SourcesHandler(BaseHandler):
         # Synthesize SQL
         source_sql = ("""SELECT 
             source,
-            source_url,
-            added_by,
             COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
             TO_CHAR(MIN(created_at), 'Month YYYY') AS min_created_at,
@@ -775,8 +766,8 @@ class SourcesHandler(BaseHandler):
             MIN(lang) AS min_lang,
             MAX(lang) AS max_lang
             FROM %s 
-            GROUP BY source, source_url, added_by
-            ORDER BY vname_count DESC, source ASC, added_by DESC
+            GROUP BY source
+            ORDER BY vname_count DESC, source ASC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
@@ -838,6 +829,9 @@ class SourcesHandler(BaseHandler):
             'sources': sources,
             #'bulk_imports': bulk_imports,
             #'individual_imports': individual_imports,
+
+            # Don't link to the summary page if there are more than these many names.
+            'NO_SUMMARIES_IF_VNAME_GT': 10000,
 
             'vneditor_version': version.NOMDB_VERSION
         })
