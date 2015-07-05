@@ -34,11 +34,11 @@
 
         <div class="well well-sm">
             {% if offset > 0 %}
-            <a class="btn btn-default" href="?vname={{vname_urlencoded}}&offset=0">Start</a>
-            <a class="btn btn-default" href="?vname={{vname_urlencoded}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset=0">Start</a>
+            <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
             {% endif %}
             {% if offset + display_count < total_count %}
-            <a class="btn btn-default" href="?vname={{vname_urlencoded}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
             {% endif %}
         </div>
 
@@ -56,7 +56,7 @@
             {% for row in rows %}
                 <tr>
                     <td>{{ loop.index + offset }}</td>
-                    <td><a href="{{'/search'|url_to_base}}?lookup={{row.scname}}"><em>{{ row.scname | capitalize }}</em></a></td>
+                    <td><a href="{{'/search'|url_to_base}}?lookup={{row.scname}}"><em>{{ row.scname | capitalize }}</em></a>{% if not row.flag_in_master_list %} (not in master list){% endif %}</td>
                     <td>
                         {% set lang = row.lang %}
                         {% if lang in language_names %}
@@ -67,7 +67,7 @@
                         &nbsp;
                     </td>
                     <td><a href="{{'/search'|url_to_base}}?lookup={{row.scname}}#lang-{{row.lang}}">{{row.cmname}}</a></td>
-                    <td>{{ row.source|urlize }}{% if row.source_priority|int != 80 %} (priority: {{row.source_priority}}){% endif %}{% if row.url %}<br>{{ row.url|urlize }}{% endif %}</td>
+                    <td>{{ row.source|urlize }} (priority: {{row.source_priority}}){% if row.url %}<br>{{ row.url|urlize }}{% endif %}</td>
                     <td>{{ row.added_by }} at {{ row.created_at }}</td>
                     <td><form method="POST" action="{{'/delete/cartodb_id'|url_to_base}}"><button class="btn btn-danger btn-sm" type="submit" name="cartodb_id" value="{{ row.cartodb_id }}">Delete</button></form></td>
                 </tr>
@@ -77,11 +77,11 @@
 
         <div class="well well-sm">
             {% if offset > 0 %}
-            <a class="btn btn-default" href="?vname={{vname_urlencoded}}&offset=0">Start</a>
-            <a class="btn btn-default" href="?vname={{vname_urlencoded}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset=0">Start</a>
+            <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
             {% endif %}
             {% if offset + display_count < total_count %}
-            <a class="btn btn-default" href="?vname={{vname_urlencoded}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
             {% endif %}
         </div>
 

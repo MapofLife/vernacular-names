@@ -57,6 +57,7 @@ JINJA_ENV = jinja2.Environment(
     autoescape=True
 )
 JINJA_ENV.filters['url_to_base'] = lambda x: BASE_URL + x
+JINJA_ENV.filters['quote_plus'] = lambda x: urllib.quote_plus(x)
 
 #
 # BaseHandler
@@ -1309,17 +1310,19 @@ class RegexSearchHandler(BaseHandler):
 
         # Synthesize SQL
         recent_sql = ("""SELECT
-            cartodb_id, cmname,
+            vn.cartodb_id, cmname,
+            scientificname IS NOT NULL AS flag_in_master_list,
             scname, lang,
             source, url, source_priority,
-            added_by, created_at, updated_at,
+            vn.added_by, vn.created_at, vn.updated_at,
             COUNT(*) OVER() AS total_count
-            FROM %s
+            FROM %s vn LEFT JOIN %s ON LOWER(scname) = LOWER(scientificname)
             WHERE cmname ~ %s
-            ORDER BY source_priority DESC, updated_at DESC, created_at DESC
+            ORDER BY scientificname IS NULL, source_priority DESC, updated_at DESC, created_at DESC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
+            access.MASTER_LIST,
             common.encode_b64_for_psql(vname),
             display_count,
             offset
