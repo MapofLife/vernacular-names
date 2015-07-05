@@ -1,0 +1,98 @@
+{% extends "templates/base.html" %}
+
+{% block page_title %}Source Summary{% endblock %}
+
+{% block head %}
+    <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
+{% endblock %}
+
+{% block content %}
+    <h2>Source: <em>{{source}}</em></h2>
+
+    <div class="well list-group row">
+        {# TODO: go back to THIS source on the sources list #}
+        <div class="list-group-item col-xs-12"><a href="{{"/sources"|url_to_base}}">Back to sources list</a></div>
+
+        <div class="list-group-item col-xs-6" style="height: 5em; overflow: auto;">Source URL: <ul>{% for source_url in source_summary.agg_source_url|dictsort(by='value')|reverse %}
+                <li><a target="_blank" href="{{source_url[0]}}">{{ source_url[0] }}</a> ({{ source_url[1] }} names)</li>
+            {% endfor %}</ul>
+        </div>
+
+        <div class="list-group-item col-xs-6" style="height: 5em; overflow: auto;">Added by: <ul>{% for added_by in source_summary.agg_added_by|dictsort(by='value')|reverse %}
+                <li>{{ added_by[0] }} ({{ added_by[1] }} names)</li>
+            {% endfor %}</ul>
+        </div>
+
+        <div class="list-group-item col-xs-6" style="height: 10em; overflow: auto;">Family: <ul>{% for agg_family_lc in source_summary.agg_family_lc|dictsort(by='value')|reverse %}
+            <li>{{ agg_family_lc[0]|capitalize }} ({{ agg_family_lc[1] }} names)</li>
+        {% endfor %}</ul>
+        </div>
+
+        <div class="list-group-item col-xs-6" style="height: 10em; overflow: auto;">Language: <ul>{% for agg_lang_lc in source_summary.agg_lang_lc|dictsort(by='value')|reverse %}
+                <li>{{ agg_lang_lc[0] }} ({{ agg_lang_lc[1] }} names)</li>
+            {% endfor %}</ul>
+        </div>
+    </div>
+
+    {% if not results and not individual_imports %}
+        <p>No results to display.</p>
+    {% else %}
+        <p>Displaying {{ results|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
+
+        <div class="well well-sm">
+            {% if offset > 0 %}
+            <a class="btn btn-default" href="?name={{source}}&offset=0">Start</a>
+            <a class="btn btn-default" href="?name={{source}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            {% endif %}
+            {% if offset + display_count < total_count %}
+            <a class="btn btn-default" href="?name={{source}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            {% endif %}
+        </div>
+
+        <table border="1" class="sortable" style="width: 100%">
+            <thead><tr>
+                <th>&nbsp;</th>
+                <th>Scientific name</th>
+                <th>Vernacular name</th>
+                <th>Added by</th>
+                <th>Source metadata</th>
+                <th>Created at (UTC)</th>
+                <th>Actions</th>
+            </tr></thead>
+            <tbody>
+            {% for row in results %}
+                <tr id="row_source_{{loop.index}}">
+                    <td>{{ loop.index + offset }}</td>
+                    <td><em><a href="{{"/search"|url_to_base}}?search={{row.scname_lc|capitalize}}">{{ row.scname_lc|capitalize }}</a>{% if not row.flag_in_master_list %} (not in master list){% endif %}</em></td>
+
+                    <td><a href="{{"/search"|url_to_base}}?search={{row.scname_lc|capitalize}}&open_lang={{row.lang_lc}}#lang-{{row.lang_lc}}">{{row.cmname}}</a> ({{row.lang_lc}})</td>
+                    <td>{{row.added_by}}</td>
+                    <td>{% if row.source_url %}<a href="{{row.source_url}}">{{row.source_url}}</a>{% else %}None{% endif %} (priority:&nbsp;{{row.source_priority}})</td>
+                    <td>{{row.created_at}}</td>
+                    <td>
+                        <form action="{{"/sources/summary"|url_to_base}}" method="POST">
+                            <input type="hidden" name="name" value="{{source}}" />
+                            <input type="hidden" name="offset" value="{{offset}}" />
+                            <input type="hidden" name="display" value="{{display_count}}" />
+                            <input type="hidden" name="cartodb_id" value="{{row.cartodb_id}}" />
+                            <button class="btn btn-xs btn-danger" type="submit" name="action" value="delete" >Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="well well-sm">
+            {% if offset > 0 %}
+                <a class="btn btn-default" href="?name={{source}}&offset=0">Start</a>
+                <a class="btn btn-default" href="?name={{source}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
+            {% endif %}
+            {% if offset + display_count < total_count %}
+                <a class="btn btn-default" href="?name={{source}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
+            {% endif %}
+        </div>
+
+
+    {% endif %}
+{% endblock %}
