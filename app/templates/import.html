@@ -183,7 +183,7 @@
                         url: "http://eol.org/api/search/1.0.json",
                         data: {
                             q: scname,
-                            exact: "true"
+                            exact: "false"
                         },
                         dataType: 'jsonp',
                         context: {
@@ -192,8 +192,10 @@
                             "lang": lang,
                             "index": index
                         }
-                    }).done(function(json) {
+                    }).done(function(json, textStatus, jqXHR) {
                         results = json['results']
+
+                        // console.log("Result from EOL (" + results + ", " + textStatus + ", " + jqXHR + ")")
                         if(results.length == 0) {
                             // Let the user know that we tried but couldn't find this name.
                             $(this.vname_input).css('background-color', '{{COLOR_SCNAME_NOT_FOUND}}')
