@@ -1316,7 +1316,7 @@ class RegexSearchHandler(BaseHandler):
             COUNT(*) OVER() AS total_count
             FROM %s
             WHERE cmname ~ %s
-            ORDER BY updated_at DESC
+            ORDER BY source_priority DESC, updated_at DESC, created_at DESC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
