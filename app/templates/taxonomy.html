@@ -29,7 +29,7 @@
                     {% if class is none or class == '' or vnames[class][lang].vernacularname == '' %}
                         <td>&nbsp;</td>
                     {% else %}
-                        <td><a href="{{'/search'|url_to_base}}?lookup={{class}}#lang-{{lang}}">{{vnames[class][lang].vernacularname}}</a></td>
+                        <td><a href="{{'/search'|url_to_base}}?lookup={{class}}&open_lang={{lang}}">{{vnames[class][lang].vernacularname}}</a></td>
                     {% endif %}
                 {% endfor %}
                 <td>TBD</td>
@@ -38,7 +38,7 @@
                 <tr>
                     <td id="order_{{order}}">&nbsp;&nbsp;Order <a href="{{'/search'|url_to_base}}?lookup={{order}}">{{ order|capitalize }}</a></td>
                     {% for lang in language_names_list %}
-                        <td><a href="{{'/search'|url_to_base}}?lookup={{order}}#lang-{{lang}}">{{vnames[order][lang].vernacularname}}</a></td>
+                        <td><a href="{{'/search'|url_to_base}}?lookup={{order}}&open_lang={{lang}}">{{vnames[order][lang].vernacularname}}</a></td>
                     {% endfor %}
                     <td>TBD</td>
                 </tr>
@@ -46,7 +46,7 @@
                     <tr>
                         <td id="family_{{family}}">&nbsp;&nbsp;&nbsp;&nbsp;Family <a href="{{'/search'|url_to_base}}?lookup={{family}}">{{ family|capitalize }}</a></td>
                         {% for lang in language_names_list %}
-                            <td><a href="{{'/search'|url_to_base}}?lookup={{family}}#lang-{{lang}}">{{vnames[family][lang].vernacular_name_formatted}}</a></td>
+                            <td><a href="{{'/search'|url_to_base}}?lookup={{family}}&open_lang={{lang}}">{{vnames[family][lang].vernacular_name_formatted}}</a></td>
                         {% endfor %}
                         <td>{{ higher_taxonomy_tree[class][order][family][0]['count_species'] }}</td>
                     </tr>

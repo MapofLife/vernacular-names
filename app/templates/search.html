@@ -3,12 +3,17 @@
 {% block javascript %}
 {% endblock %}
 {% block style %}
+
 #scrolled_search_results {
     border: 1px solid black;
 }
 
-table.search_results tr.selected td {
-    background: yellow;
+table.search_results tr td {
+    min-width: 100%;
+}
+
+li.selected {
+    font-weight: bold;
 }
 
 table.search_results td {
@@ -19,179 +24,176 @@ table.search_results td {
 table.search_results tr:nth-child(even) {
     background: #ddd;
 }
+
+div.block {
+    padding: 1em;
+    margin: 1em;
+    float: left;
+    border: 1px solid #555;
+    background: #eee;
+
+    width: 30%;
+    padding: 0.5em;
+}
+
 {% endblock %}
 
 {% block content %}
-        {% if dataset_filter %}<p>Datasets filtered by <em>{{dataset_filter}}</em> (<a href="?dataset=&search={{current_search}}&lookup={{lookup_search}}">reset</a>).</p>{% endif %}
+    {% if dataset_filter %}<p>Datasets filtered by <em>{{dataset_filter}}</em> (<a href="?dataset=&search={{current_search}}&lookup={{lookup_search}}">reset</a>).</p>{% endif %}
 
-        <table width="100%" style="margin: 2em 0em">
-        <tr><td width="20%" valign="top">
-    
-        {% if not search_results %}
-                <p><strong>No results found.</strong> Use the search box above to try another search.</p>
+    {% if not search_results %}
+        <div class="alert alert-danger"><strong>No results found.</strong> Use the search box above to try another search, or
+            enter common names for this scientific name below.
+        </div>
+    {% endif %}
 
-        {% else %}
-
-            <div id="scrolled_search_results" style="overflow: scroll; height: 600px;">
-            <table class="search_results">
-            <form onsubmit="window.location.hash = ''">
-            <input type="hidden" name="search" value="{{current_search}}">
-            {% for scname in search_results_scnames %}
-                <tr class="{% if scname|lower == lookup_search|lower %}selected{% endif %}">
-                    <!-- TODO: these should be URL encoded before being used in a link -->
-                    <td><em>{{scname}}</em> <a style="float: right" href="?dataset={{dataset_filter}}&search={{current_search}}&lookup={{scname}}">View</a>
-                    <div style="font-size: 90%; width: auto;">
-                        {% if search_results[scname] %}<br><strong>Matched common name</strong>
-                        <ul>
-                        {% for cmname in search_results[scname] %}
-                            <li>{{ cmname }}</li>
-                        {% endfor %}
-                        </ul>
-                        {% endif %}
-                    </div>
-                    </td>
-                </tr>
-            {% endfor %}
-            </form>
-            </table>
-            </div>
-            </td>
+    <div class="block" style="width: 20em; padding: 0.8em; margin: 0em 0.5em;">
+        Search results
+        <ul>
+        {% if not search_results_scnames %}
+            <li>No matches in database.</li>
         {% endif %}
-
-        {% if not lookup_results %}
-        {% else %}
-            <td valign="top" width="80%">
-                <div id="external_links" style="float: right; width=30%; border: 1px solid #555; background: #eee; padding: 0.5em">
-                    <strong>External links</strong>
-                    <br>
-                    <br>
-                    <a target="_blank" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{lookup_search}}">English Wikipedia</a>
-                    <br>
-                    <a target="_blank" href="http://eol.org/{{lookup_search}}">EOL</a>
-                    <br>
-                    <a target="_blank" href="http://www.gbif.org/species/search?q={{lookup_search}}">GBIF</a>
-                </div>
-
-                <h2><em>{{ lookup_search }}</em>
-                </h2>
-
-                {% set genus = lookup_search.split()[0] %}
-                <p>
-                    <form method="post" action="{{'/add/name'|url_to_base}}">
-                        <input type="hidden" name="dataset" value="{{dataset_filter}}">
-                        <input type="hidden" name="search" value="{{current_search}}">
-                        <input type="hidden" name="lookup" value="{{lookup_search}}">
-
-                        Class: {% for class in tax_class %}<a href="?lookup={{class}}">{{class|capitalize}}</a> {%endfor%}
-                        <a class="btn btn-info btn-xs" role="button" href="#" onclick="$('#tax_class_add').show(); $('#tax_source_add').show(); return false">Add</a>
-                        <input id="tax_class_add" name="tax_class" style="display:none">
-                        <br>
-                        Order: {% for order in tax_order %}<a href="?lookup={{order}}">{{order|capitalize}}</a> {%endfor%}
-                        <a class="btn btn-info btn-xs" role="button" href="#" onclick="$('#tax_order_add').show(); $('#tax_source_add').show(); return false">Add</a>
-                        <input id="tax_order_add" name="tax_order" style="display:none">
-                        <br>
-                        Family: {% for family in tax_family %}<a href="?lookup={{family}}">{{family|capitalize}}</a> {%endfor%}
-                        <a class="btn btn-info btn-xs" role="button" href="#" onclick="$('#tax_family_add').show(); $('#tax_source_add').show(); return false">Add</a>
-                        <input id="tax_family_add" name="tax_family" style="display:none">
-                        <br>
-                        Genus: <em><a href="?lookup={{genus}}">{{genus}}</a></em><br>
-
-                        <div id="tax_source_add" style="display:none">
-                            <em>Higher taxonomy source</em>: <input name="source" size=50>
-                            <input class="btn btn-success btn-sm" name="add_to_current_lookup_in_{{language}}"
-                                value="Add" type="submit">
-                        </div> 
-
-                   </form>
-                </p>
-
-<!--
-                    <div style="float: right; padding: 0.5em; border: 1px; background: #ddd">
-                        <center><strong>Languages</strong></center>
-                        {% for lang in language_names_list %}
-                            <a href="#lang-{{language}}">{{language_names[lang]}}</a>
-                            <br>
+        {% if search_results_scnames|length > 20 %}
+            <p></p><strong>Too many search results</strong>: species not in the master list may be hidden to simplify the search,
+            but <a href="#" onclick="$('.search_matches_not_in_master_list').toggle(); return false;">click here to display them</a>.
+            </p>
+        {% endif %}
+        {% for scname in search_results_scnames %}
+            {# If there are less than 20 matches, display all; otherwise, skip those which are not in the master list. #}
+            <li {% if search_results_scnames|length > 20 and not search_results[scname]['_flag_in_master_list'] %}style="display: none" class="search_matches_not_in_master_list"{% endif %}>
+                <!-- TODO: these should be URL encoded before being used in a link -->
+                {% if scname|lower == lookup_search|lower %}<strong>{% endif %}
+                <em><a href="{{'/search'|url_to_base}}?dataset={{dataset_filter}}&search={{current_search}}&lookup={{scname}}">{{scname|capitalize}}</a></em>
+                {% if scname|lower == lookup_search|lower %}</strong> (currently displayed){% endif %}
+                {% if search_results[scname] and not search_results[scname]['_flag_in_master_list'] %} (not in master list){% endif %}
+                <div style="font-size: 90%; width: auto;">
+                    {% if search_results[scname]|length > 1 %}<strong>Matched common name</strong>
+                    <ul>
+                        {% for cmname in search_results[scname] %}
+                            {% if cmname != '_flag_in_master_list' %}
+                                <li>{{ cmname }}</li>
+                            {% endif %}
                         {% endfor %}
-                        <a href="#lang-completely-new">Add new name</a>
-                    </div>
--->
+                    </ul><br>
+                    {% endif %}
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
 
-                    {% for language in language_names_list %}
-                        <div class="results-lang{% if language in language_names_list %} results-lang-mol{% endif %}" id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}>
-                        {% if language in lookup_results and (lookup_results[language])|length > 0 %}
-                            <h3 id="lang-{{language}}">{{ language_names[language] }}: {{ lookup_results[language][0].vernacularname }}</h3>
-                        {% else %}
-                            <h3 id="lang-{{language}}">{{ language_names[language] }}: <em>None</em></h3>
-                        {% endif %}
-                        <ol>
-                            {% for result in lookup_results[language] %}
-                                <li>
-                                    <div class="display_name" id="display_name_{{language}}_{{loop.index}}">
-                                        {% if not result.is_direct_match %}(for <em>{{ result.matched_name|capitalize }}</em>){% endif %}
-                                        {% if loop.first %}<strong>{% endif %}
-                                        <a class="nohistory" href="#" onclick="$('.display_name').show(); $('.edit_name').hide(); $('#display_name_{{language}}_{{loop.index}}').hide(); $('#edit_name_{{language}}_{{loop.index}}').show(); $('#edit_name_{{language}}_{{loop.index}} input:first').focus(); return false">{{ result.vernacular_name_formatted }}</a>
-                                        {% if result.source_priority == 80 %}(added manually){% elif result.source_priority != 0%}(Priority: {{ result.source_priority }}){%endif%}
-                                        {% if loop.first %}</strong>{% endif %}
-                                        {# TODO: reactivate once we have this in the result
-                                        {% if result.source_priority > 80 %}
-                                            <strong>(This name cannot be overridden! Please contact an administrator to edit it)</strong>
-                                        {% endif %}
-                                        #} {% if result.url %}(<a target="_new" href="{{ result.url }}">URL</a>){% endif %}
-                                        <ul>
-                                            <li><span style="font: 80% small-caps">{{ result.source|urlize }}<!-- from {{result.source_url|urlize}} --></span></li>
-                                        </ul>
-                                    </div>
-                                    <div class="edit_name" id="edit_name_{{language}}_{{loop.index}}" style="display: none">
-                                        <form method="post" action="{{'/add/name'|url_to_base}}">
-                                            <input name="name_to_add" value="{{result.cmname}}" size=40>
-                                            <span style="font-size: 80%">Source:</span> <input name="source" size=50 value="{{result.sources|join("|")}}">
-     
-                                            <input type="hidden" name="dataset" value="{{dataset_filter}}">
-                                            <input type="hidden" name="search" value="{{current_search}}">
-                                            <input type="hidden" name="lookup" value="{{lookup_search}}">
-                                            <input type="hidden" name="lang" value="{{language}}">
-                                            <input class="btn btn-success btn-sm" name="add_to_current_lookup_in_{{language}}"
-                                                value="Add" type="submit">
-                                            <input class="btn btn-default btn-sm" value="Cancel" type="reset" onclick="$('#edit_name_{{language}}_{{loop.index}}').hide(); $('#display_name_{{language}}_{{loop.index}}').show();">
-                                        </form>
-                                    </div>
-                                </li>
-                            {% endfor %}
-                            <li><a class="btn btn-info btn-xs nohistory" role="button" href="#" onclick="$('#add_new_{{language}}').toggle(); $('#name_to_add_{{language}}').focus(); return false"><em>Add another</em></a>
-                                <div id='add_new_{{language}}' style="display:none">
-                                    <form method="post" action="{{'/add/name'|url_to_base}}">
-                                        <input name="name_to_add" id="name_to_add_{{language}}">
-                                        <input name="source" size=50 value="Source">
-                                        <input class="btn btn-success btn-sm" name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
-                                        <input type="hidden" name="dataset" value="{{dataset_filter}}">
-                                        <input type="hidden" name="search" value="{{current_search}}">
-                                        <input type="hidden" name="lookup" value="{{lookup_search}}">
-                                        <input type="hidden" name="lang" value="{{language}}">
-                                    </form>
-                                </div>
-                            </li>
-                        </ol>
-                        </div>
+    <div id="result" style="margin-left: 22em;">
+
+    <h2><em>{{lookup_search|capitalize}}</em></h2>
+
+    <!-- TODO: Add list of datasets? -->
+
+    {% if 'family' not in higher_taxonomy %}
+        <div class="alert alert-warning"><strong>Higher taxonomy</strong>:
+            This name does not exist in the <a href="{{'/masterlist'|url_to_base}}">Master List</a>,
+            and so higher taxonomy cannot be looked up. Since the master list only displays species-level
+            names, this might just mean you're adding vernacular names to a genus or family, which is fine.
+        </div>
+    {% else %}
+        <p><strong>Higher taxonomy</strong> (according to the <a href="{{'/masterlist'|url_to_base}}">Master List</a>):</p>
+        <ul>
+            {% if 'class' in higher_taxonomy %}
+                <li>Class <a href="{{'/search'|url_to_base}}?lookup={{higher_taxonomy['class']|capitalize}}">{{higher_taxonomy['class']|capitalize}}</a>
+                (source: {{higher_taxonomy['class_source']}})
+            {% endif %}
+            {% if 'order' in higher_taxonomy %}
+                <li>Order <a href="{{'/search'|url_to_base}}?lookup={{higher_taxonomy['order']|capitalize}}">{{higher_taxonomy['order']|capitalize}}</a>
+                (source: {{higher_taxonomy['order_source']}})
+            {% endif %}
+            {% if 'family' in higher_taxonomy %}
+                <li>Family <a href="{{'/search'|url_to_base}}?lookup={{higher_taxonomy['family']|capitalize}}">{{higher_taxonomy['family']|capitalize}}</a>
+                (source: {{higher_taxonomy['family_source']}})
+            {% endif %}
+        </ul>
+    {% endif %}
+
+    <p>Look up <em>{{lookup_search|capitalize}}</em> on
+        <a target="_blank" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{lookup_search|capitalize}}">English Wikipedia</a>
+        | <a target="_blank" href="http://eol.org/{{lookup_search|capitalize}}">EOL</a>
+        | <a target="_blank" href="http://www.gbif.org/species/search?q={{lookup_search|capitalize}}">GBIF</a>
+    </p>
+
+    <strong>Vernacular names</strong>
+
+    <table border="1">
+        {% for language in language_names_list %}
+            {% if language + '_unique' in lookup_results %}
+                {% set unique_vnames = lookup_results[language + '_unique'] + [""] %}
+            {% else %}
+                {% set unique_vnames = [""] %}
+            {% endif %}
+            <tr class="results-lang{% if language in language_names_list %} results-lang-mol{% endif %}"
+                id="results-lang-{{language}}" {% if language not in language_names_list %}style="display:none"{% endif %}
+            >
+
+            {% if language in lookup_results and (lookup_results[language])|length > 0 %}
+                <td><strong id="lang-{{language}}">{{ language_names[language] }}</strong></td>
+            {% else %}
+                <td><strong id="lang-{{language}}">{{ language_names[language] }}: </strong></td>
+            {% endif %}
+
+            <td><select id="{{language}}_select" style="width: 100%"
+                onchange='$(".{{language}}_edit").hide(); $("#{{language}}_opt_" + ($(this).val())).show()'
+            >
+                    {% for vname in unique_vnames %}
+                        <option value="{{loop.index}}"
+                                {% if loop.first %}selected="true"{% endif %}>{% if vname == '' %}New ...{%
+                                else %}{{ vname }} ({{ lookup_results[language + '_dict'][vname]|count }} sources){% endif %}</option>
                     {% endfor %}
-                    <!--
-                        <div class="results-lang" id="results-lang-completely-new">
-                        <h3 id="lang-completely-new">Add new language</h3>
-                        <form method="post" action="/add/name">
-                            Language: <input name="lang" size="4">
-                            Name: <input name="name_to_add" id="name_to_add_completely-new">
-                            Source: <input name="source" size=50 value="Source">
-                            <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                </select>
+
+                {% for vname in unique_vnames %}
+                    <div id="{{language}}_opt_{{loop.index}}" class="{{language}}_edit" style="{% if not (open_lang == language and loop.first) %}display: none{% endif %}">
+                        <form method="post" action="{{'/add/name'|url_to_base}}">
+                        <table>
+                            <tr><td>Name</td><td>
+                                <input name="name_to_add" id="{{language}}_vname" size="50"
+                                       value="{% if vname != '' %}{{lookup_results[language + "_dict"][vname][0].vernacular_name_formatted}}{% endif %}" />
+                                </td>
+                            <tr><td>Source</td><td>
+                                <input name="source" size=50 value="{% if vname != '' %}{{lookup_results[language + "_dict"][vname][0].source}}{% endif %}">
+                            </tr>
+
                             <input type="hidden" name="dataset" value="{{dataset_filter}}">
                             <input type="hidden" name="search" value="{{current_search}}">
                             <input type="hidden" name="lookup" value="{{lookup_search}}">
-                        </form>
-                        </div>
-                    -->
-                    </tr>
-                </table>
-            </td>    
-        {% endif %}
+                            <input type="hidden" name="lang" value="{{language}}">
 
+                            <tr><td colspan="2"><center><input type="submit" class="btn btn-success btn-sm" name="add_to_current_lookup_in_{{language}}" value="Add" />
+                            <button onclick="$('.{{language}}_edit').hide(); $('#{{language}}_select option:eq(0)').prop('selected', true); return false;" class="btn btn-success btn-sm">Close</button>
+                            </center></td></tr>
+
+                        </table>
+                        </form>
+                    </div>
+                {% endfor %}
+            </td>
         </tr>
-        </table>
+        {% endfor %}
+    </table>
+                <!--
+                    <div class="results-lang" id="results-lang-completely-new">
+                    <h3 id="lang-completely-new">Add new language</h3>
+                    <form method="post" action="/add/name">
+                        Language: <input name="lang" size="4">
+                        Name: <input name="name_to_add" id="name_to_add_completely-new">
+                        Source: <input name="source" size=50 value="Source">
+                        <input name="add_to_current_lookup_in_{{language}}" value="Add" type="submit">
+                        <input type="hidden" name="dataset" value="{{dataset_filter}}">
+                        <input type="hidden" name="search" value="{{current_search}}">
+                        <input type="hidden" name="lookup" value="{{lookup_search}}">
+                    </form>
+                    </div>
+                -->
+    </ul>
+
+    </div>
+
+    <div style="clear: both;">&nbsp;</div>
+
 {% endblock %}

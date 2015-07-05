@@ -116,7 +116,6 @@ class StaticPages(BaseHandler):
         else:
             self.response.status = 404
 
-
 #
 # MAIN PAGE HANDLER: /
 #
@@ -144,154 +143,6 @@ class MainPage(BaseHandler):
             'user_name': user_name,
             'vneditor_version': version.NOMDB_VERSION
         })
-
-#
-# SEARCH PAGE HANDLER: /search
-#
-class SearchPage(BaseHandler):
-    def get(self):
-        """ Display the search results and allows individual entries to be edited.
-
-        For historical reasons, this page does both search and edit, and does it
-        awfully. However, I'm not sure too many people use this functionality much
-        except for basic editing right now, so I'm not going to clean it until we
-        fully understand what this copmoenent should look like.
-        """
-        # TODO https://github.com/MapofLife/vernacular-names/issues/59
-
-        self.response.headers['Content-type'] = 'text/html'
-
-        # Set up user details.
-        user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
-        # Allow not-logged-in code to run.
-        if user is None:
-            return
-
-        # Load the current search term.
-        current_search = self.request.get('search')
-        if self.request.get('clear') != '':
-            current_search = ''
-        current_search = current_search.strip()
-
-        # Load the scientific name being looked up. If no search is
-        # currently in progress, look up the common name instead.
-        lookup_search = self.request.get('lookup')
-        lookup_results = {}
-
-        # If the current search is blank, but lookup is not, search
-        # for that instead.
-        if current_search == '' and lookup_search != '':
-            current_search = lookup_search
-
-        # Do the search.
-        search_results = dict()
-        search_results_scnames = []
-        if current_search != '':
-            search_results = masterlist.search_for_name(current_search)
-            search_results_scnames = sorted(search_results.keys())
-
-        # Check for dataset_filter
-        dataset_filter = self.request.get('dataset')
-        if dataset_filter != '':
-            if current_search != '':
-                # If there is a search, filter it using dataset_filter.
-                search_results_scnames = filter(
-                    lambda scname: masterlist.dataset_contains_name(dataset_filter, scname),
-                    search_results_scnames
-                )
-            else:
-                # If not, search by dataset.
-                search_results_scnames = masterlist.get_dataset_names(dataset_filter)
-
-                search_results = dict()
-                for scname in search_results_scnames:
-                    search_results[scname] = []
-
-        # During the initial search, automatically pick identical matches.
-        if lookup_search == '' and current_search != '':
-            lookup_search = current_search
-
-        # Find all names for all species in the languages of interest.
-        tax_family = set()
-        tax_order = set()
-        tax_class = set()
-        lookup_results_languages = []
-        lookup_results_lang_names = dict()
-        if lookup_search != '':
-            lookup_results = names.get_detailed_vname(lookup_search)
-
-            # Summarize higher taxonomy.
-            tax_family = lookup_results['tax_family']
-            tax_order = lookup_results['tax_order']
-            tax_class = lookup_results['tax_class']
-
-        # Render the main template.
-        self.render_template('search.html', {
-            'message': self.request.get('msg'),
-            'dataset_filter': dataset_filter,
-            'login_url': users.create_login_url(BASE_URL),
-            'logout_url': users.create_logout_url(BASE_URL),
-            'user_url': user_url,
-            'user_name': user_name,
-            'current_search': current_search,
-            'search_results': search_results,
-            'search_results_scnames': search_results_scnames,
-            'tax_family': tax_family,
-            'tax_order': tax_order,
-            'tax_class': tax_class,
-            'lookup_search': lookup_search,
-            'lookup_results': lookup_results,
-            'language_names': languages.language_names,
-            'language_names_list': languages.language_names_list,
-            'vneditor_version': version.NOMDB_VERSION
-        })
-
-#
-# DELETE NAME BY CartoDBID HANDLER: /delete/cartodb_id
-#
-class DeleteNameByCDBIDHandler(BaseHandler):
-    """ This handler will delete a row using its CartoDB identifier. """
-
-    def post(self):
-        """Delete name by $cartodb_id and redirect to /recent
-        """
-
-        # Fail without login.
-        current_user = self.check_user()
-        if current_user is None:
-            return
-
-        # Retrieve cartodb_id to delete.
-        cartodb_id = self.request.get_range('cartodb_id')
-
-        # Synthesize SQL
-        sql = "DELETE FROM %s WHERE cartodb_id=%d"
-        sql_query = sql % (
-            access.ALL_NAMES_TABLE,
-            cartodb_id
-        )
-
-        # Make it so.
-        response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
-            dict(
-                q=sql_query,
-                api_key=access.CARTODB_API_KEY
-            )
-        ))
-
-        if response.status_code != 200:
-            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-        else:
-            message = "Change %d deleted successfully." % cartodb_id
-
-        # Redirect to the recent changes page, which is the only person using this service right now.
-        self.redirect(BASE_URL + "/recent?" + urllib.urlencode(dict(
-            msg=message,
-        )))
-
 
 #
 # ADD NAME HANDLER: /add/name
@@ -381,9 +232,167 @@ class AddNameHandler(BaseHandler):
         self.redirect(BASE_URL + "/search?" + urllib.urlencode(dict(
             msg=message,
             search=search,
-            lookup=lookup
-        )) + "#lang-" + lang)
+            lookup=lookup,
+            open_lang=lang
+        )))
 
+#
+# SEARCH PAGE HANDLER: /search
+#
+class SearchPage(BaseHandler):
+    def get(self):
+        """ Display the search results and allows individual entries to be edited.
+
+        For historical reasons, this page does both search and edit, and does it
+        awfully. However, I'm not sure too many people use this functionality much
+        except for basic editing right now, so I'm not going to clean it until we
+        fully understand what this copmoenent should look like.
+        """
+        # TODO https://github.com/MapofLife/vernacular-names/issues/59
+
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Set up user details.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        # Allow not-logged-in code to run.
+        if user is None:
+            return
+
+        # Get any messages.
+        msg = self.request.get('msg')
+
+        # Load the current search term.
+        current_search = self.request.get('search')
+        if self.request.get('clear') != '':
+            current_search = ''
+        current_search = current_search.strip()
+
+        # Load the scientific name being looked up. If no search is
+        # currently in progress, look up the common name instead.
+        lookup_search = self.request.get('lookup')
+        lookup_results = {}
+
+        # If the current search is blank, but lookup is not, search
+        # for that instead.
+        if current_search == '' and lookup_search != '':
+            current_search = lookup_search
+
+        # Do the search.
+        search_results = dict()
+        search_results_scnames = []
+        if current_search != '':
+            search_results = masterlist.search_for_name(current_search)
+            search_results_scnames = sorted(search_results.keys())
+
+        # Check for dataset_filter
+        dataset_filter = self.request.get('dataset')
+        if dataset_filter != '':
+            if current_search != '':
+                # If there is a search, filter it using dataset_filter.
+                search_results_scnames = filter(
+                    lambda scname: masterlist.dataset_contains_name(dataset_filter, scname),
+                    search_results_scnames
+                )
+            else:
+                # If not, search by dataset.
+                search_results_scnames = masterlist.get_dataset_names(dataset_filter)
+
+                search_results = dict()
+                for scname in search_results_scnames:
+                    search_results[scname] = []
+
+        # During the initial search, automatically pick identical matches.
+        if lookup_search == '' and current_search != '':
+            lookup_search = current_search
+
+        # Find all names for all species in the languages of interest.
+        tax_family = set()
+        tax_order = set()
+        tax_class = set()
+        lookup_results_languages = []
+        lookup_results_lang_names = dict()
+        if lookup_search != '':
+            lookup_results = names.get_detailed_vname(lookup_search)
+
+            # Summarize higher taxonomy from vnames.
+            tax_family = lookup_results['tax_family']
+            tax_order = lookup_results['tax_order']
+            tax_class = lookup_results['tax_class']
+
+            # But also look up higher taxonomy from the Master List.
+            result = masterlist.get_higher_taxonomy([lookup_search.lower()])
+            higher_taxonomy = dict()
+            if lookup_search.lower() in result:
+                higher_taxonomy = result[lookup_search.lower()]
+
+        # Render the main template.
+        self.render_template('search.html', {
+            'message': msg,
+            'dataset_filter': dataset_filter,
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
+            'user_url': user_url,
+            'user_name': user_name,
+            'current_search': current_search,
+            'search_results': search_results,
+            'search_results_scnames': search_results_scnames,
+            'tax_family': tax_family,
+            'tax_order': tax_order,
+            'tax_class': tax_class,
+            'higher_taxonomy': higher_taxonomy,
+            'lookup_search': lookup_search,
+            'lookup_results': lookup_results,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'open_lang': self.request.get('open_lang'),
+            'vneditor_version': version.NOMDB_VERSION
+        })
+
+#
+# DELETE NAME BY CartoDBID HANDLER: /delete/cartodb_id
+#
+class DeleteNameByCDBIDHandler(BaseHandler):
+    """ This handler will delete a row using its CartoDB identifier. """
+
+    def post(self):
+        """Delete name by $cartodb_id and redirect to /recent
+        """
+
+        # Fail without login.
+        current_user = self.check_user()
+        if current_user is None:
+            return
+
+        # Retrieve cartodb_id to delete.
+        cartodb_id = self.request.get_range('cartodb_id')
+
+        # Synthesize SQL
+        sql = "DELETE FROM %s WHERE cartodb_id=%d"
+        sql_query = sql % (
+            access.ALL_NAMES_TABLE,
+            cartodb_id
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
+            dict(
+                q=sql_query,
+                api_key=access.CARTODB_API_KEY
+            )
+        ))
+
+        if response.status_code != 200:
+            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+        else:
+            message = "Change %d deleted successfully." % cartodb_id
+
+        # Redirect to the recent changes page, which is the only person using this service right now.
+        self.redirect(BASE_URL + "/recent?" + urllib.urlencode(dict(
+            msg=message,
+        )))
 
 #
 # COVERAGE VIEW HANDLER: /coverage
