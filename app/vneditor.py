@@ -57,6 +57,7 @@ JINJA_ENV = jinja2.Environment(
     autoescape=True
 )
 JINJA_ENV.filters['url_to_base'] = lambda x: BASE_URL + x
+JINJA_ENV.filters['quote_plus'] = lambda x: urllib.quote_plus(x)
 
 #
 # BaseHandler
@@ -1278,6 +1279,99 @@ class HigherTaxonomyHandler(BaseHandler):
         })
 
 #
+# REGEX SEARCH HANDLER: /regex
+#
+class RegexSearchHandler(BaseHandler):
+    """ Execute regular expression searches against the database. """
+
+    def get(self):
+        """ Runs a regular expression search against the database. """
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = 100
+
+        # Possible queries
+        vname = self.request.get('vname')
+
+        # Synthesize SQL
+        recent_sql = ("""SELECT
+            vn.cartodb_id, cmname,
+            scientificname IS NOT NULL AS flag_in_master_list,
+            scname, lang,
+            source, url, source_priority,
+            vn.added_by, vn.created_at, vn.updated_at,
+            COUNT(*) OVER() AS total_count
+            FROM %s vn LEFT JOIN %s ON LOWER(scname) = LOWER(scientificname)
+            WHERE cmname ~ %s
+            ORDER BY scientificname IS NULL, source_priority DESC, updated_at DESC, created_at DESC
+            LIMIT %d OFFSET %d
+        """) % (
+            access.ALL_NAMES_TABLE,
+            access.MASTER_LIST,
+            common.encode_b64_for_psql(vname),
+            display_count,
+            offset
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(
+            access.CDB_URL,
+            payload=urllib.urlencode({'q': recent_sql}),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=config.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        rows = []
+        total_count = 0
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + recent_sql + "'), server returned error " + str(
+                response.status_code) + ": " + response.content
+        else:
+            results = json.loads(response.content)
+            rows = results['rows']
+            if len(rows) > 0:
+                total_count = rows[0]['total_count']
+
+        # Render recent changes.
+        self.render_template('regex.html', {
+            'message': message,
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
+            'user_url': user_url,
+            'user_name': user_name,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+
+            'offset': offset,
+            'display_count': display_count,
+            'total_count': total_count,
+
+            'vname': vname,
+
+            'rows': rows,
+
+            'vneditor_version': version.NOMDB_VERSION
+        })
+
+
+#
 # RECENT CHANGES HANDLER: /recent
 #
 class RecentChangesHandler(BaseHandler):
@@ -1838,6 +1932,7 @@ application = webapp2.WSGIApplication([
     (BASE_URL + '/list', ListViewHandler),
     (BASE_URL + '/delete/cartodb_id', DeleteNameByCDBIDHandler),
     (BASE_URL + '/recent', RecentChangesHandler),
+    (BASE_URL + '/regex', RegexSearchHandler),
     (BASE_URL + '/taxonomy', HigherTaxonomyHandler),
     (BASE_URL + '/family', FamilyHandler),
     (BASE_URL + '/hemihomonyms', HemihomonymHandler),
