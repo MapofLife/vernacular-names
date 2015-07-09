@@ -1491,6 +1491,53 @@ class HigherTaxonomyHandler(BaseHandler):
 class RegexSearchHandler(BaseHandler):
     """ Execute regular expression searches against the database. """
 
+    def post(self):
+        """ Modify names and redirect to GET. """
+
+        # Load state.
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        message = ""
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = 100
+
+        # Possible queries
+        vname = self.request.get('vname')
+
+        # Figure out what changes need to be made.
+        scnames_args = filter(lambda x: x.startswith('scname_'), self.request.arguments())
+
+        for scname_arg in scnames_args:
+            match = re.match(r"^scname_(\d+)$", scname_arg)
+            if match:
+                loop_index = int(match.group(1))
+                scname = self.request.get('scname_%d' % loop_index)
+                original_cmname = self.request.get('original_cmname_%d' % loop_index)
+                cmname = self.request.get('cmname_%d' % loop_index)
+                lang = self.request.get('lang_%d' % loop_index)
+
+                if original_cmname != cmname:
+                    message += "(scname %s, cmname %s, lang %s)" % (scname, cmname, lang)
+
+        self.redirect(BASE_URL + "/regex?" + urllib.urlencode({
+            'oy': 'vey',
+            'msg': message.encode('utf8'),
+            'vname': vname,
+            'offset': offset,
+            'display': display_count
+        }))
+
+
     def get(self):
         """ Runs a regular expression search against the database. """
         self.response.headers['Content-type'] = 'text/html'

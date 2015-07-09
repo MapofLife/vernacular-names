@@ -40,6 +40,11 @@
     {% else %}
         <p>Displaying {{ rows|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
+        <form method="POST">
+            <input type="hidden" name="vname" value="{{value}}" />
+            <input type="hidden" name="display" value="{{display_count}}" />
+            <input type="hidden" name="offset" value="{{offset}}" />
+
         <div class="well well-sm">
             {% if offset > 0 %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset=0">Start</a>
@@ -48,6 +53,7 @@
             {% if offset + display_count < total_count %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
             {% endif %}
+            <input class="btn btn-primary" type="submit" value="Save changed common names" />
         </div>
 
         <table border="1" class="sortable">
@@ -64,7 +70,8 @@
             {% for row in rows %}
                 <tr>
                     <td>{{ loop.index + offset }}</td>
-                    <td><a href="{{'/search'|url_to_base}}?lookup={{row.scname}}"><em>{{ row.scname | capitalize }}</em></a>{% if not row.flag_in_master_list %} (not in master list){% endif %}</td>
+                    <td><input type="hidden" name="scname_{{loop.index}}" value="{{row.scname}}" />
+                        <a href="{{'/search'|url_to_base}}?lookup={{row.scname}}"><em>{{ row.scname | capitalize }}</em></a>{% if not row.flag_in_master_list %} (not in master list){% endif %}</td>
                     <td>
                         {% set lang = row.lang %}
                         {% if lang in language_names %}
@@ -74,7 +81,15 @@
                         {% endif %}
                         &nbsp;
                     </td>
-                    <td><a href="{{'/search'|url_to_base}}?lookup={{row.scname}}#lang-{{row.lang}}">{{row.cmname}}</a></td>
+                    <td>
+                        <input type="hidden" name="lang_{{loop.index}}" value="{{row.lang}}" />
+                        <input type="hidden" name="original_cmname_{{loop.index}}" value="{{row.cmname}}" />
+                        {#
+                            TODO: Make this change colour when edited.
+                        #}
+                        <input size="30" name="cmname_{{loop.index}}" value="{{row.cmname}}" /><br>
+                        <a href="{{'/search'|url_to_base}}?lookup={{row.scname}}#lang-{{row.lang}}">Lookup</a>
+                    </td>
                     <td>{{ row.source|urlize }} (priority: {{row.source_priority}}){% if row.url %}<br>{{ row.url|urlize }}{% endif %}</td>
                     <td>{{ row.added_by }} at {{ row.created_at }}</td>
                     <td><form method="POST" action="{{'/delete/cartodb_id'|url_to_base}}"><button class="btn btn-danger btn-sm" type="submit" name="cartodb_id" value="{{ row.cartodb_id }}">Delete</button></form></td>
@@ -82,6 +97,8 @@
             {% endfor %}
             </tbody>
         </table>
+
+
 
         <div class="well well-sm">
             {% if offset > 0 %}
@@ -91,7 +108,10 @@
             {% if offset + display_count < total_count %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
             {% endif %}
+            <input class="btn btn-primary" type="submit" value="Save changed common names" />
         </div>
+
+    </form>
 
 
     {% endif %}
