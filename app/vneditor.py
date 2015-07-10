@@ -1511,26 +1511,101 @@ class RegexSearchHandler(BaseHandler):
         offset = self.request.get_range('offset', 0, default=0)
         display_count = 100
 
+        # Source priority?
+        source_priority = str(self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX,
+            config.PRIORITY_DEFAULT_APP))
+
         # Possible queries
         vname = self.request.get('vname')
 
         # Figure out what changes need to be made.
-        scnames_args = filter(lambda x: x.startswith('scname_'), self.request.arguments())
+        cartodb_id_args = filter(lambda x: x.startswith('cartodb_id_'), self.request.arguments())
 
-        for scname_arg in scnames_args:
-            match = re.match(r"^scname_(\d+)$", scname_arg)
+        for cartodb_id_arg in cartodb_id_args:
+            match = re.match(r"^cartodb_id_(\d+)$", cartodb_id_arg)
             if match:
                 loop_index = int(match.group(1))
+                cartodb_id = self.request.get('cartodb_id_%d' % loop_index)
                 scname = self.request.get('scname_%d' % loop_index)
                 original_cmname = self.request.get('original_cmname_%d' % loop_index)
                 cmname = self.request.get('cmname_%d' % loop_index)
                 lang = self.request.get('lang_%d' % loop_index)
 
                 if original_cmname != cmname:
-                    message += "(scname %s, cmname %s, lang %s)" % (scname, cmname, lang)
+                    message += "(scname %s, cmname %s, lang %s at source priority %s)" % (scname, cmname, lang, source_priority)
+
+                    # Record the change in the audit table.
+                    sql_query = """INSERT INTO %(audit_table)s
+                        (vernacular_name_cartodb_id, cmname_from, cmname_to, lang_from, lang_to, scname_from, scname_to,
+                            source_from, source_to, source_priority_from, source_priority_to, source_url_from, source_url_to,
+                            url_from, url_to) SELECT
+                            %(cartodb_id)s AS vernacular_name_cartodb_id,
+                            vn.cmname AS cmname_from,
+                            %(cmname)s AS cmname_to,
+                            vn.lang AS lang_from,
+                            %(lang)s AS lang_to,
+                            vn.scname AS scname_from,
+                            %(scname)s AS scname_to,
+                            vn.source AS source_from,
+                            vn.source AS source_to,
+                            vn.source_priority AS source_priority_from,
+                            %(source_priority)s AS source_priority_to,
+                            vn.source_url AS source_url_from,
+                            vn.source_url AS source_url_to,
+                            vn.url AS url_from,
+                            vn.url AS url_to
+                        FROM %(all_names)s vn
+                        WHERE cartodb_id::TEXT=%(cartodb_id)s
+                    """ % {
+                        'audit_table': access.AUDIT_TABLE,
+                        'all_names': access.ALL_NAMES_TABLE,
+                        'cartodb_id': common.encode_b64_for_psql(cartodb_id),
+                        'lang': common.encode_b64_for_psql(lang),
+                        'cmname': common.encode_b64_for_psql(cmname),
+                        'scname': common.encode_b64_for_psql(scname),
+                        'source_priority': common.encode_b64_for_psql(source_priority)
+                    }
+
+                    # Make it so.
+                    response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
+                        dict(
+                            q=sql_query,
+                            api_key=access.CARTODB_API_KEY
+                        )
+                    ))
+
+                    if response.status_code != 200:
+                        message += "\nError updating audit trail: server returned error " + str(response.status_code) + ": " + response.content
+                    else:
+                        # Update vernacular name table.
+                        sql_query = """UPDATE %(all_names)s SET
+                            cmname=%(cmname)s,
+                            scname=%(scname)s,
+                            lang=%(lang)s,
+                            source_priority=%(source_priority)s
+                            WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
+                                'all_names': access.ALL_NAMES_TABLE,
+                                'cmname': common.encode_b64_for_psql(cmname),
+                                'scname': common.encode_b64_for_psql(scname),
+                                'lang': common.encode_b64_for_psql(lang),
+                                'source_priority': common.encode_b64_for_psql(source_priority),
+                                'cartodb_id': common.encode_b64_for_psql(cartodb_id)
+                            }
+
+                        # Make it so.
+                        response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
+                            dict(
+                                q=sql_query,
+                                api_key=access.CARTODB_API_KEY
+                            )
+                        ))
+
+                        if response.status_code != 200:
+                            message += "\nError updating vernacular name: server returned error " + str(response.status_code) + ": " + response.content
+                        else:
+                            message += "\nCommon name '%s' changed." % cartodb_id
 
         self.redirect(BASE_URL + "/regex?" + urllib.urlencode({
-            'oy': 'vey',
             'msg': message.encode('utf8'),
             'vname': vname,
             'offset': offset,
@@ -1564,7 +1639,7 @@ class RegexSearchHandler(BaseHandler):
 
         # Synthesize SQL
         recent_sql = ("""SELECT
-            vn.cartodb_id, cmname,
+            vn.cartodb_id AS cartodb_id, cmname,
             scientificname IS NOT NULL AS flag_in_master_list,
             scname, lang,
             source, url, source_priority,

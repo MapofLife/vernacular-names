@@ -53,7 +53,7 @@
             {% if offset + display_count < total_count %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
             {% endif %}
-            <input class="btn btn-primary" type="submit" value="Save changed common names" />
+            <input class="btn btn-primary" type="submit" size="5" value="Save changed common names" />
         </div>
 
         <table border="1" class="sortable">
@@ -83,6 +83,8 @@
                     </td>
                     <td>
                         <input type="hidden" name="lang_{{loop.index}}" value="{{row.lang}}" />
+                        <input type="hidden" name="cartodb_id_{{loop.index}}" value="{{row.cartodb_id}}" />
+                        <input type="hidden" name="source_priority_{{loop.index}}" value="{{row.source_priority}}" />
                         <input type="hidden" name="original_cmname_{{loop.index}}" value="{{row.cmname}}" />
                         {#
                             TODO: Make this change colour when edited.
