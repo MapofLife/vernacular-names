@@ -1637,7 +1637,7 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
-        display_count = 100
+        display_count = 30
 
         # Possible queries
         vname = self.request.get('vname')
