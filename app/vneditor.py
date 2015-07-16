@@ -1499,7 +1499,7 @@ class RegexSearchHandler(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
+        user_email = user.email() if user else "no user logged in"
         user_url = users.create_login_url(BASE_URL)
 
         if user is None:
@@ -1521,6 +1521,7 @@ class RegexSearchHandler(BaseHandler):
         # Figure out what changes need to be made.
         cartodb_id_args = filter(lambda x: x.startswith('cartodb_id_'), self.request.arguments())
 
+        count_success = 0
         for cartodb_id_arg in cartodb_id_args:
             match = re.match(r"^cartodb_id_(\d+)$", cartodb_id_arg)
             if match:
@@ -1532,33 +1533,34 @@ class RegexSearchHandler(BaseHandler):
                 lang = self.request.get('lang_%d' % loop_index)
 
                 if original_cmname != cmname:
-                    message += "(scname %s, cmname %s, lang %s at source priority %s)" % (scname, cmname, lang, source_priority)
+                    # message += "(scname %s, cmname %s, lang %s at source priority %s)" % (scname, cmname, lang, source_priority)
 
                     # Record the change in the audit table.
                     sql_query = """INSERT INTO %(audit_table)s
-                        (vernacular_name_cartodb_id, cmname_from, cmname_to, lang_from, lang_to, scname_from, scname_to,
-                            source_from, source_to, source_priority_from, source_priority_to, source_url_from, source_url_to,
-                            url_from, url_to) SELECT
-                            %(cartodb_id)s AS vernacular_name_cartodb_id,
-                            vn.cmname AS cmname_from,
-                            %(cmname)s AS cmname_to,
-                            vn.lang AS lang_from,
-                            %(lang)s AS lang_to,
-                            vn.scname AS scname_from,
-                            %(scname)s AS scname_to,
-                            vn.source AS source_from,
-                            vn.source AS source_to,
-                            vn.source_priority AS source_priority_from,
-                            %(source_priority)s AS source_priority_to,
-                            vn.source_url AS source_url_from,
-                            vn.source_url AS source_url_to,
-                            vn.url AS url_from,
-                            vn.url AS url_to
-                        FROM %(all_names)s vn
-                        WHERE cartodb_id::TEXT=%(cartodb_id)s
-                    """ % {
+(added_by, vernacular_name_cartodb_id, cmname_from, cmname_to, lang_from, lang_to, scname_from, scname_to,
+source_from, source_to, source_priority_from, source_priority_to, source_url_from, source_url_to,
+url_from, url_to) SELECT
+%(added_by)s AS added_by,
+%(cartodb_id)s AS vernacular_name_cartodb_id,
+vn.cmname AS cmname_from,
+%(cmname)s AS cmname_to,
+vn.lang AS lang_from,
+%(lang)s AS lang_to,
+vn.scname AS scname_from,
+%(scname)s AS scname_to,
+vn.source AS source_from,
+vn.source AS source_to,
+vn.source_priority AS source_priority_from,
+%(source_priority)s AS source_priority_to,
+vn.source_url AS source_url_from,
+vn.source_url AS source_url_to,
+vn.url AS url_from,
+vn.url AS url_to
+FROM %(all_names)s vn
+WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
                         'audit_table': access.AUDIT_TABLE,
                         'all_names': access.ALL_NAMES_TABLE,
+                        'added_by': common.encode_b64_for_psql(user_email),
                         'cartodb_id': common.encode_b64_for_psql(cartodb_id),
                         'lang': common.encode_b64_for_psql(lang),
                         'cmname': common.encode_b64_for_psql(cmname),
@@ -1601,9 +1603,12 @@ class RegexSearchHandler(BaseHandler):
                         ))
 
                         if response.status_code != 200:
-                            message += "\nError updating vernacular name: server returned error " + str(response.status_code) + ": " + response.content
+                            message += "\nError updating vernacular name: server returned error " + str(response.status_code) + ": " + response.content + " "
                         else:
-                            message += "\nCommon name '%s' changed." % cartodb_id
+                            count_success += 1
+
+        if count_success > 0:
+            message += "\n%d names modified successfully. " % count_success
 
         self.redirect(BASE_URL + "/regex?" + urllib.urlencode({
             'msg': message.encode('utf8'),
@@ -1619,7 +1624,7 @@ class RegexSearchHandler(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
+        user_email = user.email() if user else "no user logged in"
         user_url = users.create_login_url(BASE_URL)
 
         if user is None:
@@ -1646,13 +1651,19 @@ class RegexSearchHandler(BaseHandler):
             vn.added_by, vn.created_at, vn.updated_at,
             COUNT(*) OVER() AS total_count
             FROM %s vn LEFT JOIN %s ON LOWER(scname) = LOWER(scientificname)
-            WHERE cmname ~ %s
-            ORDER BY scientificname IS NULL, source_priority DESC, updated_at DESC, created_at DESC
+            WHERE cmname ~ %s AND lang IN %s
+            ORDER BY
+                scientificname IS NULL,
+                scientificname ASC,
+                source_priority DESC,
+                updated_at DESC,
+                created_at DESC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
             access.MASTER_LIST,
             common.encode_b64_for_psql(vname),
+            '(' + ','.join(map(lambda x: common.encode_b64_for_psql(x), languages.language_names_list)) + ')',
             display_count,
             offset
         )
@@ -1684,7 +1695,7 @@ class RegexSearchHandler(BaseHandler):
             'login_url': users.create_login_url(BASE_URL),
             'logout_url': users.create_logout_url(BASE_URL),
             'user_url': user_url,
-            'user_name': user_name,
+            'user_name': user_email,
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
 
@@ -1727,15 +1738,33 @@ class RecentChangesHandler(BaseHandler):
         offset = self.request.get_range('offset', 0, default=0)
         display_count = 100
 
-        # Synthesize SQL
-        recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, tax_class, tax_order, tax_family, added_by, created_at, updated_at,
-            COUNT(*) OVER() AS total_count
-            FROM %s
-            WHERE source_url='""" + SOURCE_URL + """'
+        # Search for recently added names.
+        recent_sql = ("""SELECT
+            vn.cartodb_id,
+            scname,
+            lang,
+            cmname,
+            source,
+            url,
+            source_priority,
+            vn.added_by,
+            vn.created_at,
+            vn.updated_at,
+            COUNT(*) OVER() AS total_count,
+
+            audit.cmname_from,
+            audit.cmname_to,
+            audit.added_by AS audit_added_by,
+            audit.updated_at AS audit_updated_at
+
+            FROM %s vn
+            LEFT JOIN %s audit
+                ON vn.cartodb_id::TEXT = audit.vernacular_name_cartodb_id
             ORDER BY updated_at DESC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
+            access.AUDIT_TABLE,
             display_count,
             offset
         )

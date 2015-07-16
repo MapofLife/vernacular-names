@@ -4,6 +4,11 @@
 
 {% block head %}
     <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
+    <script type="text/javascript">
+        $(window).bind('beforeunload', function(e) {
+
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -31,8 +36,15 @@
                     <a href="?vname=.{30}">30 characters</a>
                 </li>
             </ul>
-
         </form>
+    </div>
+
+    <div id="edit-mode-warning" class="alert alert-warning">
+        <p><strong>Warning</strong>:
+            Although names changed here will appear in <a href="{{'/recent'|url_to_base}}">Recent Changes</a>,
+            any changes you make on this page will NOT be automatically undoable, and will need to be
+            fixed on this page or replaced with a better name.
+        </p>
     </div>
 
     {% if not rows %}
@@ -100,8 +112,6 @@
             </tbody>
         </table>
 
-
-
         <div class="well well-sm">
             {% if offset > 0 %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset=0">Start</a>
@@ -114,7 +124,6 @@
         </div>
 
     </form>
-
 
     {% endif %}
 {% endblock %}

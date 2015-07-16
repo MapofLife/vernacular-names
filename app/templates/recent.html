@@ -46,7 +46,17 @@
                         {% endif %}
                         &nbsp;
                     </td>
-                    <td><a href="{{'/search'|url_to_base}}?lookup={{recent_change.scname}}&open_lang={{recent_change.lang}}">{{recent_change.cmname}}</a></td>
+                    <td><a href="{{'/search'|url_to_base}}?lookup={{recent_change.scname}}&open_lang={{recent_change.lang}}">{{recent_change.cmname}}</a>
+                    {% if recent_change.cmname_from %}
+                        <div class="small">
+                            (renamed
+                            {% if recent_change.cmname_to != recent_change.cmname %}to {{recent_change.cmname_to}}{% endif %}
+                            from &ldquo;{{ recent_change.cmname_from }}&rdquo;
+                            by {{recent_change.audit_added_by}}
+                            at {{recent_change.audit_updated_at}})
+                        </div>
+                    {% endif %}
+                    </td>
                     <td>
                     <a href="{{'/sources/summary'|url_to_base}}?name={{recent_change.source|quote_plus}}">{{ recent_change.source|urlize }} (priority:&nbsp;{{recent_change.source_priority}}){% if recent_change.url %}<br>{{ recent_change.url|urlize }}{% endif %}</td>
                     <td>{{ recent_change.added_by }} at {{ recent_change.created_at }}</td>
