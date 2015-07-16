@@ -15,6 +15,7 @@ import csv
 import os
 import os.path
 import time
+import datetime
 import sys
 
 sys.path.append('config')
@@ -69,12 +70,21 @@ print("Vernacular names downloaded for %d families." % len(tax_families))
 
 # Break the request up into chunks.
 CHUNK_SIZE = 3000
+time_start = time.time()
 for i in xrange(0, len(all_names), CHUNK_SIZE):
     chunk_scnames = all_names[i:i + CHUNK_SIZE]
 
     vnames_chunk = names.get_vnames(chunk_scnames)
     print("Retrieved vernacular names for %d scientific names, %d rows of %d (%.2f%%) written so far." % (
         len(vnames_chunk), rowcount, len(all_names), float(rowcount)/len(all_names) * 100))
+
+    # Estimate time left.
+    time_elapsed = time.time() - time_start
+    time_remaining = len(all_names)/(rowcount/time_elapsed) - time_elapsed if rowcount > 0 else 0
+    print("Time elapsed: %s, time remaining: %s" % (
+        str(datetime.timedelta(seconds=time_elapsed)),
+        str(datetime.timedelta(seconds=time_remaining))
+    ))
 
     for name in chunk_scnames:
         rowcount += 1
@@ -110,4 +120,4 @@ gzfile.close()
 
 time_ended = time.time()
 
-print(str(rowcount) + " rows written in " + str(time_ended-time_started) + " seconds")
+print(str(rowcount) + " rows written in " + str(datetime.timedelta(seconds=time_ended-time_started)))
