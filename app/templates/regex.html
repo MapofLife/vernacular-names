@@ -4,6 +4,11 @@
 
 {% block head %}
     <script src="{{'/static/sorttable.js'|url_to_base}}"></script>
+    <script type="text/javascript">
+        $(window).bind('beforeunload', function(e) {
+
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
@@ -23,6 +28,7 @@
                 <li><a href="?vname=<.*>">HTML tags</a></li>
                 <li><a href="?vname=%26%23\d%2B;">HTML entities</a></li>
                 <li><a href="?vname=[a-z]%2B[A-Z]%2B[a-z]%2B">Improper spacing</a></li>
+                <li>Conjunctions in: <a href="?vname=\s(and|or)\s">English</a></li>
                 <li>Names longer than:
                     <a href="?vname=.{100}">100 characters</a>,
                     <a href="?vname=.{80}">80 characters</a>,
@@ -31,8 +37,15 @@
                     <a href="?vname=.{30}">30 characters</a>
                 </li>
             </ul>
-
         </form>
+    </div>
+
+    <div id="edit-mode-warning" class="alert alert-warning">
+        <p><strong>Warning</strong>:
+            Although names changed here will appear in <a href="{{'/recent'|url_to_base}}">Recent Changes</a>,
+            any changes you make on this page will NOT be automatically undoable, and will need to be
+            fixed on this page or replaced with a better name.
+        </p>
     </div>
 
     {% if not rows %}
@@ -40,7 +53,13 @@
     {% else %}
         <p>Displaying {{ rows|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
+        <form method="POST">
+            <input type="hidden" name="vname" value="{{value}}" />
+            <input type="hidden" name="display" value="{{display_count}}" />
+            <input type="hidden" name="offset" value="{{offset}}" />
+
         <div class="well well-sm">
+            <input class="btn btn-primary" type="submit" size="5" value="Save changed common names" />
             {% if offset > 0 %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset=0">Start</a>
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
@@ -64,7 +83,8 @@
             {% for row in rows %}
                 <tr>
                     <td>{{ loop.index + offset }}</td>
-                    <td><a href="{{'/search'|url_to_base}}?lookup={{row.scname}}"><em>{{ row.scname | capitalize }}</em></a>{% if not row.flag_in_master_list %} (not in master list){% endif %}</td>
+                    <td><input type="hidden" name="scname_{{loop.index}}" value="{{row.scname}}" />
+                        <a href="{{'/search'|url_to_base}}?lookup={{row.scname}}"><em>{{ row.scname | capitalize }}</em></a>{% if not row.flag_in_master_list %} (not in master list){% endif %}</td>
                     <td>
                         {% set lang = row.lang %}
                         {% if lang in language_names %}
@@ -74,7 +94,17 @@
                         {% endif %}
                         &nbsp;
                     </td>
-                    <td><a href="{{'/search'|url_to_base}}?lookup={{row.scname}}#lang-{{row.lang}}">{{row.cmname}}</a></td>
+                    <td>
+                        <input type="hidden" name="lang_{{loop.index}}" value="{{row.lang}}" />
+                        <input type="hidden" name="cartodb_id_{{loop.index}}" value="{{row.cartodb_id}}" />
+                        <input type="hidden" name="source_priority_{{loop.index}}" value="{{row.source_priority}}" />
+                        <input type="hidden" name="original_cmname_{{loop.index}}" value="{{row.cmname}}" />
+                        {#
+                            TODO: Make this change colour when edited.
+                        #}
+                        <input size="30" name="cmname_{{loop.index}}" value="{{row.cmname}}" /><br>
+                        <a href="{{'/search'|url_to_base}}?lookup={{row.scname}}#lang-{{row.lang}}">Lookup</a>
+                    </td>
                     <td>{{ row.source|urlize }} (priority: {{row.source_priority}}){% if row.url %}<br>{{ row.url|urlize }}{% endif %}</td>
                     <td>{{ row.added_by }} at {{ row.created_at }}</td>
                     <td><form method="POST" action="{{'/delete/cartodb_id'|url_to_base}}"><button class="btn btn-danger btn-sm" type="submit" name="cartodb_id" value="{{ row.cartodb_id }}">Delete</button></form></td>
@@ -84,6 +114,7 @@
         </table>
 
         <div class="well well-sm">
+            <input class="btn btn-primary" type="submit" value="Save changed common names" />
             {% if offset > 0 %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset=0">Start</a>
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
@@ -93,6 +124,7 @@
             {% endif %}
         </div>
 
+    </form>
 
     {% endif %}
 {% endblock %}

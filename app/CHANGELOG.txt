@@ -5,6 +5,8 @@ Development:
  - Added a regular expression search at /regex (#42).
  - Created a source summary page (#107).
  - Added source and better UI for filters to names in /list (#58, #65).
+ - Added /regex for regular expression searching and editing (#113).
+   - Modified /recent to display renames from /regex as well.
 
 0.9.3: June 21, 2015
  - Added support for Appstats so that we can track timeouts better
