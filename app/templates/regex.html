@@ -28,6 +28,7 @@
                 <li><a href="?vname=<.*>">HTML tags</a></li>
                 <li><a href="?vname=%26%23\d%2B;">HTML entities</a></li>
                 <li><a href="?vname=[a-z]%2B[A-Z]%2B[a-z]%2B">Improper spacing</a></li>
+                <li>Conjunctions in: <a href="?vname=\s(and|or)\s">English</a></li>
                 <li>Names longer than:
                     <a href="?vname=.{100}">100 characters</a>,
                     <a href="?vname=.{80}">80 characters</a>,
@@ -58,6 +59,7 @@
             <input type="hidden" name="offset" value="{{offset}}" />
 
         <div class="well well-sm">
+            <input class="btn btn-primary" type="submit" size="5" value="Save changed common names" />
             {% if offset > 0 %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset=0">Start</a>
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
@@ -65,7 +67,6 @@
             {% if offset + display_count < total_count %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
             {% endif %}
-            <input class="btn btn-primary" type="submit" size="5" value="Save changed common names" />
         </div>
 
         <table border="1" class="sortable">
@@ -113,6 +114,7 @@
         </table>
 
         <div class="well well-sm">
+            <input class="btn btn-primary" type="submit" value="Save changed common names" />
             {% if offset > 0 %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset=0">Start</a>
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset - display_count}}">Previous {{display_count}} entries</a>
@@ -120,7 +122,6 @@
             {% if offset + display_count < total_count %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
             {% endif %}
-            <input class="btn btn-primary" type="submit" value="Save changed common names" />
         </div>
 
     </form>

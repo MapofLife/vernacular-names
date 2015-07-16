@@ -1509,7 +1509,7 @@ class RegexSearchHandler(BaseHandler):
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
-        display_count = 100
+        display_count = 30
 
         # Source priority?
         source_priority = str(self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX,
