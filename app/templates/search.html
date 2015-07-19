@@ -138,7 +138,8 @@ div.block {
             {% endif %}
 
             <td><select id="{{language}}_select" style="width: 100%"
-                onchange='$(".{{language}}_edit").hide(); $("#{{language}}_opt_" + ($(this).val())).show()'
+                {# OnChange doesn't work if there's only a single item, so we switch to OnClick for that. #}
+                {% if unique_vnames|count == 1 %}onclick{% else %}onchange{% endif %}='$(".{{language}}_edit").hide(); $("#{{language}}_opt_" + ($(this).val())).show()'
             >
                     {% for vname in unique_vnames %}
                         <option value="{{loop.index}}"

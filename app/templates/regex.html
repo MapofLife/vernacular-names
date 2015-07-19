@@ -84,7 +84,7 @@
                 <tr>
                     <td>{{ loop.index + offset }}</td>
                     <td><input type="hidden" name="scname_{{loop.index}}" value="{{row.scname}}" />
-                        <a href="{{'/search'|url_to_base}}?lookup={{row.scname}}"><em>{{ row.scname | capitalize }}</em></a>{% if not row.flag_in_master_list %} (not in master list){% endif %}</td>
+                        <a target="_blank" href="{{'/search'|url_to_base}}?lookup={{row.scname}}"><em>{{ row.scname | capitalize }}</em></a>{% if not row.flag_in_master_list %} (not in master list){% endif %}</td>
                     <td>
                         {% set lang = row.lang %}
                         {% if lang in language_names %}
@@ -103,7 +103,7 @@
                             TODO: Make this change colour when edited.
                         #}
                         <input size="30" name="cmname_{{loop.index}}" value="{{row.cmname}}" /><br>
-                        <a href="{{'/search'|url_to_base}}?lookup={{row.scname}}#lang-{{row.lang}}">Lookup</a>
+                        <a target="_blank" href="{{'/search'|url_to_base}}?lookup={{row.scname}}&open_lang={{row.lang}}">Lookup</a>
                     </td>
                     <td>{{ row.source|urlize }} (priority: {{row.source_priority}}){% if row.url %}<br>{{ row.url|urlize }}{% endif %}</td>
                     <td>{{ row.added_by }} at {{ row.created_at }}</td>
