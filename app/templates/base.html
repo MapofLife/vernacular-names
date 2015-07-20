@@ -33,8 +33,7 @@
         </div>
 
         <form action="{{'/search'|url_to_base}}" method="GET">
-            <input name="search" value="{{ current_search }}">
-                Name:
+            Scientific or vernacular name: <input name="search" value="{{ current_search }}">
                 <input class="btn btn-primary btn-sm" type="submit" value="Lookup">
                 <input class="btn btn-default btn-sm" type="reset" name="clear" value="Clear">
             <input name="dataset" type="hidden" value="{{ dataset_filter }}">
