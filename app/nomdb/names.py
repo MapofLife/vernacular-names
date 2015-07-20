@@ -192,6 +192,7 @@ def get_detailed_vname(scname):
             %s
         ORDER BY
             source_priority DESC,
+            cmname DESC,
             created_at DESC
     """
     sql_query = sql.strip() % (
@@ -224,7 +225,7 @@ def get_detailed_vname(scname):
     for lang in rows_by_lang:
         rows = rows_by_lang[lang]
 
-        list_vnames = []
+        list_vnames = list()
         flag_direct_matches = False
 
         for row in rows:
@@ -232,7 +233,7 @@ def get_detailed_vname(scname):
             if row['scname'].lower() == scname.lower():
                 flag_direct_matches = True
 
-            list_vnames.append(VernacularName(
+            vname = VernacularName(
                 scname,
                 row['scname'],
                 row['lang_lc'],
@@ -242,7 +243,8 @@ def get_detailed_vname(scname):
                 row['url'],
                 row['source_url'],
                 row['created_at']
-            ))
+            )
+            list_vnames.append(vname)
 
             tax_order.add(row['tax_order'].lower())
             tax_class.add(row['tax_class'].lower())
@@ -252,7 +254,19 @@ def get_detailed_vname(scname):
         if flag_direct_matches:
             list_vnames = filter(lambda x: x.is_direct_match, list_vnames)
 
+        dict_vnames = dict()
+        list_unique_vnames = list()
+        for vname in list_vnames:
+            cmname = vname.vernacular_name_formatted
+            if cmname in dict_vnames:
+                dict_vnames[cmname].append(vname)
+            else:
+                list_unique_vnames.append(cmname)
+                dict_vnames[cmname] = [vname]
+
         final_results[lang] = list_vnames
+        final_results[lang + '_unique'] = list_unique_vnames
+        final_results[lang + '_dict'] = dict_vnames
 
     final_results['tax_class'] = tax_class
     final_results['tax_order'] = tax_order

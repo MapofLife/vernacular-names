@@ -23,7 +23,7 @@ from nomdb import masterlist, names, config, common, languages, version
 """ What is the base URL for this app? """
 BASE_URL = '/taxonomy/names'
 
-""" Display DEBUG information? This is only used once. """
+""" Display DEBUG information? This is only used once (in /list). """
 FLAG_DEBUG = False
 
 """ Display the total count in $BASE_URL/list: expensive, but useful. """
@@ -57,6 +57,7 @@ JINJA_ENV = jinja2.Environment(
     autoescape=True
 )
 JINJA_ENV.filters['url_to_base'] = lambda x: BASE_URL + x
+JINJA_ENV.filters['quote_plus'] = lambda x: urllib.quote_plus(x)
 
 #
 # BaseHandler
@@ -115,7 +116,6 @@ class StaticPages(BaseHandler):
         else:
             self.response.status = 404
 
-
 #
 # MAIN PAGE HANDLER: /
 #
@@ -143,154 +143,6 @@ class MainPage(BaseHandler):
             'user_name': user_name,
             'vneditor_version': version.NOMDB_VERSION
         })
-
-#
-# SEARCH PAGE HANDLER: /search
-#
-class SearchPage(BaseHandler):
-    def get(self):
-        """ Display the search results and allows individual entries to be edited.
-
-        For historical reasons, this page does both search and edit, and does it
-        awfully. However, I'm not sure too many people use this functionality much
-        except for basic editing right now, so I'm not going to clean it until we
-        fully understand what this copmoenent should look like.
-        """
-        # TODO https://github.com/MapofLife/vernacular-names/issues/59
-
-        self.response.headers['Content-type'] = 'text/html'
-
-        # Set up user details.
-        user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
-        # Allow not-logged-in code to run.
-        if user is None:
-            return
-
-        # Load the current search term.
-        current_search = self.request.get('search')
-        if self.request.get('clear') != '':
-            current_search = ''
-        current_search = current_search.strip()
-
-        # Load the scientific name being looked up. If no search is
-        # currently in progress, look up the common name instead.
-        lookup_search = self.request.get('lookup')
-        lookup_results = {}
-
-        # If the current search is blank, but lookup is not, search
-        # for that instead.
-        if current_search == '' and lookup_search != '':
-            current_search = lookup_search
-
-        # Do the search.
-        search_results = dict()
-        search_results_scnames = []
-        if current_search != '':
-            search_results = masterlist.search_for_name(current_search)
-            search_results_scnames = sorted(search_results.keys())
-
-        # Check for dataset_filter
-        dataset_filter = self.request.get('dataset')
-        if dataset_filter != '':
-            if current_search != '':
-                # If there is a search, filter it using dataset_filter.
-                search_results_scnames = filter(
-                    lambda scname: masterlist.dataset_contains_name(dataset_filter, scname),
-                    search_results_scnames
-                )
-            else:
-                # If not, search by dataset.
-                search_results_scnames = masterlist.get_dataset_names(dataset_filter)
-
-                search_results = dict()
-                for scname in search_results_scnames:
-                    search_results[scname] = []
-
-        # During the initial search, automatically pick identical matches.
-        if lookup_search == '' and current_search != '':
-            lookup_search = current_search
-
-        # Find all names for all species in the languages of interest.
-        tax_family = set()
-        tax_order = set()
-        tax_class = set()
-        lookup_results_languages = []
-        lookup_results_lang_names = dict()
-        if lookup_search != '':
-            lookup_results = names.get_detailed_vname(lookup_search)
-
-            # Summarize higher taxonomy.
-            tax_family = lookup_results['tax_family']
-            tax_order = lookup_results['tax_order']
-            tax_class = lookup_results['tax_class']
-
-        # Render the main template.
-        self.render_template('search.html', {
-            'message': self.request.get('msg'),
-            'dataset_filter': dataset_filter,
-            'login_url': users.create_login_url(BASE_URL),
-            'logout_url': users.create_logout_url(BASE_URL),
-            'user_url': user_url,
-            'user_name': user_name,
-            'current_search': current_search,
-            'search_results': search_results,
-            'search_results_scnames': search_results_scnames,
-            'tax_family': tax_family,
-            'tax_order': tax_order,
-            'tax_class': tax_class,
-            'lookup_search': lookup_search,
-            'lookup_results': lookup_results,
-            'language_names': languages.language_names,
-            'language_names_list': languages.language_names_list,
-            'vneditor_version': version.NOMDB_VERSION
-        })
-
-#
-# DELETE NAME BY CartoDBID HANDLER: /delete/cartodb_id
-#
-class DeleteNameByCDBIDHandler(BaseHandler):
-    """ This handler will delete a row using its CartoDB identifier. """
-
-    def post(self):
-        """Delete name by $cartodb_id and redirect to /recent
-        """
-
-        # Fail without login.
-        current_user = self.check_user()
-        if current_user is None:
-            return
-
-        # Retrieve cartodb_id to delete.
-        cartodb_id = self.request.get_range('cartodb_id')
-
-        # Synthesize SQL
-        sql = "DELETE FROM %s WHERE cartodb_id=%d"
-        sql_query = sql % (
-            access.ALL_NAMES_TABLE,
-            cartodb_id
-        )
-
-        # Make it so.
-        response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
-            dict(
-                q=sql_query,
-                api_key=access.CARTODB_API_KEY
-            )
-        ))
-
-        if response.status_code != 200:
-            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
-        else:
-            message = "Change %d deleted successfully." % cartodb_id
-
-        # Redirect to the recent changes page, which is the only person using this service right now.
-        self.redirect(BASE_URL + "/recent?" + urllib.urlencode(dict(
-            msg=message,
-        )))
-
 
 #
 # ADD NAME HANDLER: /add/name
@@ -380,9 +232,167 @@ class AddNameHandler(BaseHandler):
         self.redirect(BASE_URL + "/search?" + urllib.urlencode(dict(
             msg=message,
             search=search,
-            lookup=lookup
-        )) + "#lang-" + lang)
+            lookup=lookup,
+            open_lang=lang
+        )))
 
+#
+# SEARCH PAGE HANDLER: /search
+#
+class SearchPage(BaseHandler):
+    def get(self):
+        """ Display the search results and allows individual entries to be edited.
+
+        For historical reasons, this page does both search and edit, and does it
+        awfully. However, I'm not sure too many people use this functionality much
+        except for basic editing right now, so I'm not going to clean it until we
+        fully understand what this copmoenent should look like.
+        """
+        # TODO https://github.com/MapofLife/vernacular-names/issues/59
+
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Set up user details.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        # Allow not-logged-in code to run.
+        if user is None:
+            return
+
+        # Get any messages.
+        msg = self.request.get('msg')
+
+        # Load the current search term.
+        current_search = self.request.get('search')
+        if self.request.get('clear') != '':
+            current_search = ''
+        current_search = current_search.strip()
+
+        # Load the scientific name being looked up. If no search is
+        # currently in progress, look up the common name instead.
+        lookup_search = self.request.get('lookup')
+        lookup_results = {}
+
+        # If the current search is blank, but lookup is not, search
+        # for that instead.
+        if current_search == '' and lookup_search != '':
+            current_search = lookup_search
+
+        # Do the search.
+        search_results = dict()
+        search_results_scnames = []
+        if current_search != '':
+            search_results = masterlist.search_for_name(current_search)
+            search_results_scnames = sorted(search_results.keys())
+
+        # Check for dataset_filter
+        dataset_filter = self.request.get('dataset')
+        if dataset_filter != '':
+            if current_search != '':
+                # If there is a search, filter it using dataset_filter.
+                search_results_scnames = filter(
+                    lambda scname: masterlist.dataset_contains_name(dataset_filter, scname),
+                    search_results_scnames
+                )
+            else:
+                # If not, search by dataset.
+                search_results_scnames = masterlist.get_dataset_names(dataset_filter)
+
+                search_results = dict()
+                for scname in search_results_scnames:
+                    search_results[scname] = []
+
+        # During the initial search, automatically pick identical matches.
+        if lookup_search == '' and current_search != '':
+            lookup_search = current_search
+
+        # Find all names for all species in the languages of interest.
+        tax_family = set()
+        tax_order = set()
+        tax_class = set()
+        lookup_results_languages = []
+        lookup_results_lang_names = dict()
+        if lookup_search != '':
+            lookup_results = names.get_detailed_vname(lookup_search)
+
+            # Summarize higher taxonomy from vnames.
+            tax_family = lookup_results['tax_family']
+            tax_order = lookup_results['tax_order']
+            tax_class = lookup_results['tax_class']
+
+            # But also look up higher taxonomy from the Master List.
+            result = masterlist.get_higher_taxonomy([lookup_search.lower()])
+            higher_taxonomy = dict()
+            if lookup_search.lower() in result:
+                higher_taxonomy = result[lookup_search.lower()]
+
+        # Render the main template.
+        self.render_template('search.html', {
+            'message': msg,
+            'dataset_filter': dataset_filter,
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
+            'user_url': user_url,
+            'user_name': user_name,
+            'current_search': current_search,
+            'search_results': search_results,
+            'search_results_scnames': search_results_scnames,
+            'tax_family': tax_family,
+            'tax_order': tax_order,
+            'tax_class': tax_class,
+            'higher_taxonomy': higher_taxonomy,
+            'lookup_search': lookup_search,
+            'lookup_results': lookup_results,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+            'open_lang': self.request.get('open_lang'),
+            'vneditor_version': version.NOMDB_VERSION
+        })
+
+#
+# DELETE NAME BY CartoDBID HANDLER: /delete/cartodb_id
+#
+class DeleteNameByCDBIDHandler(BaseHandler):
+    """ This handler will delete a row using its CartoDB identifier. """
+
+    def post(self):
+        """Delete name by $cartodb_id and redirect to /recent
+        """
+
+        # Fail without login.
+        current_user = self.check_user()
+        if current_user is None:
+            return
+
+        # Retrieve cartodb_id to delete.
+        cartodb_id = self.request.get_range('cartodb_id')
+
+        # Synthesize SQL
+        sql = "DELETE FROM %s WHERE cartodb_id=%d"
+        sql_query = sql % (
+            access.ALL_NAMES_TABLE,
+            cartodb_id
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
+            dict(
+                q=sql_query,
+                api_key=access.CARTODB_API_KEY
+            )
+        ))
+
+        if response.status_code != 200:
+            message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+        else:
+            message = "Change %d deleted successfully." % cartodb_id
+
+        # Redirect to the recent changes page, which is the only person using this service right now.
+        self.redirect(BASE_URL + "/recent?" + urllib.urlencode(dict(
+            msg=message,
+        )))
 
 #
 # COVERAGE VIEW HANDLER: /coverage
@@ -434,6 +444,203 @@ class CoverageViewHandler(BaseHandler):
             'default_display': default_display,
             'display': display,
             'offset': offset
+        })
+
+#
+# SOURCES SUMMARY HANDLER: /sources/summary?name={{source}}
+#
+class SourceSummaryHandler(BaseHandler):
+    """Summarizes a single source, allowing renames, detailed logs, and other cool features."""
+
+    def post(self):
+        """ Change details relating to a single source or entry. For now,
+        we'll leave "single source" down to /sources, which can handle that
+        for now, and deal only with individual entries.
+        """
+
+        # Make sure a user is logged in.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        # Set up error msg.
+        message = ""
+
+        # Retrieve offset/display of the /sources page we should redirect to.
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
+
+        # Retrieve source to modify.
+        source = self.request.get('name')
+
+        # Retrieve item to modify.
+        cartodb_id = self.request.get_range('cartodb_id')
+
+        # What action are we dealing with?
+        action = self.request.get('action')
+
+        if action == 'delete':
+            if cartodb_id == '':
+                message = "DELETE attempted without a CartoDB ID. Try again?"
+                return
+
+            # Synthesize SQL
+            sql = "DELETE FROM %s WHERE cartodb_id=%d"
+            sql_query = sql % (
+                access.ALL_NAMES_TABLE,
+                cartodb_id
+            )
+
+            # Make it so.
+            response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
+                dict(
+                    q=sql_query,
+                    api_key=access.CARTODB_API_KEY
+                )
+            ))
+
+            if response.status_code != 200:
+                message = "Error: server returned error " + str(response.status_code) + ": " + response.content
+            else:
+                message = "Change %d deleted successfully." % cartodb_id
+
+        # Redirect back to the main page.
+        self.redirect(BASE_URL + "/sources/summary?" + urllib.urlencode(dict(
+            msg=message,
+            name=source,
+            cartodb_id=cartodb_id,
+            offset=offset,
+            display=display_count
+        )))
+
+    def get(self):
+        """ Display summary for a single source. """
+
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_name = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = self.request.get_range('display', 0, default=SourcesHandler.DEFAULT_DISPLAY_COUNT)
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Which source are we summarizing?
+        source = self.request.get('name')
+        if source == '':
+            # If this is blank, redirect the sources list and ask the user to pick one.
+            self.redirect(BASE_URL + "/sources?" + urllib.urlencode(dict(
+                msg="Cannot display source summary: no source provided!"
+            )))
+            return
+
+        # Synthesize SQL
+        source_sql = ("""
+            SELECT
+                COUNT(*) OVER () AS total_count,
+                ARRAY_AGG(LOWER(source_url)) OVER (ROWS BETWEEN CURRENT ROW AND 100 FOLLOWING) AS agg_source_url,
+                ARRAY_AGG(TO_CHAR(vn.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')) OVER () AS agg_created_at,
+                ARRAY_AGG(LOWER(lang)) OVER () AS agg_lang_lc,
+                ARRAY_AGG(LOWER(family)) OVER () AS agg_family_lc,
+                ARRAY_AGG(added_by) OVER () AS agg_added_by,
+                vn.cartodb_id AS cartodb_id,
+                LOWER(scname) AS scname_lc,
+                LOWER(lang) AS lang_lc,
+                scientificname IS NOT NULL AS flag_in_master_list,
+                cmname,
+                url,
+                source,
+                source_url,
+                source_priority,
+                added_by,
+                TO_CHAR(vn.created_at AT TIME ZONE 'UTC', 'FMDay, Month DD, YYYY at HH:MI pm') AS created_at
+            FROM %s vn
+                LEFT JOIN %s
+                    ON LOWER(scname) = LOWER(scientificname)
+            WHERE source=%s
+            ORDER BY scname ASC, lang ASC, source_priority DESC, vn.created_at ASC
+            LIMIT %d OFFSET %d
+        """) % (
+            access.ALL_NAMES_TABLE,
+            access.MASTER_LIST,
+            common.encode_b64_for_psql(source),
+            display_count,
+            offset
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(
+            access.CDB_URL,
+            payload=urllib.urlencode(
+                {'q': source_sql}),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=config.DEADLINE_FETCH
+        )
+
+        # logging.info("SQL: '" + source_sql + "'")
+
+        # Retrieve results. Store the total count if there is one.
+        total_count = 0
+        results = []
+        source_summary = {
+            'agg_source_url': {},
+            'agg_added_by': {},
+            'agg_lang_lc': {},
+            'agg_family_lc': {}
+        }
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + source_sql + "'), server returned error " + str(
+                response.status_code) + ": " + response.content
+        else:
+            results = json.loads(response.content)['rows']
+            # message += "LOok what wwe go: '" + response.content + "'"
+            if len(results) > 0:
+                total_count = results[0]['total_count']
+                source_summary['agg_source_url'] = {x:results[0]['agg_source_url'].count(x) for x in results[0]['agg_source_url']}
+                source_summary['agg_added_by'] = {x:results[0]['agg_added_by'].count(x) for x in results[0]['agg_added_by']}
+                source_summary['agg_lang_lc'] = {x:results[0]['agg_lang_lc'].count(x) for x in results[0]['agg_lang_lc']}
+                source_summary['agg_family_lc'] = {x:results[0]['agg_family_lc'].count(x) for x in results[0]['agg_family_lc']}
+
+        # There are two kinds of sources:
+        #   1. Anything <= INDIVIDUAL_IMPORT_LIMIT is an individual import from the source.
+        #       These should be grouped by prefix.
+        #   2. Anything > INDIVIDUAL_IMPORT_LIMIT is a bulk import, and should be displayed separately.
+        #individual_imports = filter(lambda x: int(x['vname_count']) <= INDIVIDUAL_IMPORT_LIMIT, sources)
+        #bulk_imports = filter(lambda x: int(x['vname_count']) > INDIVIDUAL_IMPORT_LIMIT, sources)
+
+        # Render sources.
+        self.render_template('source_summary.html', {
+            'message': message,
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
+            'user_url': user_url,
+            'user_name': user_name,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+
+            'offset': offset,
+            'display_count': display_count,
+
+            'source': source,
+            'source_summary': source_summary,
+            'total_count': total_count,
+            'results': results,
+
+            'vneditor_version': version.NOMDB_VERSION
         })
 
 #
@@ -562,8 +769,6 @@ class SourcesHandler(BaseHandler):
         # Synthesize SQL
         source_sql = ("""SELECT 
             source,
-            source_url,
-            added_by,
             COUNT(*) OVER () AS total_count,
             COUNT(*) AS vname_count,
             TO_CHAR(MIN(created_at), 'Month YYYY') AS min_created_at,
@@ -573,8 +778,8 @@ class SourcesHandler(BaseHandler):
             MIN(lang) AS min_lang,
             MAX(lang) AS max_lang
             FROM %s 
-            GROUP BY source, source_url, added_by
-            ORDER BY vname_count DESC, source ASC, added_by DESC
+            GROUP BY source
+            ORDER BY vname_count DESC, source ASC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
@@ -636,6 +841,9 @@ class SourcesHandler(BaseHandler):
             'sources': sources,
             #'bulk_imports': bulk_imports,
             #'individual_imports': individual_imports,
+
+            # Don't link to the summary page if there are more than these many names.
+            'NO_SUMMARIES_IF_VNAME_GT': 10000,
 
             'vneditor_version': version.NOMDB_VERSION
         })
@@ -1278,6 +1486,232 @@ class HigherTaxonomyHandler(BaseHandler):
         })
 
 #
+# REGEX SEARCH HANDLER: /regex
+#
+class RegexSearchHandler(BaseHandler):
+    """ Execute regular expression searches against the database. """
+
+    def post(self):
+        """ Modify names and redirect to GET. """
+
+        # Load state.
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_email = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        message = ""
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = 30
+
+        # Source priority?
+        source_priority = str(self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX,
+            config.PRIORITY_DEFAULT_APP))
+
+        # Possible queries
+        vname = self.request.get('vname')
+
+        # Figure out what changes need to be made.
+        cartodb_id_args = filter(lambda x: x.startswith('cartodb_id_'), self.request.arguments())
+
+        count_success = 0
+        for cartodb_id_arg in cartodb_id_args:
+            match = re.match(r"^cartodb_id_(\d+)$", cartodb_id_arg)
+            if match:
+                loop_index = int(match.group(1))
+                cartodb_id = self.request.get('cartodb_id_%d' % loop_index)
+                scname = self.request.get('scname_%d' % loop_index)
+                original_cmname = self.request.get('original_cmname_%d' % loop_index)
+                cmname = self.request.get('cmname_%d' % loop_index)
+                lang = self.request.get('lang_%d' % loop_index)
+
+                if original_cmname != cmname:
+                    # message += "(scname %s, cmname %s, lang %s at source priority %s)" % (scname, cmname, lang, source_priority)
+
+                    # Record the change in the audit table.
+                    sql_query = """INSERT INTO %(audit_table)s
+(added_by, vernacular_name_cartodb_id, cmname_from, cmname_to, lang_from, lang_to, scname_from, scname_to,
+source_from, source_to, source_priority_from, source_priority_to, source_url_from, source_url_to,
+url_from, url_to) SELECT
+%(added_by)s AS added_by,
+%(cartodb_id)s AS vernacular_name_cartodb_id,
+vn.cmname AS cmname_from,
+%(cmname)s AS cmname_to,
+vn.lang AS lang_from,
+%(lang)s AS lang_to,
+vn.scname AS scname_from,
+%(scname)s AS scname_to,
+vn.source AS source_from,
+vn.source AS source_to,
+vn.source_priority AS source_priority_from,
+%(source_priority)s AS source_priority_to,
+vn.source_url AS source_url_from,
+vn.source_url AS source_url_to,
+vn.url AS url_from,
+vn.url AS url_to
+FROM %(all_names)s vn
+WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
+                        'audit_table': access.AUDIT_TABLE,
+                        'all_names': access.ALL_NAMES_TABLE,
+                        'added_by': common.encode_b64_for_psql(user_email),
+                        'cartodb_id': common.encode_b64_for_psql(cartodb_id),
+                        'lang': common.encode_b64_for_psql(lang),
+                        'cmname': common.encode_b64_for_psql(cmname),
+                        'scname': common.encode_b64_for_psql(scname),
+                        'source_priority': common.encode_b64_for_psql(source_priority)
+                    }
+
+                    # Make it so.
+                    response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
+                        dict(
+                            q=sql_query,
+                            api_key=access.CARTODB_API_KEY
+                        )
+                    ))
+
+                    if response.status_code != 200:
+                        message += "\nError updating audit trail: server returned error " + str(response.status_code) + ": " + response.content
+                    else:
+                        # Update vernacular name table.
+                        sql_query = """UPDATE %(all_names)s SET
+                            cmname=%(cmname)s,
+                            scname=%(scname)s,
+                            lang=%(lang)s,
+                            source_priority=%(source_priority)s
+                            WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
+                                'all_names': access.ALL_NAMES_TABLE,
+                                'cmname': common.encode_b64_for_psql(cmname),
+                                'scname': common.encode_b64_for_psql(scname),
+                                'lang': common.encode_b64_for_psql(lang),
+                                'source_priority': common.encode_b64_for_psql(source_priority),
+                                'cartodb_id': common.encode_b64_for_psql(cartodb_id)
+                            }
+
+                        # Make it so.
+                        response = urlfetch.fetch(access.CDB_URL + "?" + urllib.urlencode(
+                            dict(
+                                q=sql_query,
+                                api_key=access.CARTODB_API_KEY
+                            )
+                        ))
+
+                        if response.status_code != 200:
+                            message += "\nError updating vernacular name: server returned error " + str(response.status_code) + ": " + response.content + " "
+                        else:
+                            count_success += 1
+
+        if count_success > 0:
+            message += "\n%d names modified successfully. " % count_success
+
+        self.redirect(BASE_URL + "/regex?" + urllib.urlencode({
+            'msg': message.encode('utf8'),
+            'vname': vname,
+            'offset': offset,
+            'display': display_count
+        }))
+
+
+    def get(self):
+        """ Runs a regular expression search against the database. """
+        self.response.headers['Content-type'] = 'text/html'
+
+        # Check user.
+        user = self.check_user()
+        user_email = user.email() if user else "no user logged in"
+        user_url = users.create_login_url(BASE_URL)
+
+        if user is None:
+            return
+
+        # Is there a message?
+        message = self.request.get('msg')
+        if not message:
+            message = ""
+
+        # Is there an offset?
+        offset = self.request.get_range('offset', 0, default=0)
+        display_count = 30
+
+        # Possible queries
+        vname = self.request.get('vname')
+
+        # Synthesize SQL
+        recent_sql = ("""SELECT
+            vn.cartodb_id AS cartodb_id, cmname,
+            scientificname IS NOT NULL AS flag_in_master_list,
+            scname, lang,
+            source, url, source_priority,
+            vn.added_by, vn.created_at, vn.updated_at,
+            COUNT(*) OVER() AS total_count
+            FROM %s vn LEFT JOIN %s ON LOWER(scname) = LOWER(scientificname)
+            WHERE cmname ~ %s AND lang IN %s
+            ORDER BY
+                scientificname IS NULL,
+                scientificname ASC,
+                source_priority DESC,
+                updated_at DESC,
+                created_at DESC
+            LIMIT %d OFFSET %d
+        """) % (
+            access.ALL_NAMES_TABLE,
+            access.MASTER_LIST,
+            common.encode_b64_for_psql(vname),
+            '(' + ','.join(map(lambda x: common.encode_b64_for_psql(x), languages.language_names_list)) + ')',
+            display_count,
+            offset
+        )
+
+        # Make it so.
+        response = urlfetch.fetch(
+            access.CDB_URL,
+            payload=urllib.urlencode({'q': recent_sql}),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=config.DEADLINE_FETCH
+        )
+
+        # Retrieve results. Store the total count if there is one.
+        rows = []
+        total_count = 0
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: query ('" + recent_sql + "'), server returned error " + str(
+                response.status_code) + ": " + response.content
+        else:
+            results = json.loads(response.content)
+            rows = results['rows']
+            if len(rows) > 0:
+                total_count = rows[0]['total_count']
+
+        # Render recent changes.
+        self.render_template('regex.html', {
+            'message': message,
+            'login_url': users.create_login_url(BASE_URL),
+            'logout_url': users.create_logout_url(BASE_URL),
+            'user_url': user_url,
+            'user_name': user_email,
+            'language_names': languages.language_names,
+            'language_names_list': languages.language_names_list,
+
+            'offset': offset,
+            'display_count': display_count,
+            'total_count': total_count,
+
+            'vname': vname,
+
+            'rows': rows,
+
+            'vneditor_version': version.NOMDB_VERSION
+        })
+
+
+#
 # RECENT CHANGES HANDLER: /recent
 #
 class RecentChangesHandler(BaseHandler):
@@ -1304,15 +1738,33 @@ class RecentChangesHandler(BaseHandler):
         offset = self.request.get_range('offset', 0, default=0)
         display_count = 100
 
-        # Synthesize SQL
-        recent_sql = ("""SELECT cartodb_id, scname, lang, cmname, source, url, source_priority, tax_class, tax_order, tax_family, added_by, created_at, updated_at,
-            COUNT(*) OVER() AS total_count
-            FROM %s
-            WHERE source_url='""" + SOURCE_URL + """'
+        # Search for recently added names.
+        recent_sql = ("""SELECT
+            vn.cartodb_id,
+            scname,
+            lang,
+            cmname,
+            source,
+            url,
+            source_priority,
+            vn.added_by,
+            vn.created_at,
+            vn.updated_at,
+            COUNT(*) OVER() AS total_count,
+
+            audit.cmname_from,
+            audit.cmname_to,
+            audit.added_by AS audit_added_by,
+            audit.updated_at AS audit_updated_at
+
+            FROM %s vn
+            LEFT JOIN %s audit
+                ON vn.cartodb_id::TEXT = audit.vernacular_name_cartodb_id
             ORDER BY updated_at DESC
             LIMIT %d OFFSET %d
         """) % (
             access.ALL_NAMES_TABLE,
+            access.AUDIT_TABLE,
             display_count,
             offset
         )
@@ -1406,6 +1858,26 @@ class ListViewHandler(BaseHandler):
         if len(sql_having) > 0:
             results['having'].append("(" + " AND ".join(sql_having) + ")")
 
+    @staticmethod
+    def filter_by_source(request, results):
+        """ If given any $source in the request, select scientific names from those datasets only.
+        Unfortunately, this is kind of pointless and so is now deprecated.
+        """
+        sources = request.get_all('source')
+        if 'all' in sources:
+            sources = []
+
+        if len(sources) > 0:
+            results['select'].append("array_agg(DISTINCT source)")
+
+        sql_having = []
+        for source in sources:
+            sql_having.append(nomdb.common.encode_b64_for_psql(source) + " = ANY(array_agg(DISTINCT source))")
+            results['search_criteria'].append("filter by source '" + source + "'")
+
+        if len(sql_having) > 0:
+            results['having'].append("(" + " OR ".join(sql_having) + ")")
+
     def get(self):
         """ Display a filtered list of species names and their vernacular names. """
         self.response.headers['Content-type'] = 'text/html'
@@ -1458,6 +1930,7 @@ class ListViewHandler(BaseHandler):
 
         ListViewHandler.filter_by_datasets(self.request, results)
         ListViewHandler.filter_by_blank_langs(self.request, results)
+        # ListViewHandler.filter_by_source(self.request, results) -- deprecated; will be replaced by source summary.
 
         # There's an implicit first filter if there is no filter.
         if len(results['search_criteria']) == 0:
@@ -1485,6 +1958,8 @@ class ListViewHandler(BaseHandler):
         )
 
         search_criteria = ", ".join(results['search_criteria'])
+        # Capitalize the first letter.
+        search_criteria = search_criteria[0].upper() + search_criteria[1:]
 
         # Put all the pieces of the SELECT statement together.
         list_sql = """SELECT
@@ -1531,6 +2006,19 @@ class ListViewHandler(BaseHandler):
 
         vnames = names.get_vnames(name_list)
 
+        # Get a list of all sources.
+        sources = list()
+        response = urlfetch.fetch(
+            access.CDB_URL,
+            payload=urllib.urlencode({'q': "SELECT DISTINCT source FROM %s" % access.ALL_NAMES_TABLE}),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=config.DEADLINE_FETCH
+        )
+        if response.status_code == 200:
+            results = json.loads(response.content)
+            sources = map(lambda x: x['source'], results['rows'])
+
         self.render_template('list.html', {
             'vneditor_version': version.NOMDB_VERSION,
             'user_url': user_url,
@@ -1540,6 +2028,8 @@ class ListViewHandler(BaseHandler):
             'datasets_data': masterlist.get_dataset_counts(),
             'selected_datasets': set(self.request.get_all('dataset')),
             'selected_blank_langs': set(self.request.get_all('blank_lang')),
+            'selected_sources': set(self.request.get_all('source')),
+            'sources': sources,
             'message': message,
             'search_criteria': search_criteria,
             'name_list': name_list,
@@ -1774,6 +2264,24 @@ class TestsPage(BaseHandler):
 
         return test
 
+    def test_duplicates(self):
+        """ Test for duplicates in the database. """
+
+        test = TestsPage.TestSet("test_duplicates", inspect.getdoc(self.test_duplicates))
+
+        # Tests for duplicates, which we define as the same cmname for the same scname in source.
+        test.test_sql(
+            "SELECT scname, cmname, source FROM %s GROUP BY scname, cmname, source HAVING COUNT(*) > 1" % (
+                access.ALL_NAMES_TABLE
+            ),
+            lambda results: len(results) == 0,
+            lambda results:
+                "All names table: contains %d vernacular names for the same scientific name from the same source." %
+                    (len(results))
+        )
+
+        return test
+
     def get(self):
         """ Display a filtered list of species names and their vernacular names. """
         self.response.headers['Content-type'] = 'text/html'
@@ -1793,6 +2301,7 @@ class TestsPage(BaseHandler):
         tests = list()
         tests.append(self.test_blank_fields())
         tests.append(self.test_field_range())
+        tests.append(self.test_duplicates())
 
         # Display test results.
         self.render_template('tests.html', {
@@ -1819,10 +2328,12 @@ application = webapp2.WSGIApplication([
     (BASE_URL + '/list', ListViewHandler),
     (BASE_URL + '/delete/cartodb_id', DeleteNameByCDBIDHandler),
     (BASE_URL + '/recent', RecentChangesHandler),
+    (BASE_URL + '/regex', RegexSearchHandler),
     (BASE_URL + '/taxonomy', HigherTaxonomyHandler),
     (BASE_URL + '/family', FamilyHandler),
     (BASE_URL + '/hemihomonyms', HemihomonymHandler),
     (BASE_URL + '/sources', SourcesHandler),
+    (BASE_URL + '/sources/summary', SourceSummaryHandler),
     (BASE_URL + '/coverage', CoverageViewHandler),
     (BASE_URL + '/import', BulkImportHandler),
     (BASE_URL + '/masterlist', MasterListHandler),

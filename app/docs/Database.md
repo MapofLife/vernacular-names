@@ -76,3 +76,17 @@ The following indexes are necessary to efficient functioning:
  * LOWER(scientificname)
  * family
  * iucn_red_list_status
+
+# Audit trail for vernacular name changes (`access.AUDIT_TABLE`)
+
+This table records where names were changed from their original, imported form. This will allow individual changes to be recorded and possibly undone.
+
+ * `vernacular_name_cartodb_id` (required): The CartoDB ID of the row in the Vernacular Name table being modified
+ * `scname_from`, `scname_to`: What the scientific name was modified from and what it was modified to.
+ * `cmname_from`, `cmname_to`: What the common name was modified from and what it was modified to.
+ * `url_from`, `url_to`: What the URL was modified from and what it was modified to.
+ * `lang_from`, `lang_to`: What the language was modified from and what it was modified to.
+ * `source_from`, `source_to`: What the source was modified from and what it was modified to.
+ * `source_priority_from`, `source_priority_to`: What the source priority was modified from and what it was modified to.
+ * `source_url_from`, `source_url_to`: What the source URL was modified from and what it was modified to.
+

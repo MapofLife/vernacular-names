@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-    <p><strong>{{ search_criteria|capitalize }}</strong></p>
+    <p><strong>{{ search_criteria }}</strong></p>
 
         <p>Displaying {{ name_list|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
@@ -15,13 +15,13 @@
             <form class="pull-left" style="padding-right: 10px;" method="POST" action="{{'/import'|url_to_base}}">
                 <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
                 <textarea style="display: none" name="scnames">{{ name_list|join("\n") }}</textarea>
-                <input class="btn btn-primary" type="submit" value="Edit {{ name_list|count }} currently displayed names" />
+                <input class="btn btn-primary" type="submit" value="Bulk-edit {{ name_list|count }} currently displayed names" />
             </form>
 
             <form method="POST" action="{{'/import'|url_to_base}}">
                 <input type="hidden" name="input_dataset" value="{% if selected_datasets|length == 1 %}{{selected_datasets[0]}}{%else%}{{search_criteria|capitalize}}{%endif%}" />
                 <textarea style="display: none" name="scnames">{{ genera_list|join("\n") }}</textarea>
-                <input class="btn btn-primary" type="submit" value="Edit {{ genera_list|count }} currently displayed genera" />
+                <input class="btn btn-primary" type="submit" value="Bulk-edit {{ genera_list|count }} currently displayed genera" />
             </form>
         </div>
 
@@ -29,9 +29,63 @@
             <input type="hidden" name="offset" value="{{offset}}">
             <input type="hidden" name="display" value="{{display_count}}">
 
-    <div id="list_content" style="width: 100%; margins: auto; text-align: center">
-    <p>
-        <button class="btn btn-default btn-xs" type="submit" name="offset" value="0"
+            <div id="list_content" style="width: 100%; margins: auto; text-align: center">
+
+        <!-- <div class="well well-sm "> -->
+        <div class="panel panel-info panel-sm">
+            <div class="panel-heading">Filter data</div>
+            <div class="panel-body">
+
+                <p>Dataset:
+
+                <select name="dataset">
+                    <option value="all" {% if 'all' in selected_datasets %}selected=1{% endif %}>All</option>
+                {% for dataset in datasets_data %}
+                    <option
+                        {% if 'all' not in selected_datasets and dataset['dataset'] in selected_datasets %}
+                            selected="1"
+                        {% endif %}
+                        value="{{dataset['dataset']}}"
+                    >{{dataset['dataset']}} ({{dataset['count']}} species)</option>
+                {% endfor %}
+                </select>
+                </p>
+
+                <p>Missing names in:
+                <select name="blank_lang">
+                <option value="none" {% if 'none' in selected_blank_langs %}selected="1"{%endif%}>None</option>
+                {% for lang in language_names_list %}
+                    <option value="{{lang}}"
+                        {% if  'none' not in selected_blank_langs and lang in selected_blank_langs %}
+                            selected="1"
+                        {% endif %}
+                    >{{language_names[lang]}}</option>
+                {% endfor %}
+                </select>
+                </p>
+
+                {# -- deprecated, use source summary instead.
+                <p><span title="Including names that aren't the primary name" style="border-bottom: 1px dotted black;">Names from source (including secondary names)</span>:
+                <select name="source" id="source">
+                    <option value="all" {% if 'all' in selected_blank_langs %}selected="1"{%endif%}>All</option>
+                    {% for source in sources %}
+                        <option value="{{source}}"
+                            {% if 'all' not in selected_sources and source in selected_sources %}
+                                selected="1"
+                            {% endif %}
+                        >{{source|truncate(60, True)}}</option>
+                    {% endfor %}
+                </select><!--
+                <button type="button" class="btn btn-info btn-xs" onclick="location.href = '{{"/sources/summary"|url_to_base}}?source=' + $('#source').val(); return false;">View source</button>
+                -->
+                #}
+                </p>
+            </div>
+
+            <div class="panel-footer"><button class="btn btn-info" type="submit">Filter</button></div>
+        </div>
+
+                <button class="btn btn-default btn-xs" type="submit" name="offset" value="0"
             {% if offset == 0 %}disabled="disabled"{% endif %}
         ><span class="glyphicon glyphicon-step-backward" aria-hidden="true"></span></button>
 
@@ -53,7 +107,6 @@
             <option {% if display_count == 5000 %}selected=1{% endif %}  value="5000">Display 5000 rows at once</option>
             <option {% if display_count == 10000 %}selected=1{% endif %}  value="10000">Display 10000 rows at once</option>
         </select>
-        |
 
         <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{offset + display_count}}"
             {% if total_count != 0 and offset + display_count >= total_count %}disabled="disabled"{% endif %}
@@ -62,40 +115,7 @@
         <button class="btn btn-default btn-xs" type="submit" name="offset" value="{{total_count - display_count}}"
             {% if total_count == 0 or offset >= total_count - display_count %}disabled="disabled"{% endif %}
         ><span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span></button>
-
-        <br />
-        <div class="well well-sm checkbox_group">
-            Datasets (<button class="btn btn-danger btn-xs" type="submit" name="dataset" value="all">Clear</button>):
-            <br />
-
-            {% for dataset in datasets_data %}
-                <label>
-                <input type="checkbox" name="dataset" onclick="this.form.submit()"  value="{{ dataset['dataset'] }}"
-                    {% if 'all' in selected_datasets %}
-                    {% elif dataset['dataset'] in selected_datasets %}
-                        checked=1
-                    {% endif %}
-                >{{dataset['dataset']}} ({{dataset['count']}} species)</input>
-                </label>
-            {% endfor %}
-        </div>
-        <br />
-        <div class="well well-sm checkbox_group">
-            Find blanks in (<button class="btn btn-danger btn-xs" type="submit" name="blank_lang" value="none">Clear</button>):
-            <br />
-
-            {% for lang in language_names_list %}
-                <label>
-                <input type="checkbox" name="blank_lang" onclick="this.form.submit()" value="{{lang}}"
-                    {% if 'none' in selected_blank_langs %}
-                    {% elif lang in selected_blank_langs %}
-                        checked=1
-                    {% endif %}
-                >{{language_names[lang]}}</input>
-                </label>
-            {% endfor %}
-        </div>
-    </p>
+    </div>
 
     <p>(Genus common names are italicized)</p>
 
@@ -130,11 +150,14 @@
                         {% if lang in vnames[name] and vnames[name][lang].vernacular_name_formatted != '' %}
                             <td>
                             {% if not vnames[name][lang].is_direct_match %}<em>{% endif %}
-                            <a href="{{'/search'|url_to_base}}?lookup={{name}}&search={{name}}#lang-{{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
+                            <a {% if vnames[name][lang].source and vnames[name][lang].source != '' %}title="Source: {{vnames[name][lang].source}}" style="border-bottom: 1px dotted black;"{% endif %}
+                                href="{{'/search'|url_to_base}}?lookup={{name}}&search={{name}}&open_lang={{lang}}">{{ vnames[name][lang].vernacular_name_formatted }}</a>
                             {% if not vnames[name][lang].is_direct_match %}</em>{% endif %}
+<!--                            {% if vnames[name][lang].source and vnames[name][lang].source != '' %}<span class="label label-info" title="{{vnames[name][lang].source}}">{{vnames[name][lang].source|truncate(5, False)}}</span>{% endif %}
+-->
                             </td>
                         {% else %}
-                            <td>&nbsp;<!-- <a href="/?lookup={{name}}&search={{name}}#lang-{{lang}}"><center><em>None</em></center></a> --></td>
+                            <td>&nbsp;<!-- <a href="/?lookup={{name}}&search={{name}}&open_lang={{lang}}"><center><em>None</em></center></a> --></td>
                         {% endif %}
                     {% endfor %}
                 </tr>
