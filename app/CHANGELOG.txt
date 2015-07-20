@@ -1,4 +1,4 @@
-Development:
+0.9.4: July 19, 2015
  - Added a test to check for duplicate common names for the same scientific
    name from the same source.
  - Modified EOL match in bulk import from exact to approximate (#76).
