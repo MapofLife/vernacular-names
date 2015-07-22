@@ -23,7 +23,10 @@
 
             <p>Some example queries:</p>
             <ul>
-                <!-- %2B is '+' -->
+                {% for (name, regex) in regular_expressions|dictsort %}
+                    <li><a href="?vname={{regex}}">{{name}}</a>{% if name|lower in regex_counts %} ({{regex_counts[name|lower]}} counts){% endif %}</li>
+                {% endfor %}
+                <!-- %2B is '+'
                 <li><a href="?vname=\ss\s">Dangling 's'</a></li>
                 <li><a href="?vname=<.*>">HTML tags</a></li>
                 <li><a href="?vname=%26%23\d%2B;">HTML entities</a></li>
@@ -38,9 +41,10 @@
                 </li>
                 <li>Lowercase:
                     <a href="?vname=^[a-z]">initial letter only</a> or
-                    <!-- <a href="?vname=^[:lower:]">initial Unicode</a>, -->
+                    <!-- <a href="?vname=^[:lower:]">initial Unicode</a>,
                     <a href="?vname=\m[^-][a-z]">at the start of any word</a>
                 </li>
+                -->
             </ul>
         </form>
     </div>

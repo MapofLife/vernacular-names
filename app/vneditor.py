@@ -1491,6 +1491,21 @@ class HigherTaxonomyHandler(BaseHandler):
 class RegexSearchHandler(BaseHandler):
     """ Execute regular expression searches against the database. """
 
+    regular_expressions = {
+        "Dangling_s": r'\ss\s',
+        "HTML_tags": r'<.*>',
+        "HTML_entities": r'&#\d+',
+        "Improper_spacing": r'[a-z]+[A-Z]+[a-z]+',
+        "English_conjugations": r'\s(and|or)\s',
+        "Names_longer_than_100_characters": r'.{100}',
+        "Names_longer_than__80_characters": r'.{80}',
+        "Names_longer_than__60_characters": r'.{60}',
+        "Names_longer_than__40_characters": r'.{40}',
+        "Names_longer_than__30_characters": r'.{30}',
+        "Lowercase_initial_letter": r'^[a-z]',
+        "Lowercase_start_of_any_word": r'\m[^-][a-z]'
+    }
+
     def post(self):
         """ Modify names and redirect to GET. """
 
@@ -1689,6 +1704,35 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             if len(rows) > 0:
                 total_count = rows[0]['total_count']
 
+        # Query all the regular expressions. At once!
+        regex_matches = []
+        for (name, regex) in self.regular_expressions.iteritems():
+            regex_matches.append("COUNT(CASE WHEN cmname ~ '%s' THEN 1 ELSE null END) AS %s" % (regex, name))
+
+        regex_count_sql = "SELECT %s FROM %s" % (', '.join(regex_matches), access.ALL_NAMES_TABLE)
+
+        # Make it so.
+        response = urlfetch.fetch(
+            access.CDB_URL,
+            payload=urllib.urlencode({'q': regex_count_sql}),
+            method=urlfetch.POST,
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            deadline=config.DEADLINE_FETCH
+        )
+
+        # Retrieve results.
+        regex_counts = {}
+        if response.status_code != 200:
+            message += "<br><strong>Error</strong>: COUNT query ('" + regex_count_sql + "'), server returned error " + str(
+                response.status_code) + ": " + response.content
+        else:
+            #message += "<br><strong>Error</strong>: COUNT query ('" + regex_count_sql + "'), server returned error " + str(
+            #    response.status_code) + ": " + response.content
+            results = json.loads(response.content)
+            rows = results['rows']
+            if len(rows) > 0:
+                regex_counts = rows[0]
+
         # Render recent changes.
         self.render_template('regex.html', {
             'message': message,
@@ -1698,6 +1742,9 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             'user_name': user_email,
             'language_names': languages.language_names,
             'language_names_list': languages.language_names_list,
+
+            'regular_expressions': self.regular_expressions,
+            'regex_counts': regex_counts,
 
             'offset': offset,
             'display_count': display_count,
