@@ -1492,18 +1492,18 @@ class RegexSearchHandler(BaseHandler):
     """ Execute regular expression searches against the database. """
 
     regular_expressions = {
-        "Dangling_s": r'\ss\s',
-        "HTML_tags": r'<.*>',
-        "HTML_entities": r'&#\d+',
-        "Improper_spacing": r'[a-z]+[A-Z]+[a-z]+',
-        "English_conjugations": r'\s(and|or)\s',
-        "Names_longer_than_100_characters": r'.{100}',
-        "Names_longer_than__80_characters": r'.{80}',
-        "Names_longer_than__60_characters": r'.{60}',
-        "Names_longer_than__40_characters": r'.{40}',
-        "Names_longer_than__30_characters": r'.{30}',
-        "Lowercase_initial_letter": r'^[a-z]',
-        "Lowercase_start_of_any_word": r'\m[^-][a-z]'
+        "Dangling 's'": r'\ss\s',
+        "HTML tags": r'<.*>',
+        "HTML entities": r'&#\d+',
+        "Improper spacing": r'[a-z]+[A-Z]+[a-z]+',
+        "English conjugations": r'\s(and|or)\s',
+        "Names longer than 100 characters": r'.{100}',
+        "Names longer than  80 characters": r'.{80}',
+        "Names longer than  60 characters": r'.{60}',
+        "Names longer than  40 characters": r'.{40}',
+        "Names longer than  30 characters": r'.{30}',
+        "Lowercase: initial letter": r'^[a-z]',
+        "Lowercase: start of any word": r'\m[^-][a-z]'
     }
 
     def post(self):
@@ -1632,6 +1632,59 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             'display': display_count
         }))
 
+    def process_action(self, action):
+        """ Handles requests for data or to execute tasks, responds with JSON.
+        :param action: The action to process, e.g. 'counts'
+        """
+        self.response.headers['Content-type'] = 'application/json'
+
+        if action not in ['counts']:
+            self.response.set_status(500, "Invalid action '%s'" % action)
+            self.response.out.write("{'error': 'Invalid action'}")
+            return
+
+        # Counts
+        if action == 'counts':
+            # Query all the regular expressions. At once!
+            regex_matches = []
+            map_id_to_name = {}
+            id = 1
+            for (name, regex) in self.regular_expressions.iteritems():
+                regex_matches.append("COUNT(CASE WHEN cmname ~ '%s' THEN 1 ELSE null END) AS result_%d" % (regex, id))
+                map_id_to_name["result_%d" % id] = name
+                id += 1
+
+            regex_count_sql = "SELECT %s FROM %s" % (', '.join(regex_matches), access.ALL_NAMES_TABLE)
+
+            # Make it so.
+            response = urlfetch.fetch(
+                access.CDB_URL,
+                payload=urllib.urlencode({'q': regex_count_sql}),
+                method=urlfetch.POST,
+                headers={'Content-type': 'application/x-www-form-urlencoded'},
+                deadline=config.DEADLINE_FETCH
+            )
+
+            # Retrieve results.
+            regex_counts = {}
+            if response.status_code != 200:
+                message += "<br><strong>Error</strong>: COUNT query ('" + regex_count_sql + "'), server returned error " + str(
+                    response.status_code) + ": " + response.content
+            else:
+                #message += "<br><strong>Error</strong>: COUNT query ('" + regex_count_sql + "'), server returned error " + str(
+                #    response.status_code) + ": " + response.content
+                results = json.loads(response.content)
+                rows = results['rows']
+                if len(rows) > 0:
+                    results = rows[0]
+
+                    # Map ids back to names.
+                    for key in results:
+                        regex_counts[map_id_to_name[key]] = results[key]
+
+            self.response.out.write(json.dumps(regex_counts))
+            return
+
 
     def get(self):
         """ Runs a regular expression search against the database. """
@@ -1649,6 +1702,11 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
         message = self.request.get('msg')
         if not message:
             message = ""
+
+        # Is this a request for JSON counts? If so, handle it separately.
+        if self.request.get('action'):
+            self.process_action(self.request.get('action'))
+            return
 
         # Is there an offset?
         offset = self.request.get_range('offset', 0, default=0)
@@ -1693,45 +1751,16 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
         )
 
         # Retrieve results. Store the total count if there is one.
-        rows = []
+        rows_search = []
         total_count = 0
         if response.status_code != 200:
             message += "<br><strong>Error</strong>: query ('" + recent_sql + "'), server returned error " + str(
                 response.status_code) + ": " + response.content
         else:
             results = json.loads(response.content)
-            rows = results['rows']
-            if len(rows) > 0:
-                total_count = rows[0]['total_count']
-
-        # Query all the regular expressions. At once!
-        regex_matches = []
-        for (name, regex) in self.regular_expressions.iteritems():
-            regex_matches.append("COUNT(CASE WHEN cmname ~ '%s' THEN 1 ELSE null END) AS %s" % (regex, name))
-
-        regex_count_sql = "SELECT %s FROM %s" % (', '.join(regex_matches), access.ALL_NAMES_TABLE)
-
-        # Make it so.
-        response = urlfetch.fetch(
-            access.CDB_URL,
-            payload=urllib.urlencode({'q': regex_count_sql}),
-            method=urlfetch.POST,
-            headers={'Content-type': 'application/x-www-form-urlencoded'},
-            deadline=config.DEADLINE_FETCH
-        )
-
-        # Retrieve results.
-        regex_counts = {}
-        if response.status_code != 200:
-            message += "<br><strong>Error</strong>: COUNT query ('" + regex_count_sql + "'), server returned error " + str(
-                response.status_code) + ": " + response.content
-        else:
-            #message += "<br><strong>Error</strong>: COUNT query ('" + regex_count_sql + "'), server returned error " + str(
-            #    response.status_code) + ": " + response.content
-            results = json.loads(response.content)
-            rows = results['rows']
-            if len(rows) > 0:
-                regex_counts = rows[0]
+            rows_search = results['rows']
+            if len(rows_search) > 0:
+                total_count = rows_search[0]['total_count']
 
         # Render recent changes.
         self.render_template('regex.html', {
@@ -1744,15 +1773,13 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             'language_names_list': languages.language_names_list,
 
             'regular_expressions': self.regular_expressions,
-            'regex_counts': regex_counts,
 
             'offset': offset,
             'display_count': display_count,
             'total_count': total_count,
 
             'vname': vname,
-
-            'rows': rows,
+            'rows': rows_search,
 
             'vneditor_version': version.NOMDB_VERSION
         })

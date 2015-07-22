@@ -8,6 +8,17 @@
         $(window).bind('beforeunload', function(e) {
 
         });
+
+        function load_counts() {
+            // Retrieve counts from server.
+            $('.count').html("<em>Please wait, loading ...</em>");
+            $.getJSON('{{'/regex'|url_to_base}}', {'action': 'counts'}, function(result) {
+                $('.count').html("Done!")
+                {# TODO MAKE THIS WORK #}
+                $('.count "#English conjugations"').text(result);
+
+            });
+        }
     </script>
 {% endblock %}
 
@@ -24,7 +35,7 @@
             <p>Some example queries:</p>
             <ul>
                 {% for (name, regex) in regular_expressions|dictsort %}
-                    <li><a href="?vname={{regex}}">{{name}}</a>{% if name|lower in regex_counts %} ({{regex_counts[name|lower]}} counts){% endif %}</li>
+                    <li><a href="?vname={{regex}}">{{name}}</a><span class="count" id="{{name}}"></span></li>
                 {% endfor %}
                 <!-- %2B is '+'
                 <li><a href="?vname=\ss\s">Dangling 's'</a></li>
@@ -46,6 +57,7 @@
                 </li>
                 -->
             </ul>
+            <p><button onclick="load_counts(); return false;" class="btn btn-xs btn-progress">Count all</button></p>
         </form>
     </div>
 
@@ -58,7 +70,7 @@
     </div>
 
     {% if not rows %}
-        <p>No recent changes to display. Try <a href="?vname=">clearing the search</a>.</p>
+        <p>No regular expression matches to display. Try <a href="?vname=">clearing the search</a>.</p>
     {% else %}
         <p>Displaying {{ rows|length }} results from {{ offset + 1 }} to {{offset + display_count }} out of {{ '%d' % total_count }}.</p>
 
