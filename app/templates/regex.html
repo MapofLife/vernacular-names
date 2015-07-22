@@ -36,6 +36,11 @@
                     <a href="?vname=.{40}">40 characters</a>,
                     <a href="?vname=.{30}">30 characters</a>
                 </li>
+                <li>Lowercase:
+                    <a href="?vname=^[a-z]">initial letter only</a> or
+                    <!-- <a href="?vname=^[:lower:]">initial Unicode</a>, -->
+                    <a href="?vname=\m[^-][a-z]">at the start of any word</a>
+                </li>
             </ul>
         </form>
     </div>
