@@ -1654,8 +1654,8 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             WHERE cmname ~ %s AND lang IN %s
             ORDER BY
                 scientificname IS NULL,
-                scientificname ASC,
                 source_priority DESC,
+                scientificname ASC,
                 updated_at DESC,
                 created_at DESC
             LIMIT %d OFFSET %d

@@ -1,5 +1,6 @@
 Development
  - /search displays and allows the source priority to be changed (closes #116)
+ - Modified /regex to search by source priority by default.
 
 0.9.4: July 19, 2015
  - Added a test to check for duplicate common names for the same scientific
