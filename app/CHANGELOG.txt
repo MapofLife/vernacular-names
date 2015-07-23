@@ -1,4 +1,4 @@
-Development
+0.9.4.1: July 23, 2015
  - /search displays and allows the source priority to be changed (closes #116)
  - Modified /regex to search by source priority by default.
 
