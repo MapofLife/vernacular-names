@@ -167,7 +167,7 @@ class AddNameHandler(BaseHandler):
         cmname = self.request.get('name_to_add')
         lang = self.request.get('lang').lower()
         source = self.request.get('source')
-        source_priority = self.request.get_range('priority', config.PRIORITY_MIN, config.PRIORITY_MAX,
+        source_priority = self.request.get_range('source_priority', config.PRIORITY_MIN, config.PRIORITY_MAX,
                                                  config.PRIORITY_DEFAULT_APP)
 
         tax_class = self.request.get('tax_class')

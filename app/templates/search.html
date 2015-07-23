@@ -137,6 +137,10 @@ div.block {
                 <td><strong id="lang-{{language}}">{{ language_names[language] }}: </strong></td>
             {% endif %}
 
+            {% if language + '_dict' in lookup_results and unique_vnames[0] != '' %}
+                {% set max_source_priority = lookup_results[language + '_dict'][unique_vnames[0]][0].source_priority %}
+            {% endif %}
+
             <td><select id="{{language}}_select" style="width: 100%"
                 {# OnChange doesn't work if there's only a single item, so we switch to OnClick for that. #}
                 {% if unique_vnames|count == 1 %}onclick{% else %}onchange{% endif %}='$(".{{language}}_edit").hide(); $("#{{language}}_opt_" + ($(this).val())).show()'
@@ -144,7 +148,7 @@ div.block {
                     {% for vname in unique_vnames %}
                         <option value="{{loop.index}}"
                                 {% if loop.first %}selected="true"{% endif %}>{% if vname == '' %}New ...{%
-                                else %}{{ vname }} ({{ lookup_results[language + '_dict'][vname]|count }} sources){% endif %}</option>
+                                else %}{{ vname }} ({{ lookup_results[language + '_dict'][vname]|count }} sources, priority: {{ lookup_results[language + '_dict'][vname][0].source_priority }}){% endif %}</option>
                     {% endfor %}
                 </select>
 
@@ -158,6 +162,16 @@ div.block {
                                 </td>
                             <tr><td>Source</td><td>
                                 <input name="source" size=50 value="{% if vname != '' %}{{lookup_results[language + "_dict"][vname][0].source}}{% endif %}">
+                            </tr>
+                            <tr><td>Source priority</td><td>
+                                {% if vname != '' and lookup_results[language + "_dict"][vname][0].source_priority != max_source_priority %}
+                                    Originally
+                                    <input readonly="true" size=5 value="{{lookup_results[language + '_dict'][vname][0].source_priority}}">, but increased to
+                                {% endif %}
+                                <input name="source_priority" size=5 value="{{max_source_priority}}">
+                                {% if vname != '' and lookup_results[language + "_dict"][vname][0].source_priority != max_source_priority %}
+                                    to override highest-priority name.
+                                {% endif %}
                             </tr>
 
                             <input type="hidden" name="dataset" value="{{dataset_filter}}">

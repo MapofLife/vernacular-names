@@ -192,8 +192,8 @@ def get_detailed_vname(scname):
             %s
         ORDER BY
             source_priority DESC,
-            cmname DESC,
-            created_at DESC
+            created_at DESC,
+            cmname DESC
     """
     sql_query = sql.strip() % (
         access.ALL_NAMES_TABLE,
