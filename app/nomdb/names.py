@@ -92,6 +92,8 @@ def get_vnames(list_scnames):
         # print("Sql = <<" + sql_query + ">>")
         # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
 
+        logging.info("get_vnames(%d): retrieving %d names" % (len(list_scnames), len(chunk_scnames)))
+
         urlresponse = common.url_post(access.CDB_URL, {'q': sql_query})
 
         if urlresponse.status_code != 200:
@@ -203,6 +205,8 @@ def get_detailed_vname(scname):
 
     # print("Sql = <<" + sql_query + ">>")
     # print("URL = <<" + access.CDB_URL % ( urllib.urlencode(dict(q=sql_query))) + ">>")
+
+    logging.info("get_detailed_vname('%s') called" % scname)
 
     # Make and parse the response.
     urlresponse = common.url_post(access.CDB_URL, {'q': sql_query})
