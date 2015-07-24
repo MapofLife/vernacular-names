@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import inspect
+import gc
 
 import webapp2
 
@@ -16,7 +17,6 @@ import jinja2
 import access
 import nomdb.version
 from nomdb import masterlist, names, config, common, languages, version
-
 
 # User interface configuration
 
@@ -44,6 +44,7 @@ SOURCE_URL = "https://github.com/gaurav/vernacular-names"
 #
 urlfetch.set_default_fetch_deadline(config.DEADLINE_FETCH)
 ereporter.register_logger()
+# gc.set_debug(gc.DEBUG_LEAK)
 
 # Check whether we're in production mode (PROD = True) or not.
 PROD = True
