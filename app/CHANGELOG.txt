@@ -1,3 +1,11 @@
+Development
+ - Added an option to change the sort order in /regex.
+ - Removed all references to HIGHER_LIST.
+
+0.9.4.1: July 23, 2015
+ - /search displays and allows the source priority to be changed (closes #116)
+ - Modified /regex to search by source priority by default.
+
 0.9.4: July 19, 2015
  - Added a test to check for duplicate common names for the same scientific
    name from the same source.

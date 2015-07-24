@@ -36,6 +36,11 @@
                     <a href="?vname=.{40}">40 characters</a>,
                     <a href="?vname=.{30}">30 characters</a>
                 </li>
+                <li>Lowercase:
+                    <a href="?vname=^[a-z]">initial letter only</a> or
+                    <!-- <a href="?vname=^[:lower:]">initial Unicode</a>, -->
+                    <a href="?vname=\m[^-][a-z]">at the start of any word</a>
+                </li>
             </ul>
         </form>
     </div>
@@ -67,6 +72,10 @@
             {% if offset + display_count < total_count %}
             <a class="btn btn-default" href="?vname={{vname_urlencoded|quote_plus}}&offset={{offset + display_count}}">Next {{display_count}} entries</a>
             {% endif %}
+            <select name="sort_order" onchange="this.form.submit()">
+                <option {% if sort_order == 'sort_priority_desc' %}selected=1{% endif %} value="sort_priority_desc">Sort by source priority (descending)</option>
+                <option {% if sort_order == 'scname_asc' %}selected=1{% endif %} value="scname_asc">Sort by scientific name (ascending)</option>
+            </select>
         </div>
 
         <table border="1" class="sortable">
