@@ -1,4 +1,5 @@
 Development
+ - Added an option to change the sort order in /regex.
  - Removed all references to HIGHER_LIST.
 
 0.9.4.1: July 23, 2015

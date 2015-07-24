@@ -1518,6 +1518,11 @@ class RegexSearchHandler(BaseHandler):
         # Possible queries
         vname = self.request.get('vname')
 
+        # Sort order.
+        sort_order = self.request.get_all('sort_order')
+        if len(sort_order) > 0:
+            sort_order = sort_order[-1]
+
         # Figure out what changes need to be made.
         cartodb_id_args = filter(lambda x: x.startswith('cartodb_id_'), self.request.arguments())
 
@@ -1614,7 +1619,8 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             'msg': message.encode('utf8'),
             'vname': vname,
             'offset': offset,
-            'display': display_count
+            'display': display_count,
+            'sort_order': sort_order
         }))
 
 
@@ -1642,6 +1648,19 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
         # Possible queries
         vname = self.request.get('vname')
 
+        # Get sort order.
+        sort_order = 'source_priority DESC, scientificname ASC'
+        sort_order_str = self.request.get('sort_order')
+        if sort_order_str == 'scname_asc':
+            # Sort on scientificname ascending.
+            sort_order = 'scientificname ASC, source_priority DESC'
+        elif sort_order_str == 'source_priority_desc':
+            pass # This is the default.
+        else:
+            # If we get any other sort_order_str, set it to the default
+            # before sending it to Jinja.
+            sort_order_str = 'source_priority_desc'
+
         # Synthesize SQL
         recent_sql = ("""SELECT
             vn.cartodb_id AS cartodb_id, cmname,
@@ -1654,8 +1673,7 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             WHERE cmname ~ %s AND lang IN %s
             ORDER BY
                 scientificname IS NULL,
-                source_priority DESC,
-                scientificname ASC,
+                %s,
                 updated_at DESC,
                 created_at DESC
             LIMIT %d OFFSET %d
@@ -1664,6 +1682,7 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             access.MASTER_LIST,
             common.encode_b64_for_psql(vname),
             '(' + ','.join(map(lambda x: common.encode_b64_for_psql(x), languages.language_names_list)) + ')',
+            sort_order,
             display_count,
             offset
         )
@@ -1702,6 +1721,7 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
             'offset': offset,
             'display_count': display_count,
             'total_count': total_count,
+            'sort_order': sort_order_str,
 
             'vname': vname,
 
