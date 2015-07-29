@@ -303,8 +303,8 @@
 
         <p>Source priority for entire dataset: <input name="source_priority" value="{{source_priority|default(0)}}" /></p>
 
-        {% if scnames_not_in_master_list|length > 0 %}
-            <p><strong>Warning</strong>: <strong>{{scnames_not_in_master_list|length}} scientific names</strong> listed below do not exist in the master list.
+        {% if scnames_warning|length > 0 %}
+            <p><strong>Warning</strong>: <strong>{{scnames_warning|length}} scientific names</strong> listed below do not exist in the master list or could not be parsed.
             </p>
         {% endif %}
 
@@ -375,15 +375,15 @@
             <tr>
                 {% set scname_index = loop.index %}
                 <td>{{ scname_index }}</td>
-                <td>{% if scname not in scnames_not_in_master_list %}
-                        <em><a href="{{'/search'|url_to_base}}?lookup={{scname}}">{{ scname|capitalize }}</a></em>
-                    {% else %}
-                        <span style="color: red"><em>{{ scname|capitalize }}</em></span><br><strong>Warning: not in master list!</strong>
+                <td><input id="scname_{{scname_index}}" name="scname_{{scname_index}}" value="{{scname|capitalize}}">
+                    {% if scname in scnames_warning %}
+                        <br><strong>Warning: {{scnames_warning[scname]}}</strong>
                     {% endif %}
-                    <input type="hidden" id="scname_{{scname_index}}" name="scname_{{scname_index}}" value="{{scname}}" />
-                    <a target="resources" href="http://eol.org/{{scname}}">EOL</a>
-                    <a target="resources" href="http://www.gbif.org/species/search?q={{scname}}">GBIF</a>
-                    <a target="resources" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{scname}}">Wikipedia</a>
+                    <br>
+                    <a target="_blank" href="{{'/search'|url_to_base}}?lookup={{scname}}">In NomDB</a></em>
+                    <a target="_blank" href="http://eol.org/{{scname}}">EOL</a>
+                    <a target="_blank" href="http://www.gbif.org/species/search?q={{scname}}">GBIF</a>
+                    <a target="_blank" href="https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search={{scname}}">Wikipedia</a>
                 </td>
                 {% for lang in language_names_list %}
                     {% set vname = "" %}

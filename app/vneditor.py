@@ -1017,11 +1017,12 @@ class BulkImportHandler(BaseHandler):
         master_list_lc = set(map(lambda x: x.lower(), master_list))
 
         scnames_not_in_master_list = filter(lambda x: (x.lower() not in master_list_lc), scnames)
-        sql_add_to_master_list = "INSERT INTO %s (dataset, scientificname) VALUES\n\t%s" % (
-            access.MASTER_LIST, ",\n\t".join(
-                map(lambda scname: "('" + input_dataset.replace("'", "''") + "', '" + scname.replace("'", "''") + "')",
-                    scnames_not_in_master_list))
-        )
+        scnames_warning = dict.fromkeys(scnames_not_in_master_list, "not in master list!")
+        #sql_add_to_master_list = "INSERT INTO %s (dataset, scientificname) VALUES\n\t%s" % (
+        #    access.MASTER_LIST, ",\n\t".join(
+        #        map(lambda scname: "('" + input_dataset.replace("'", "''") + "', '" + scname.replace("'", "''") + "')",
+        #            scnames_not_in_master_list))
+        #)
 
         # Retrieve list of sources.
         all_sources = self.request.get('sources')
@@ -1193,7 +1194,7 @@ class BulkImportHandler(BaseHandler):
             'message': message,
 
             'scnames': scnames,
-            'scnames_not_in_master_list': scnames_not_in_master_list,
+            'scnames_warning': scnames_warning,
             'source_priority': source_priority,
             'input_dataset': input_dataset,
             'sources': sources,
