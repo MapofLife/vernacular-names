@@ -76,15 +76,20 @@ class BaseHandler(webapp2.RequestHandler):
     def check_user(self):
         """check_user checks to see if the user should be allowed to access
         this application (are they a signed in Google user who is an administrator
-        on this project?). If not, it redirects them to /page/private"""
+        on this project?). If so, it returns a dict of properties to do with the
+        user. If not, it redirects them to /page/private"""
         user = users.get_current_user()
         if not user:
             self.redirect(users.create_login_url(self.request.uri))
 
         if not users.is_current_user_admin():
             self.redirect(BASE_URL + '/page/private')
+            return None
 
-        return user
+        return {
+            'username': user.email() if user else "no user logged in",
+            'login_url': users.create_login_url(BASE_URL)
+        }
 
 #
 # STATIC PAGE HANDLER:
@@ -128,12 +133,13 @@ class MainPage(BaseHandler):
 
         # Set up user details.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
 
         # Allow not-logged-in code to run.
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Render the main template.
         self.render_template('main.html', {
@@ -187,7 +193,7 @@ class AddNameHandler(BaseHandler):
             message = "Error: language is blank."
         else:
             # Metadata
-            added_by = current_user.nickname()
+            added_by = current_user['username']
 
             # Base64 anything we don't absolutely trust
             added_by_b64 = nomdb.common.encode_b64_for_psql(added_by)
@@ -255,12 +261,13 @@ class SearchPage(BaseHandler):
 
         # Set up user details.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
 
         # Allow not-logged-in code to run.
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Get any messages.
         msg = self.request.get('msg')
@@ -1070,7 +1077,7 @@ class BulkImportHandler(BaseHandler):
                         vnames_source[loop_index][lang] = source.strip()
 
         # Some variables for all entries.
-        added_by = user.nickname()
+        added_by = user['username']
 
         debug_save = ""
         if self.request.get('save') != "":
@@ -1216,11 +1223,11 @@ class FamilyHandler(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Is there a message?
         message = self.request.get('msg')
@@ -1296,11 +1303,11 @@ class HemihomonymHandler(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Is there a message?
         message = self.request.get('msg')
@@ -1382,11 +1389,11 @@ class HigherTaxonomyHandler(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Is there a message?
         message = self.request.get('msg')
@@ -1500,11 +1507,11 @@ class RegexSearchHandler(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_email = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         message = ""
 
@@ -1631,11 +1638,11 @@ WHERE cartodb_id::TEXT=%(cartodb_id)s""" % {
 
         # Check user.
         user = self.check_user()
-        user_email = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Is there a message?
         message = self.request.get('msg')
@@ -1744,11 +1751,11 @@ class RecentChangesHandler(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Is there a message?
         message = self.request.get('msg')
@@ -1905,11 +1912,11 @@ class ListViewHandler(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Message?
         message = self.request.get('msg')
@@ -2309,11 +2316,11 @@ class TestsPage(BaseHandler):
 
         # Check user.
         user = self.check_user()
-        user_name = user.email() if user else "no user logged in"
-        user_url = users.create_login_url(BASE_URL)
-
         if user is None:
             return
+
+        user_name = user['username']
+        user_url = user['login_url']
 
         # Message?
         message = self.request.get('msg')
