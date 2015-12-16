@@ -2338,8 +2338,8 @@ class TestsPage(BaseHandler):
 application = webapp2.WSGIApplication([
     # If someone tries accessing the module directly, display the root page,
     # but all links from here should go to another
-    ('/', MainPage),
-
+    ('/taxonomy', MainPage),
+    ('/taxonomy/', MainPage),
     # Pages on our website.
     (BASE_URL, MainPage),
     (BASE_URL + '/search', SearchPage),
